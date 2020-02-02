@@ -39,7 +39,7 @@ const val STEPS = 20                        // number of STEPS between start end
 
 /* constants determining Greek flag size */
 /* Thickness of the lines that make (the blue part of) the greek flag
- * All other dimensions are in relation with this value (
+ * All other dimensions are in relation to this value (
  */
 const val THICKNESS = 20f
 const val FLAG_WIDTH_FACTOR = 18   // flag is wide 18 x THICKNESS
