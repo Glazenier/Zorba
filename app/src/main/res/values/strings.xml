@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<resources>
+    <string name="activity_title_main">Lemma\'s</string>
+
+    <string name="advanced">Gevorderd</string>
+
+    <string name="again">Opnieuw</string>
+
+    <string name="alphabetical">alfabetisch</string>
+
+    <string name="app_name">Zorba</string>
+    <string name="app_subtitle">by Herman</string>
+
+    <string name="apply">aan/uit</string>
+
+    <string name="author">Herman van Rongen</string>
+
+    <string name="basis">Basis</string>
+
+    <string name="block_size_post">woorden.</string>
+    <string name="block_size_pre">Blokken van</string>
+
+    <!--   ▶⫴  two characters: triangle pipes   \u25b6\u2af4  -->
+    <string name="btn_caption_next_block">\u25b6\u2af4</string>
+    <!-- ⫴◀ two characters: pipes triangle   \u2af4\u25c0-->
+    <string name="btn_caption_prev_block">\u2af4\u25c0</string>
+
+    <string name="cancel">Cancel</string>
+
+    <string name="caption_search">Zoek:</string>
+
+    <string name="clear">Wis</string>
+
+    <string name="contact_email">herman@driemondglas.nl</string>
+
+    <string name="correct">Goed:</string>
+
+    <string name="descending">ondersteboven</string>
+
+    <string name="description">Vocaulary learner Greek - Dutch </string>
+
+    <string name="emoji_back">\u279C</string>
+    <string name="emoji_correct">\u2713</string>
+    <string name="emoji_not_ok">\u26D4</string>
+    <string name="emoji_ok">&#127383;</string>
+    <string name="emoji_wrong">\u2717</string>
+
+    <string name="error">Fout:</string>
+
+    <string name="flag_dutch">vlag NL</string>
+    <string name="flag_greek">vlag GR</string>
+
+    <string name="hangman_meaning">Betekenis: %1$s</string>
+
+    <string name="hide_jumpers">dan niet meer tonen</string>
+
+    <string name="index">positie</string>
+
+    <string name="initiaal">Initiaal:</string>
+
+    <string name="lemma_length_post">karakters.</string>
+    <string name="lemma_length_pre">Lemma lengte</string>
+
+    <string name="level">Niveau:</string>
+
+    <string name="menu_caption_about">ⓘ About Zorba…</string>
+    <string name="menu_caption_detail_selections">&#128736; Detail selecties</string>
+    <string name="menu_caption_email">\u2709 Email this lemma</string>
+    <string name="menu_caption_group_type">&#128218; Kies woordgroep of woordsoort</string>
+    <string name="menu_caption_import_database">&#9889; Importeer Database</string>
+    <string name="menu_caption_neurolingo">&#127760; Lookup - NeuroLingo</string>
+    <string name="menu_caption_reset_score">\u24ff-\u24ff Reset Scores</string>
+    <string name="menu_caption_reset_selects">&#128260; Wis alle selecties</string>
+    <string name="menu_caption_use_speech">&#128264; Use speech</string>
+    <string name="menu_caption_wordreference">&#127760; Lookup - WordReference</string>
+
+    <string name="msg_blocksize_number">Vul positief getal in voor de blokgrootte.</string>
+    <string name="msg_lemmalength_number">Vul positief getal in voor de woordlengte.</string>
+    <string name="msg_threshold_number">Vul positief getal in voor de drempelwaarde.</string>
+
+    <string name="nice_to_know">Ballast</string>
+
+    <string name="open_flashcards">open flashcards</string>
+
+    <string name="paperclip">paperclip</string>
+
+    <string name="play_hangman">Speel Galgje</string>
+
+    <string name="question_mark">\?</string>
+
+    <string name="random">door elkaar</string>
+
+    <string name="select">Pas toe</string>
+
+    <string name="sort">Volgorde:</string>
+
+    <!-- 🔈 luidspreker &#128264;  U+1F508  \ud83d\udd08-->
+    <string name="speak">&#128264;</string>
+
+    <string name="standard">standaard</string>
+
+    <string name="threshold_post"> x goed.</string>
+    <string name="threshold_pre">Geslaagd bij </string>
+
+    <string name="version_info">Last change: androidX conversion</string>
+
+    <string name="wordgroup">Groep</string>
+
+    <string name="wordtype">Woordsoort</string>
+</resources>

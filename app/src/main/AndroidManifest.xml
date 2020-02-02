@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools"
+          package="driemondglas.nl.zorba">
+
+    <application
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/app_name"
+            android:supportsRtl="true"
+            android:theme="@style/AppTheme"
+            tools:ignore="AllowBackup,GoogleAppIndexingWarning"
+            android:allowBackup="true">
+
+        <activity android:name=".Splash"
+                  android:configChanges="orientation"
+                  android:screenOrientation="portrait">
+        </activity>
+
+        <activity android:name=".Hangman"
+                  android:parentActivityName="MainActivity"
+                  android:configChanges="orientation"
+                  android:screenOrientation="portrait">
+        </activity>
+
+        <activity
+                android:name=".Selecties"
+                android:windowSoftInputMode="stateHidden"
+                android:configChanges="orientation"
+                android:screenOrientation="portrait">
+        </activity>
+
+        <activity android:name=".GroepWoordsoort"
+                  android:configChanges="orientation"
+                  android:screenOrientation="portrait">
+        </activity>
+
+        <activity android:name=".FlashCard"
+                  android:parentActivityName="MainActivity"
+                  android:configChanges="orientation"
+                  android:screenOrientation="portrait">
+        </activity>
+
+        <activity android:name=".MainActivity"
+                  android:configChanges="orientation"
+                  android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+    </application>
+
+</manifest>

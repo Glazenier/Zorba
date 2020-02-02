@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#008577</color>
+    <color name="colorPrimaryDark">#00574B</color>
+    <color name="colorAccent">#D81B60</color>
+    <color name="borderBackground">#DCFDFF</color>
+    <color name="border_color">#673AB7</color>
+    <color name="labelBackground">#36673AB7</color>
+    <color name="border_gray">#B4B4B4</color>
+    <color name="helder_vermiljoen">#AE1C28</color>
+    <color name="kobaltblauw">#21468B</color>
+    <color name="κυανός">#004C98</color>
+</resources>
+

@@ -1,0 +1,55 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt"
+        android:width="60dp"
+        android:height="40dp"
+        android:viewportWidth="20"
+        android:viewportHeight="12">
+
+    <group android:translateY="1.5" android:translateX="2">
+
+        <!-- white canvas -->
+        <path
+                android:pathData="M 0,0 h 16 v 9 h-16 z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                        android:startX="1"
+                        android:endX="20"
+                        android:startY="1"
+                        android:endY="1"
+                        android:type="linear">
+                    <item
+                            android:color="#E3F2FD"
+                            android:offset="0.0" />
+                    <item
+                            android:color="#ffffff"
+                            android:offset="0.5" />
+                    <item
+                            android:color="#FFE3F2FD"
+                            android:offset="1.0" />
+                </gradient>
+            </aapt:attr>
+        </path>
+
+        <!-- official red nl -->
+        <path
+                android:fillColor="@color/helder_vermiljoen"
+                android:pathData="M12,0 h4 v3 h-7 z"
+        />
+        <!-- official blue nl -->
+        <path
+                android:fillColor="@color/kobaltblauw"
+                android:pathData="M6,6 h10 v3 h-13 z"
+        />
+        <!-- greek squares-->
+        <path   android:fillColor="@color/κυανός"
+                android:pathData="M0,0 h2 v2 h-2 z M0,3 h2 v2 h-2 z"
+        />
+        <!-- greek complex-->
+        <path   android:fillColor="@color/κυανός"
+                android:pathData="M3,0 h9 l-1,1 h-6 v3 h3 l-1,1 h-4 v-2 h6 l1,-1 h-7 z"
+        />
+        <!-- greek beams-->
+        <path   android:fillColor="@color/κυανός"
+                android:pathData="M0,6 h6 l-1,1 h-5 z M0,8 h4 l-1,1 h-3 z "
+        />
+    </group>
+</vector>

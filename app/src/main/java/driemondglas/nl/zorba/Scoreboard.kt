@@ -1,0 +1,120 @@
+package driemondglas.nl.zorba
+
+import android.annotation.SuppressLint
+import android.content.Context
+import android.graphics.Typeface
+import androidx.core.content.ContextCompat
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
+import android.text.style.RelativeSizeSpan
+import android.text.style.StyleSpan
+import kotlin.math.absoluteValue
+
+object ScoreBoard {
+
+    private val queryManager: QueryManager = QueryManager.getInstance()
+
+    @SuppressLint("UseSparseArrays")  // there may be a performance gain using sparseArray instead of HashMap
+    /* scoremap holds ids and correct(pos) or incorrect(neg) count per lemma in a block */
+    private var scoreMap = HashMap<Int, Int>()
+    private var correctCount = 0
+    private var incorrectCount = 0
+    private var previousCorrectCount = 0
+    private var previousIncorrectCount = 0
+    private var previousIdx = 0
+    private var previousLemmaScore = 0
+
+    fun getSessionScore(): SpannableString {
+        /* This function formats the score text as: 'totaal: 6 fout: 3 = 50%'
+         * The total count, incorrect count and percentage correct get a larger font size.
+         * For that purpose the string is divided into partitions using SpannableString */
+        val totaalCount = correctCount + incorrectCount
+        val totaalCountString = totaalCount.toString()
+        val correctCountString = correctCount.toString()
+
+        val pctCorrect = if (totaalCount == 0) 100 else (100 * correctCount / totaalCount)
+        val pctCorrectString = pctCorrect.toString()
+        val textScore = SpannableString("goed: $correctCountString totaal: $totaalCountString  =  $pctCorrectString %")
+        /*                                     |span1 |     span2        |  span3 |      span4      |  5  |    span6      |sp7|  */
+        val span1Length = "goed: ".length
+        val span2Length = correctCountString.length
+        val span3Length = " totaal: ".length
+        val span4Length = totaalCountString.length
+
+        var spanStart = span1Length
+        var spanEnd = spanStart + span2Length
+        textScore.setSpan(RelativeSizeSpan(3f), spanStart, spanEnd, 0)
+        textScore.setSpan(StyleSpan(Typeface.BOLD), spanStart, spanEnd, 0)
+
+        spanStart = spanEnd + span3Length
+        spanEnd = spanStart + span4Length
+        textScore.setSpan(RelativeSizeSpan(3f), spanStart, spanEnd, 0)
+        textScore.setSpan(StyleSpan(Typeface.BOLD), spanStart, spanEnd, 0)
+
+        spanStart = textScore.length - pctCorrectString.length - 2
+        spanEnd = textScore.length - 2
+        textScore.setSpan(RelativeSizeSpan(2f), spanStart, spanEnd, 0)
+        textScore.setSpan(StyleSpan(Typeface.BOLD), spanStart, spanEnd, 0)
+
+        return textScore
+    }
+
+    fun undoLastScore() {
+        correctCount = previousCorrectCount
+        incorrectCount = previousIncorrectCount
+        if (previousIdx > 0) scoreMap[previousIdx] = previousLemmaScore
+    }
+
+    fun updateCounters(thisIdx: Int, isCorrect: Boolean) {
+        /* save old values for undo functionality */
+        previousCorrectCount = correctCount
+        previousIncorrectCount = incorrectCount
+        previousIdx = thisIdx
+        previousLemmaScore = scoreMap.getOrDefault(thisIdx, 0)
+
+        if (isCorrect) correctCount++ else incorrectCount++
+
+        /* increase the correct or incorrect counter per individual lemma */
+        scoreMap[thisIdx] = if (isCorrect) previousLemmaScore + 1 else previousLemmaScore - 1
+    }
+
+    /* show correct-incorrect count using a string of green or red rectangles */
+    fun showLemmaScore(context: Context, thisIdx: Int): SpannableString {
+        val correctCount = scoreMap.getOrDefault(thisIdx, 0)
+        /* set text color depending on negative or positive count */
+        val colorInt = if (correctCount > 0) R.color.colorPrimaryDark else R.color.colorAccent
+        val textScore = SpannableString(if (correctCount < -3) """✚▉▉▉""" else """▉""".repeat(correctCount.absoluteValue))
+
+        textScore.setSpan(ForegroundColorSpan(ContextCompat.getColor(context, colorInt)), 0, textScore.length, 0)
+        return textScore
+    }
+
+    fun resetScoreMap() {
+        scoreMap.clear()
+        previousIdx = 0
+        previousLemmaScore = 0
+    }
+
+    fun resetScores() {
+        resetScoreMap()
+
+        correctCount = 0
+        incorrectCount = 0
+        previousCorrectCount = 0
+        previousIncorrectCount = 0
+    }
+
+    /* the progress bar shows the total correct count for the current block */
+    fun getBlockScore(): Int = scoreMap.values.sum()
+
+    /* retrieve the minimum value in the score list */
+    fun allAreCorrect(): Boolean {
+        val lowestValue = scoreMap.values.min()
+        return if (lowestValue != null) (lowestValue > queryManager.jumpThreshold) else false
+    }
+
+    fun scoreMapToString(): String = scoreMap.toList().toString().removeSurrounding("[", "]")
+
+    fun noJumper(theIdx: Int): Boolean = (scoreMap.getOrDefault(theIdx, 0) <= queryManager.jumpThreshold)
+}
+

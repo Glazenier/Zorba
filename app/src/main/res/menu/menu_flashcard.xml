@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+        >
+    <item
+            android:id="@+id/menu_set_groep_soort"
+            android:title="@string/menu_caption_group_type"
+            />
+    <item
+            android:id="@+id/menu_set_block_sort"
+            android:title="@string/menu_caption_detail_selections"
+            />
+    <item
+            android:id="@+id/menu_clear_selects"
+            android:title="@string/menu_caption_reset_selects"
+            />
+    <item
+            android:id="@+id/menu_reset_score"
+            android:title="@string/menu_caption_reset_score"
+            />
+    <item
+            android:id="@+id/menu_speech2"
+            android:title="@string/menu_caption_use_speech"
+            android:checkable="true"
+            />
+    <item
+            android:id="@+id/menu_mail_lemma"
+            android:title="@string/menu_caption_email"
+            />
+    <item
+            android:id="@+id/menu_wordreference"
+            android:title="@string/menu_caption_wordreference"
+            />
+    <item
+            android:id="@+id/menu_neurolingo"
+            android:title="@string/menu_caption_neurolingo"
+            />
+</menu>
