@@ -223,6 +223,11 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 recyclerViewAdapter.notifyDataSetChanged()
             }
 
+            R.id.verb_game ->{
+                val myIntent = Intent(this, VerbGame::class.java)
+                startActivity(myIntent)
+            }
+
             /*  about applicattion */
             R.id.menu_about -> buidAbout()
 

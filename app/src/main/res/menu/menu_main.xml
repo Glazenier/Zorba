@@ -22,6 +22,10 @@
             android:title="@string/menu_caption_use_speech"
             />
     <item
+            android:id="@+id/verb_game"
+            android:title="werkwoordspel"
+            />
+    <item
             android:id="@+id/menu_about"
             android:title="@string/menu_caption_about"
             />
