@@ -237,12 +237,12 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         return true
     }
 
-    override fun onDestroy() {
-        /* Shutdown TTS when app gets destroyed by android */
-        zorbaSpeaks.stop()
-        zorbaSpeaks.shutdown()
-        super.onDestroy()
-    }
+//    override fun onDestroy() {
+//        /* Shutdown TTS when app gets destroyed by android */
+//        zorbaSpeaks.stop()
+//        zorbaSpeaks.shutdown()
+//        super.onDestroy()
+//    }
 
     private fun refreshData() {
         /* method clears the existing array list and refills it with fresh data from the database */

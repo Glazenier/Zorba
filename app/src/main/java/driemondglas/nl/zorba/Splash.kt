@@ -32,8 +32,8 @@ const val Y0_FLAG = 50f
 const val SCALE_ZORBA = 20f
 
 /* constants for animation timing */
-const val SPLASH_START_DELAY: Long = 1500    // ms before animation starts
-const val ANIMATION_DELAY: Long = 5         // ms between animation STEPS
+const val SPLASH_START_DELAY: Long = 1000    // ms before animation starts
+const val ANIMATION_DELAY: Long = 4         // ms between animation STEPS
 const val STEPS = 20                        // number of STEPS between start end end of animation
 /* there are 15 lines to be animated, each in 20 STEPS of 5 milisecs, so the animation should take 1500ms */
 

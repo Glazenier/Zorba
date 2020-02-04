@@ -5,21 +5,23 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import kotlinx.android.synthetic.main.verb_game.*
 
+@SuppressLint("SetTextI18n")
 class VerbGame : AppCompatActivity() {
     private val queryManager: QueryManager = QueryManager.getInstance()
     private lateinit var mainCursor: Cursor
     private lateinit var db: SQLiteDatabase
-    private val persoonsvormNL = listOf("1ste persoon enkelvoud: ", "2de persoon enkelvoud: ", "3de persoon enkelvoud: ", "1ste persoon meervoud: ", "2de persoon meervoud: ", "3de persoon meervoud: ")
-    private val persoonsvormGR = listOf("Εγώ", "Εσύ", "Αυτός, αυτή, αυτό", "Εμείς", "Εσείς", "Αυτοί, αυτές, αυτά")
-    private val tijdvorm=listOf("Tegenwoordige tijd","Toekomende tijd","Voltooid Verleden tijd (Aorist)", "Onvoltooid Verleden tijd")
-    private var pickOne=0
-    private lateinit var parts: List<String>
 
-    @SuppressLint("SetTextI18n")
+    private var theVerb = ""       // holds the Enestotas (present)
+    private var theMeaning = ""    // holds the NL translation of the verb
+    private var tijdvorm = ""      // holds the randomly choosen tense
+    private var theConjurgation="" // holds the randomly selected conjugation in the choosen tense
+    private var thePersonGR=""     // keeps greek personal pronoun in sync with choosen conjugation
+
+    private lateinit var conjugationParts: List<String>
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.verb_game)
@@ -31,46 +33,89 @@ class VerbGame : AppCompatActivity() {
         val query = queryManager.verbGameQuery
         mainCursor = db.rawQuery(query, null)
 
-        btn_go.setOnClickListener {if (mainCursor.moveToNext()) setupVerb() else Utils.colorToast(this, "Thats all")
-            text_reveal.visibility= View.INVISIBLE}
-        btn_reveal.setOnClickListener {
-            text_reveal.visibility= View.VISIBLE
-            text_ask.text = "${persoonsvormGR[pickOne]} ${parts[pickOne]}"
-        }
-
+        btn_go.setOnClickListener {if (mainCursor.moveToNext()) setupVerb() else Utils.colorToast(this, "Thats all")}
+        btn_reveal.setOnClickListener { reveal() }
+        sw_mode.setOnClickListener { onModeChange() }
         /* if there is indeed a record returned...
          * ... setup the game
          */
         if (mainCursor.moveToNext()) setupVerb()
     }
-    @SuppressLint("SetTextI18n")
-    private fun setupVerb(){
-        val theVerb = mainCursor.getString(mainCursor.getColumnIndex("PureLemma"))
-        val theTenses = mainCursor.getString(mainCursor.getColumnIndex("GR"))
-        val betekenis = mainCursor.getString(mainCursor.getColumnIndex("NL"))
 
-        var avail = "1"
-        if (hasMellontas(theTenses)) avail += "2"
-        if (hasAorist(theTenses)) avail += "3"
-        if (hasParatatikos(theTenses)) avail += "4"
-        val pos = (1..avail.length).shuffled().last()
-        val choice = avail[pos-1].toString().toInt()
-        val tense = when (choice) {
-            1 -> conjureEnestotas(theTenses)
-            2 -> conjureMellontas(theTenses)
-            3 -> conjureAorist(theTenses)
-            4 -> conjureParatatikos(theTenses)
+    private fun setupVerb(){
+        /* Setup the texts for ask and reveal */
+        theVerb = mainCursor.getString(mainCursor.getColumnIndex("PureLemma"))
+        val textGR = mainCursor.getString(mainCursor.getColumnIndex("GR"))
+        theMeaning = mainCursor.getString(mainCursor.getColumnIndex("NL"))
+
+        /* check which tenses are available in the Greek text field */
+        var tenseIsAvailable = "e"  // present is always there, or at least an expression
+        if (hasMellontas(textGR)) tenseIsAvailable += "m"
+        if (hasAorist(textGR)) tenseIsAvailable += "a"
+        if (hasParatatikos(textGR)) tenseIsAvailable += "p"
+
+        /* pick a random position in the string with available tenses */
+        val sixConjugations = when (tenseIsAvailable.random()) {
+            'e' -> {
+                tijdvorm = "Tegenwoordige tijd"
+                conjureEnestotas(textGR)
+            }
+            'm' -> {
+                tijdvorm = "Toekomende tijd"
+                conjureMellontas(textGR)
+            }
+            'a' -> {
+                tijdvorm = "Aorist"
+                conjureAorist(textGR)
+            }
+            'p' -> {
+                tijdvorm = "Onvoltooid verleden tijd"
+                conjureParatatikos(textGR)
+            }
             else -> "unknown"
         }
-        parts = tense.split(",")
-        if (parts[0]!="Werkwoordtype onbekend") {
-        val conjureCount=parts.size
-        Log.d("hvr","nr of conjurgations: $conjureCount")
-        pickOne=(0 until conjureCount).shuffled().last()
-        Log.d("hvr"," picked: $pickOne")
-        text_ask.text = parts[pickOne]
-        text_reveal.text="Komt van: $theVerb\nBetekent: $betekenis\n\n${tijdvorm[choice-1]}\n${persoonsvormNL[pickOne]}"
+
+        conjugationParts = sixConjugations.split(",")
+        if (conjugationParts[0].trim() == "Werkwoordtype onbekend") {
+            theConjurgation = theVerb
+            tijdvorm = ""
+            thePersonGR = ""
+
+        } else {
+            /* choose one of the 6 conjugations */
+            val conjureCount = conjugationParts.size
+            val pickOne = (0 until conjureCount).shuffled().last()
+            theConjurgation = conjugationParts[pickOne]
+            val persoonsvormGR = listOf("Εγώ", "Εσύ", listOf("Αυτός", "Αυτή", "Αυτό").random(), "Εμείς", "Εσείς", listOf("Αυτοί", "Αυτές", "Αυτά").random())
+            thePersonGR = persoonsvormGR[pickOne]
+            showByMode()
         }
+    }
+
+    private fun showByMode(){
+        if (sw_mode.isChecked) {
+            text_ask.text = theConjurgation
+            text_reveal.text = "Komt van: $theVerb\n$theMeaning\n\n$tijdvorm"
+        } else {
+            text_ask.text = theVerb
+            text_reveal.text = "$thePersonGR $tijdvorm"
+        }
+
+        text_reveal.visibility = if (sw_mode.isChecked) View.INVISIBLE else View.VISIBLE
+    }
+
+    private fun reveal(){
+        text_reveal.visibility = View.VISIBLE
+        if (sw_mode.isChecked) {
+            text_ask.text = "$thePersonGR $theConjurgation"
+        } else {
+            text_ask.text = "$thePersonGR $theConjurgation"
+            text_reveal.text = "Komt van: $theVerb\n$theMeaning\n\n$tijdvorm"
+        }
+    }
+
+    private fun onModeChange(){
+        showByMode()
     }
 
     override fun onStop() {

@@ -107,4 +107,8 @@
     <string name="wordgroup">Groep</string>
 
     <string name="wordtype">Woordsoort</string>
+    <string name="ask">Ask</string>
+    <string name="reveal">Reveal</string>
+    <string name="volgende">Volgende</string>
+    <string name="laat_zien">Laat zien</string>
 </resources>
