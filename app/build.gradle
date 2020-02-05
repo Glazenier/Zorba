@@ -10,8 +10,8 @@ android {
         applicationId "driemondglas.nl.zorba"
         minSdkVersion 26
         targetSdkVersion 29
-        versionCode 127
-        versionName "2.4.4 androidX"
+        versionCode 128
+        versionName "2.5.0 Game"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {

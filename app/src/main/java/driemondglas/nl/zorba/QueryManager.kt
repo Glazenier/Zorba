@@ -32,7 +32,7 @@ class QueryManager private constructor() {
         "SELECT Woordsoort AS woordsoort, Count(*) AS soorttotaal FROM woorden GROUP BY Woordsoort ORDER BY Woordsoort;"
     val queryAlleGroepen =
         "SELECT Groep AS groep, Count(*) AS groeptotaal FROM woorden WHERE woordsoort != 'liedtekst' GROUP BY Groep ORDER BY Groep;"
-    val verbGameQuery = "SELECT PureLemma, GR, NL FROM woorden WHERE woordsoort = 'werkwoord' ORDER BY RANDOM() LIMIT 100"
+
 
     /* public vars can be written to and read from outside  (implied getter / setter) */
     var wordGroup = ""
@@ -170,6 +170,9 @@ class QueryManager private constructor() {
         return sqlHangman
     }
 
+    fun verbGameQuery(): String{
+        return  "SELECT PureLemma, GR, NL FROM woorden WHERE woordsoort = 'werkwoord' " + buildLevelClause() + " ORDER BY RANDOM() LIMIT 100"
+    }
 
     /* function is called from the menu item 'Clear All' to reset all selections made by user. */
     fun clearAll() {

@@ -10,6 +10,7 @@ import android.graphics.Paint
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.AttributeSet
+import android.view.MenuItem
 import android.view.View
 
 import driemondglas.nl.zorba.Utils.colorToast
@@ -68,12 +69,6 @@ class Hangman : AppCompatActivity() {
         if (mainCursor.moveToNext()) setupSecret()
     }
 
-    override fun onStop() {
-        /* make sure the db etc get properly closed */
-        mainCursor.close()
-        db.close()
-        super.onStop()
-    }
 
     fun again(@Suppress("UNUSED_PARAMETER") v: View) {
         /* if any more secret words are available, setup the next turn */
@@ -167,6 +162,19 @@ class Hangman : AppCompatActivity() {
         /* spaces are allowed in the secret word (lemma); they have tag underscore(_) */
         if (guessed == "_") guessed = " "
         checkIt()
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        /* Handle action bar item clicks here. */
+        if (item.itemId == android.R.id.home) finishIntent() else super.onOptionsItemSelected(item)
+        return true
+    }
+
+    /* finish intent and return to main activity */
+    private fun finishIntent() {
+        mainCursor.close()
+        db.close()
+        finish()
     }
 }
 

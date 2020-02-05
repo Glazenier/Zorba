@@ -201,7 +201,7 @@ fun conjureEnestotas(textGreek: String): String {
             "C3" -> "${stem}ιέμαι, ${stem}ιέσαι, ${stem}ιέται, ${stem}ιόμαστε, ${stem}ιέστε, ${stem}ιούνται"
             "C4" -> "${stem}ούμαι, ${stem}είσαι, ${stem}είται, ${stem}ούμαστε, ${stem}είστε, ${stem}ούνται"
             "C5" -> "${stem}είμαι, ${stem}είσαι, ${stem}είναι, ${stem}είμαστε, ${stem}είστε, ${stem}είναι"
-            else -> "Werkwoordtype onbekend"
+            else -> UNKNOWN_VERB
         }
     }
     return "Tegenwoordige tijd ontbreekt op regel 1"
@@ -230,7 +230,7 @@ fun conjureMellontas(textGreek: String): String {
                 verbType = when {
                     mellontas.endsWith("ω") -> "regular"
                     mellontas.endsWith("ώ") -> "irregular1"
-                    else -> "unknown"
+                    else -> UNKNOWN_VERB
                 }
                 stem = mellontas.dropLast(1)
             }
@@ -241,7 +241,7 @@ fun conjureMellontas(textGreek: String): String {
             "irregular2" -> "θα ${stem}ω, θα ${stem.unStress()}ς, θα ${stem}ει, θα ${stem}με, θα ${stem}τε, θα ${stem}νε"
             "irregular3" -> "θα ${stem}ω, θα ${stem}εις, θα ${stem}ει, θα ${stem}ουμε, θα ${stem}είτε, θα ${stem}ουν"
             "irregular4" -> "θα ${stem}μαι, θα ${stem}σαι, θα ${stem}ναι, θα ${stem}μαστε, θα ${stem}στε, θα ${stem}ναι"
-            else -> "Werkwoordtype onbekend"
+            else -> UNKNOWN_VERB
         }
     }
     return "Toekomende tijd ontbreekt op regel 2"

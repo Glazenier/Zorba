@@ -28,6 +28,7 @@ import java.util.*
 const val SHOW_CARDS_CODE = 3108
 const val GROEP_SOORT_CODE = 3208
 const val SELECTIES_CODE = 3308
+const val UNKNOWN_VERB = "Werkwoordvorm onbekend"
 
 /*  Initialise the database helper class. */
 lateinit var zorbaDBHelper: ZorbaDBHelper
