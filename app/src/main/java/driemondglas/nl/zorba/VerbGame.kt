@@ -12,8 +12,8 @@ import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
 import androidx.core.content.ContextCompat
+import driemondglas.nl.zorba.Utils.colorToast
 import kotlinx.android.synthetic.main.verb_game.*
-
 @SuppressLint("SetTextI18n")
 class VerbGame : AppCompatActivity() {
     private val queryManager: QueryManager = QueryManager.getInstance()
@@ -25,6 +25,7 @@ class VerbGame : AppCompatActivity() {
     private var theTense = ""        // holds the randomly choosen tense
     private var theConjugation = ""  // holds the randomly selected conjugation in the choosen tense
     private var thePersonGR = ""     // keeps greek personal pronoun in sync with choosen conjugation
+//    private val attentionColor = ContextCompat.getColor(this, R.color.colorAccent)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,10 +64,11 @@ class VerbGame : AppCompatActivity() {
     /* move forward in cursor until a verb is found that contains selected conjugation (ex: Not all have Paratatikos!) */
     private fun forwardToNextMatch() {
         txt_conjugations.visibility = View.INVISIBLE
+        text_ask.setTextColor(Color.DKGRAY)
         while (gameCursor.moveToNext()) {
             if (setupVerb()) break
         }
-        if (gameCursor.isAfterLast) Utils.colorToast(this, "Thats all", Color.BLUE)
+        if (gameCursor.isAfterLast) colorToast(this, "Thats all", Color.BLUE)
     }
 
     private fun setupVerb(): Boolean {
@@ -104,8 +106,8 @@ class VerbGame : AppCompatActivity() {
                 else -> UNKNOWN_VERB
             }
 
-            /* Create set of selected persons: 0 = 1st person singular, 1 = 2nd person singular, ..., 3 = 1st person plural ...
-             * Asked person is picked from this set */
+            /* Create set of selected persons: 0 = 1st person singular, 1 = 2nd person singular, ..., 3 = 1st person plural ... etc.
+             * questionned person is picked from this set */
             val selectedPersons = mutableSetOf<Int>()
             if (chk_1.isChecked) selectedPersons.add(0)
             if (chk_2.isChecked) selectedPersons.add(1)
@@ -114,7 +116,7 @@ class VerbGame : AppCompatActivity() {
             if (chk_5.isChecked) selectedPersons.add(4)
             if (chk_6.isChecked) selectedPersons.add(5)
 
-            if (selectedPersons.size != 0) {
+            if (selectedPersons.isNotEmpty()) {
                 txt_conjugations.text = sixConjugations.replace(", ".toRegex(), "\n")
                 val conjugationParts = sixConjugations.split(",")
                 if (conjugationParts.size == 1) {
@@ -141,16 +143,19 @@ class VerbGame : AppCompatActivity() {
 
             lbl_herken.setTextColor(ContextCompat.getColor(this, R.color.colorAccent))
             lbl_herken.setTypeface(null, Typeface.BOLD)
+
             text_ask.text = theConjugation
             text_reveal.text = "Komt van: $theVerb\n$theMeaning\n\n$theTense"
         } else {
             sw_mode.setTextColor(ContextCompat.getColor(this, R.color.colorAccent))
             sw_mode.setTypeface(null, Typeface.BOLD)
+
             lbl_herken.setTextColor(Color.DKGRAY)
             lbl_herken.setTypeface(null, Typeface.NORMAL)
+
             val dashes = "⎽ ".repeat(theConjugation.length)
             text_ask.text = "$thePersonGR $dashes ($theVerb)"
-            text_reveal.text = "              $theTense"
+            text_reveal.text = " ".repeat(14) + theTense
         }
         text_reveal.visibility = if (sw_mode.isChecked) View.INVISIBLE else View.VISIBLE
     }
@@ -160,7 +165,8 @@ class VerbGame : AppCompatActivity() {
         if (sw_mode.isChecked) {
             text_ask.text = "$thePersonGR $theConjugation"
         } else {
-            text_ask.text = "$thePersonGR $theConjugation ($theVerb)"
+            text_ask.text = "$thePersonGR $theConjugation"
+            text_ask.setTextColor(ContextCompat.getColor(this, R.color.colorAccent))
             text_reveal.text = " ".repeat(14) + "$theTense\n\nBetekenis: $theMeaning"
         }
     }
@@ -186,18 +192,17 @@ class VerbGame : AppCompatActivity() {
             MotionEvent.ACTION_UP -> {
                 /* check if release is  within the source view */
                 val boundaries = Rect(0, 0, v.width, v.height)
-                /* correct false negative/positive count */
                 if (boundaries.contains(m.x.toInt(), m.y.toInt())) forwardToNextMatch()
             }
         }
     }
 
-
-
-
     @Suppress("UNUSED_PARAMETER")
     fun onPersonClick(view: View) {
-        if (!(chk_1.isChecked || chk_2.isChecked || chk_3.isChecked || chk_4.isChecked || chk_5.isChecked || chk_6.isChecked)) chk_1.isChecked = true
+        if (!(chk_1.isChecked || chk_2.isChecked || chk_3.isChecked || chk_4.isChecked || chk_5.isChecked || chk_6.isChecked)){
+            colorToast(this,"Need at least one person selected.",Color.RED)
+            chk_1.isChecked = true
+        }
     }
 
     private fun onLevelChange() {
