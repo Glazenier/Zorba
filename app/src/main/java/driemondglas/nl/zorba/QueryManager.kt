@@ -171,7 +171,9 @@ class QueryManager private constructor() {
     }
 
     fun verbGameQuery(): String{
-        return  "SELECT PureLemma, GR, NL FROM woorden WHERE woordsoort = 'werkwoord' " + buildLevelClause() + " ORDER BY RANDOM() LIMIT 100"
+        val sqlVerbGame =  "SELECT PureLemma, GR, NL FROM woorden WHERE woordsoort = 'werkwoord' " + buildLevelClause() + " ORDER BY RANDOM() LIMIT 100"
+        Log.d("hvr", "Game query is: $sqlVerbGame")
+        return sqlVerbGame
     }
 
     /* function is called from the menu item 'Clear All' to reset all selections made by user. */

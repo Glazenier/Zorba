@@ -127,7 +127,7 @@ fun hasParatatikos(textGreek: String): Boolean {
     return Regex("""(.*\R){3}\p{InGREEK}+(.*\R)*.*""").matches(textGreek)
 }
 
-fun conjureEnestotas(textGreek: String): String {
+fun conjugateEnestotas(textGreek: String): String {
     var stem = ""
     var verbType = ""
     var oneSyllable = false
@@ -207,7 +207,7 @@ fun conjureEnestotas(textGreek: String): String {
     return "Tegenwoordige tijd ontbreekt op regel 1"
 }
 
-fun conjureMellontas(textGreek: String): String {
+fun conjugateMellontas(textGreek: String): String {
     val stem: String
     val verbType: String
     val mellontas = getMellontas(textGreek)
@@ -247,7 +247,7 @@ fun conjureMellontas(textGreek: String): String {
     return "Toekomende tijd ontbreekt op regel 2"
 }
 
-fun conjureAorist(textGreek: String): String {
+fun conjugateAorist(textGreek: String): String {
     val stemSingle: String
     var stemPlural: String
     val enestotas = getEnestotas(textGreek)
@@ -325,7 +325,7 @@ fun conjureAorist(textGreek: String): String {
     } else return "Verleden tijd ontbreekt op regel 3"
 }
 
-fun conjureParatatikos(textGreek: String): String {
+fun conjugateParatatikos(textGreek: String): String {
     val stemSingle: String
     var stemPlural: String
     val enestotas = getEnestotas(textGreek)

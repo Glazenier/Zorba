@@ -5,22 +5,24 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.graphics.Color
 import android.graphics.Rect
+import android.graphics.Typeface
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
+import androidx.core.content.ContextCompat
 import kotlinx.android.synthetic.main.verb_game.*
 
 @SuppressLint("SetTextI18n")
 class VerbGame : AppCompatActivity() {
     private val queryManager: QueryManager = QueryManager.getInstance()
-    private lateinit var mainCursor: Cursor
+    private lateinit var gameCursor: Cursor
     private lateinit var db: SQLiteDatabase
 
-    private var theVerb = ""         // holds the unconjured Enestotas (present)
+    private var theVerb = ""         // holds the un-conjugated Enestotas (present)
     private var theMeaning = ""      // holds the NL translation of the verb
-    private var tijdvorm = ""        // holds the randomly choosen tense
+    private var theTense = ""        // holds the randomly choosen tense
     private var theConjugation = ""  // holds the randomly selected conjugation in the choosen tense
     private var thePersonGR = ""     // keeps greek personal pronoun in sync with choosen conjugation
 
@@ -28,40 +30,51 @@ class VerbGame : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.verb_game)
 
-        val myBar = supportActionBar
-        if (myBar != null) {
-            /* This next line shows the home/back button.
-             * The functionality is handled by the android system as long as a parent activity
-             * is specified in the manifest.xls file
-             */
-            myBar.setDisplayHomeAsUpEnabled(true)
-            myBar.title = "ZORBA Verb Game"
-            myBar.subtitle = "by Herman"
+        /* setup action bar on top */
+        val actionBar = supportActionBar
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true)
+            actionBar.title = "ZORBA Werkwoord Game"
         }
 
         /* get a reference to the database */
         db = zorbaDBHelper.readableDatabase
 
         /* get the specific selection query from the Query manager  */
-        val query = queryManager.verbGameQuery()
-        mainCursor = db.rawQuery(query, null)
-
+        gameCursor = db.rawQuery(queryManager.verbGameQuery(), null)
 
         btn_go.setOnTouchListener { v: View, m: MotionEvent -> touche(v, m); true }
-        btn_reveal.setOnClickListener { txt_conjugations.visibility=if(txt_conjugations.visibility==View.VISIBLE) View.INVISIBLE else View.VISIBLE }
+        btn_show_ladder.setOnClickListener { txt_conjugations.visibility = if (txt_conjugations.visibility == View.VISIBLE) View.INVISIBLE else View.VISIBLE }
         sw_mode.setOnClickListener { showByMode() }
+        sw_level_basis.setOnClickListener { onLevelChange() }
+        sw_level_gevorderd.setOnClickListener { onLevelChange() }
+        sw_level_ballast.setOnClickListener { onLevelChange() }
+
+        /* set level switches according to QueryManager's values */
+        sw_level_basis.isChecked = queryManager.levelBasic
+        sw_level_gevorderd.isChecked = queryManager.levelAdvanced
+        sw_level_ballast.isChecked = queryManager.levelBallast
 
         /* if indeed a record is returned...
            ... setup the game */
         forwardToNextMatch()
     }
 
-    private fun setupVerb(): Boolean {
-        /* Setup the textstrings for ask and reveal */
+    /* move forward in cursor until a verb is found that contains selected conjugation (ex: Not all have Paratatikos!) */
+    private fun forwardToNextMatch() {
+        txt_conjugations.visibility = View.INVISIBLE
+        while (gameCursor.moveToNext()) {
+            if (setupVerb()) break
+        }
+        if (gameCursor.isAfterLast) Utils.colorToast(this, "Thats all", Color.BLUE)
+    }
 
-        theVerb = mainCursor.getString(mainCursor.getColumnIndex("PureLemma"))
-        theMeaning = mainCursor.getString(mainCursor.getColumnIndex("NL"))
-        val textGR = mainCursor.getString(mainCursor.getColumnIndex("GR"))
+    private fun setupVerb(): Boolean {
+        /* Setup the textstrings for ask and reveal. retruns false if no conjugation matches */
+
+        theVerb = gameCursor.getString(gameCursor.getColumnIndex("PureLemma"))
+        theMeaning = gameCursor.getString(gameCursor.getColumnIndex("NL"))
+        val textGR = gameCursor.getString(gameCursor.getColumnIndex("GR"))
 
         /* check which tenses are available in the Greek text field */
         var tenseIsAvailable = if (chk_enestotas.isChecked) "e" else ""
@@ -73,24 +86,26 @@ class VerbGame : AppCompatActivity() {
             /* pick a random position in the string with available tenses */
             val sixConjugations = when (tenseIsAvailable.random()) {
                 'e' -> {
-                    tijdvorm = "Tegenwoordige tijd"
-                    conjureEnestotas(textGR)
+                    theTense = "Tegenwoordige tijd"
+                    conjugateEnestotas(textGR)
                 }
                 'm' -> {
-                    tijdvorm = "Toekomende tijd"
-                    conjureMellontas(textGR)
+                    theTense = "Toekomende tijd"
+                    conjugateMellontas(textGR)
                 }
                 'a' -> {
-                    tijdvorm = "Aorist"
-                    conjureAorist(textGR)
+                    theTense = "Aorist"
+                    conjugateAorist(textGR)
                 }
                 'p' -> {
-                    tijdvorm = "Onvoltooid verleden tijd"
-                    conjureParatatikos(textGR)
+                    theTense = "Onvoltooid verleden tijd"
+                    conjugateParatatikos(textGR)
                 }
                 else -> UNKNOWN_VERB
             }
 
+            /* Create set of selected persons: 0 = 1st person singular, 1 = 2nd person singular, ..., 3 = 1st person plural ...
+             * Asked person is picked from this set */
             val selectedPersons = mutableSetOf<Int>()
             if (chk_1.isChecked) selectedPersons.add(0)
             if (chk_2.isChecked) selectedPersons.add(1)
@@ -104,7 +119,7 @@ class VerbGame : AppCompatActivity() {
                 val conjugationParts = sixConjugations.split(",")
                 if (conjugationParts.size == 1) {
                     theConjugation = theVerb
-                    tijdvorm = ""
+                    theTense = ""
                     thePersonGR = ""
                 } else {
                     /* pick one of the choosen conjugations */
@@ -121,14 +136,22 @@ class VerbGame : AppCompatActivity() {
 
     private fun showByMode() {
         if (sw_mode.isChecked) {
+            sw_mode.setTextColor(Color.DKGRAY)
+            sw_mode.setTypeface(null, Typeface.NORMAL)
+
+            lbl_herken.setTextColor(ContextCompat.getColor(this, R.color.colorAccent))
+            lbl_herken.setTypeface(null, Typeface.BOLD)
             text_ask.text = theConjugation
-            text_reveal.text = "Komt van: $theVerb\n$theMeaning\n\n$tijdvorm"
+            text_reveal.text = "Komt van: $theVerb\n$theMeaning\n\n$theTense"
         } else {
+            sw_mode.setTextColor(ContextCompat.getColor(this, R.color.colorAccent))
+            sw_mode.setTypeface(null, Typeface.BOLD)
+            lbl_herken.setTextColor(Color.DKGRAY)
+            lbl_herken.setTypeface(null, Typeface.NORMAL)
             val dashes = "⎽ ".repeat(theConjugation.length)
             text_ask.text = "$thePersonGR $dashes ($theVerb)"
-            text_reveal.text = "              $tijdvorm"
+            text_reveal.text = "              $theTense"
         }
-
         text_reveal.visibility = if (sw_mode.isChecked) View.INVISIBLE else View.VISIBLE
     }
 
@@ -138,10 +161,9 @@ class VerbGame : AppCompatActivity() {
             text_ask.text = "$thePersonGR $theConjugation"
         } else {
             text_ask.text = "$thePersonGR $theConjugation ($theVerb)"
-            text_reveal.text = "              $tijdvorm\n\nBetekenis: $theMeaning"
+            text_reveal.text = " ".repeat(14) + "$theTense\n\nBetekenis: $theMeaning"
         }
     }
-
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         /* Handle action bar item clicks here. */
@@ -151,7 +173,7 @@ class VerbGame : AppCompatActivity() {
 
     /* finish intent and return to main activity */
     private fun finishIntent() {
-        mainCursor.close()
+        gameCursor.close()
         db.close()
         finish()
     }
@@ -170,12 +192,28 @@ class VerbGame : AppCompatActivity() {
         }
     }
 
-    private fun forwardToNextMatch() {
-        txt_conjugations.visibility=View.INVISIBLE
-        while (mainCursor.moveToNext()) {
-            if (setupVerb()) break
+
+
+
+    @Suppress("UNUSED_PARAMETER")
+    fun onPersonClick(view: View) {
+        if (!(chk_1.isChecked || chk_2.isChecked || chk_3.isChecked || chk_4.isChecked || chk_5.isChecked || chk_6.isChecked)) chk_1.isChecked = true
+    }
+
+    private fun onLevelChange() {
+        /* if no level is selected, select all */
+        if (!(sw_level_basis.isChecked || sw_level_gevorderd.isChecked || sw_level_ballast.isChecked)) {
+            sw_level_basis.isChecked = true
+            sw_level_gevorderd.isChecked = true
+            sw_level_ballast.isChecked = true
         }
 
-        if (mainCursor.isAfterLast) Utils.colorToast(this, "Thats all", Color.BLUE)
+        /* forward to query manager */
+        queryManager.levelBasic = sw_level_basis.isChecked
+        queryManager.levelAdvanced = sw_level_gevorderd.isChecked
+        queryManager.levelBallast = sw_level_ballast.isChecked
+
+        gameCursor = db.rawQuery(queryManager.verbGameQuery(), null)
+        forwardToNextMatch()
     }
 }

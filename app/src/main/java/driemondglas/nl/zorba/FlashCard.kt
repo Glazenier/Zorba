@@ -85,10 +85,10 @@ class FlashCard : AppCompatActivity() {
         btn_next_block.setOnClickListener { nextBlock() }
         btn_prev_block.setOnClickListener { prevBlock() }
         text_nederlands.setOnClickListener { previous() }
-        btn_OTT.setOnClickListener { showVerb(conjureEnestotas(thisGreekText), "Enestotas van $thisPureLemma") }
-        btn_OTTT.setOnClickListener { showVerb(conjureMellontas(thisGreekText), "Mellontas van $thisPureLemma") }
-        btn_VVT.setOnClickListener { showVerb(conjureAorist(thisGreekText), "Aorist van $thisPureLemma") }
-        btn_OVT.setOnClickListener { showVerb(conjureParatatikos(thisGreekText), "Paratatikos van $thisPureLemma") }
+        btn_OTT.setOnClickListener { showVerb(conjugateEnestotas(thisGreekText), "Enestotas van $thisPureLemma") }
+        btn_OTTT.setOnClickListener { showVerb(conjugateMellontas(thisGreekText), "Mellontas van $thisPureLemma") }
+        btn_VVT.setOnClickListener { showVerb(conjugateAorist(thisGreekText), "Aorist van $thisPureLemma") }
+        btn_OVT.setOnClickListener { showVerb(conjugateParatatikos(thisGreekText), "Paratatikos van $thisPureLemma") }
         btn_GW.setOnClickListener { showVerb(createProstaktiki(thisGreekText), "Gebiedende wijs van $thisPureLemma") }
         btn_speak.setOnClickListener { cleanSpeech(thisGreekText, thisWoordsoort) }
 
