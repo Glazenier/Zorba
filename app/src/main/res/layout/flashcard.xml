@@ -107,14 +107,15 @@
             android:layout_margin="2dp"
             android:background="@drawable/backgroundborder"
             android:clickable="true"
-            android:fontFamily="sans-serif"
+            android:fontFamily="@font/tinos_italic"
+            android:letterSpacing="0.02"
             android:paddingStart="3dp"
             android:paddingEnd="3dp"
             android:scrollbars="vertical"
             android:singleLine="false"
-            android:textColor="#0037FF"
+            android:textColor="@color/kobaltblauw"
             android:textIsSelectable="true"
-            android:textSize="16sp"
+            android:textSize="20sp"
             android:textStyle="normal|italic"
             android:visibility="invisible"
             app:layout_constraintEnd_toEndOf="parent"
@@ -151,6 +152,7 @@
             app:layout_constraintTop_toBottomOf="@+id/ibtn_flag_nl"
             />
     <TextView
+            android:id="@+id/lbl-wrong"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="4dp"
@@ -162,6 +164,7 @@
             app:layout_constraintEnd_toEndOf="@id/text_grieks"
             />
     <TextView
+            android:id="@+id/lbl_prev"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="4dp"
@@ -211,6 +214,7 @@
             app:layout_constraintTop_toBottomOf="@+id/img_paperclip"
             />
     <TextView
+            android:id="@+id/lbl_correct"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="4dp"
@@ -316,6 +320,23 @@
             android:textSize="24sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            />
+    <TextView
+            android:id="@+id/lbl_jumper"
+            android:layout_width="33dp"
+            android:layout_height="22dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="16dp"
+            android:background="@color/colorAccent"
+            android:gravity="bottom|center"
+            android:text="↷"
+            android:textColor="?attr/colorBackgroundFloating"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:visibility="invisible"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:visibility="visible"
             />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -46,12 +46,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             /* set Greek as language for text to speech object */
-            val result = zorbaSpeaks.setLanguage(Locale("el_GR"))
-            if (result == 0) {
-                /* adjust some voice parameters */
-                zorbaSpeaks.setPitch(1f)
-                zorbaSpeaks.setSpeechRate(0.9f)
-            } else Log.e("hvr", "el_GR text to speech is not active on this device")
+            zorbaSpeaks.setLanguage(Locale("el_GR"))
         } else Log.e("hvr", "peech initilization problem!")
     }
 
@@ -77,24 +72,31 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         /* lookup the item in the ArrayList */
         val thisLemmaItem: LemmaItem = lemmaArrayList[position]
 
-        /* take the property you need and show to the user */
-        val textToDisplay = thisLemmaItem.textGreek + "\n\n" + thisLemmaItem.meaningNL
+        val thisIdx=thisLemmaItem.idx
 
-        val bob = AlertDialog.Builder(this)
-              .setMessage(textToDisplay)
-              .setIcon(R.drawable.greneth)
-              .setTitle(" ") // needed to display the icon on the title line
-              .setPositiveButton(R.string.emoji_ok, null)  // no action, just close the message
-              .setNeutralButton(R.string.speak, null)  // we write our own custom listener below
-        val alertDialog = bob.create()
-        alertDialog.show()
+        val myIntent = Intent(this,FlashCard::class.java)
+        myIntent.putExtra("idx",thisIdx)
+        startActivity(myIntent)
 
-        val neutralButton = alertDialog.getButton(AlertDialog.BUTTON_NEUTRAL)
-        neutralButton.setOnClickListener { if (useSpeech) cleanSpeech(thisLemmaItem.textGreek, thisLemmaItem.woordsoort) }
-        neutralButton.textSize = 28f
-        neutralButton.enabled(useSpeech)
 
-        alertDialog.getButton(DialogInterface.BUTTON_POSITIVE).textSize = 28f
+//        /* take the property you need and show to the user */
+//        val textToDisplay = thisLemmaItem.textGreek + "\n\n" + thisLemmaItem.meaningNL
+//
+//        val bob = AlertDialog.Builder(this)
+//              .setMessage(textToDisplay)
+//              .setIcon(R.drawable.greneth)
+//              .setTitle(" ") // needed to display the icon on the title line
+//              .setPositiveButton(R.string.emoji_ok, null)  // no action, just close the message
+//              .setNeutralButton(R.string.speak, null)  // we write our own custom listener below
+//        val alertDialog = bob.create()
+//        alertDialog.show()
+//
+//        val neutralButton = alertDialog.getButton(AlertDialog.BUTTON_NEUTRAL)
+//        neutralButton.setOnClickListener { if (useSpeech) cleanSpeech(thisLemmaItem.textGreek, thisLemmaItem.woordsoort) }
+//        neutralButton.textSize = 28f
+//        neutralButton.enabled(useSpeech)
+//
+//        alertDialog.getButton(DialogInterface.BUTTON_POSITIVE).textSize = 28f
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -173,6 +175,12 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             val myIntent = Intent(this, Hangman::class.java)
             startActivity(myIntent)
         }
+
+        btn_verb_game.setOnClickListener {
+            /* launch the Hangman Activity */
+            val myIntent = Intent(this, VerbGame::class.java)
+            startActivity(myIntent)
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -224,11 +232,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 recyclerViewAdapter.notifyDataSetChanged()
             }
 
-            R.id.verb_game ->{
-                val myIntent = Intent(this, VerbGame::class.java)
-                startActivity(myIntent)
-            }
-
             /*  about applicattion */
             R.id.menu_about -> buidAbout()
 
@@ -260,7 +263,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 myCursor.getString(myCursor.getColumnIndex("PureLemma")),
                 myCursor.getString(myCursor.getColumnIndex("GR")),
                 myCursor.getString(myCursor.getColumnIndex("NL")),
-                myCursor.getString(myCursor.getColumnIndex("Woordsoort"))
+                myCursor.getString(myCursor.getColumnIndex("Woordsoort")),
+                myCursor.getLong(myCursor.getColumnIndex("idx"))
             )
             lemmaArrayList.add(lemmaItem)
         }
@@ -370,5 +374,6 @@ data class LemmaItem(
     val pureLemma: String,
     val textGreek: String,
     val meaningNL: String,
-    val woordsoort: String
+    val woordsoort: String,
+    val idx: Long
 )

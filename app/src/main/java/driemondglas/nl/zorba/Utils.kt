@@ -20,9 +20,11 @@ val allDiacriticVowels = "άέήίϊΐόύϋΰώ".toCharArray()
 val allNormalizedVowels = "αεηιιιουυυω".toCharArray()
 
 val allDoubleVowels = listOf("ευ", "αυ", "ου", "ει", "οι", "αι", "ια")
+val allTripleVowels = listOf("οια")
+
 
 val articleRegex = """(.*?),\s(τ?[ηοα]ι?)""".toRegex()
-val adjectiveRegex = """(.*?)([οηόύή]ς),\s?-(ε?[ηήιίαά][αάς]?),\s?-([οόίύεέ]ς?)""".toRegex()
+val adjectiveRegex = """(.*?)([οηόύή][ςιί]),\s?-(ε?[αάεέηήιί][αάς]?),\s?-([άαεέίοόύ]ς?)""".toRegex()   //βαρύς, -εία, -ύ
 val inBracketsRegex = """\(.*?\)""".toRegex()
 val firstWordRegex = """^[\p{InGreek}]*""".toRegex()
 
@@ -266,10 +268,11 @@ fun conjugateAorist(textGreek: String): String {
             aorist.endsWith("είχα") -> stemPlural = stemSingle // werkwoorden afgeleid van έχω
             aorist.endsWith("ήλθα") -> stemPlural = stemSingle // werkwoorden afgeleid van έρχομαι
             aorist.endsWith("πήρα") -> stemPlural = stemSingle // werkwoorden afgeleid van παίρνω
+            enestotas.endsWith("ταΐζω") -> stemPlural = "ταΐσ" // trema komt niet voor in aoristos dus afkijken bij enestotas
+
             else -> {
                 /* The code below formats the stem for 1st and 2nd person plural,
-                 * having shifted accent and possible extra prefix ή or έ removed:
-                 */
+                 * having shifted accent and possible extra prefix ή or έ removed: */
                 val targetCharacter: Char
                 val newStressPos: Int
 
@@ -280,10 +283,15 @@ fun conjugateAorist(textGreek: String): String {
                 stemPlural = stemSingle.unStress()
 
                 // 3 - find target vowel (receiving new stress) past the original stressed vowel
+                val vowelPos: Int
+                //     first check for triple vowels; search past original stress.
+                val tripleVowelPos = stemSingle.indexOfAny(allTripleVowels, stressPos + 1)
                 //     first check for double vowels; search past original stress.
                 val doubleVowelPos = stemSingle.indexOfAny(allDoubleVowels, stressPos + 1)
-                val vowelPos: Int
-                if (doubleVowelPos > -1) {  // if double vowel, second one gets the accent, see wich character there is at that position
+                if (tripleVowelPos > -1) {  // if triple vowel, last one gets the accent, see wich character there is at that position
+                    targetCharacter = stemSingle[tripleVowelPos + 2]
+                    newStressPos = tripleVowelPos + 2
+                } else if (doubleVowelPos > -1) {  // if double vowel, second one gets the accent, see wich character there is at that position
                     targetCharacter = stemSingle[doubleVowelPos + 1]
                     newStressPos = doubleVowelPos + 1
                 } else {
@@ -389,6 +397,7 @@ fun conjugateParatatikos(textGreek: String): String {
 
 fun createProstaktiki(textGreek: String): String {
     val mellontas = getMellontas(textGreek)
+    if (mellontas.isEmpty()) return "Tsja, mellontas is leeg"
     val stem = mellontas.dropLast(1)
     var single = stem + "ε"
     val singleEndsWith = single.takeLast(2)
@@ -469,6 +478,10 @@ object Utils {
     fun View.enabled(isEnabled: Boolean) {
         alpha = if (isEnabled) 1f else 0.3f   // high transparency looks like greyed out
         isClickable = isEnabled
+    }
+
+    fun View.visible(isVisible: Boolean = true){
+        visibility = if (isVisible) View.VISIBLE else View.INVISIBLE
     }
 
     /* extension function for Views: toggles visibility on/off */

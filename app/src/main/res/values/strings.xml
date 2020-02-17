@@ -66,7 +66,7 @@
     <string name="menu_caption_about">ⓘ About Zorba…</string>
     <string name="menu_caption_detail_selections">&#128736; Detail selecties</string>
     <string name="menu_caption_email">\u2709 Email this lemma</string>
-    <string name="menu_caption_group_type">&#128218; Kies woordgroep of woordsoort</string>
+    <string name="menu_caption_group_type">&#128218; Kies woordgroep of woordsoort </string>
     <string name="menu_caption_import_database">&#9889; Ververs Database</string>
     <string name="menu_caption_neurolingo">&#127760; Lookup - NeuroLingo</string>
     <string name="menu_caption_reset_score">\u24ff-\u24ff Reset Scores</string>

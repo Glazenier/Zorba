@@ -10,5 +10,8 @@
     <color name="helder_vermiljoen">#AE1C28</color>
     <color name="kobaltblauw">#21468B</color>
     <color name="κυανός">#004C98</color>
+    <color name="main_background">#F0F0F0</color>
+    <color name="color_item_background">#E3F2FD</color>
+    <color name="color_item_border">#B4B4B4</color>
 </resources>
 

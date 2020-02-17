@@ -171,7 +171,7 @@ class QueryManager private constructor() {
     }
 
     fun verbGameQuery(): String{
-        val sqlVerbGame =  "SELECT PureLemma, GR, NL FROM woorden WHERE woordsoort = 'werkwoord' " + buildLevelClause() + " ORDER BY RANDOM() LIMIT 100"
+        val sqlVerbGame =  "SELECT idx, PureLemma, GR, NL FROM woorden WHERE woordsoort = 'werkwoord' " + buildLevelClause() + " ORDER BY RANDOM();"
         Log.d("hvr", "Game query is: $sqlVerbGame")
         return sqlVerbGame
     }
