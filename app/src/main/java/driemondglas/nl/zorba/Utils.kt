@@ -91,7 +91,7 @@ fun cleanSpeech(rawText: String, wordType: String) {
         }
     }
     Log.d("hvr", result)
-    zorbaSpeaks.speak(result, TextToSpeech.QUEUE_FLUSH, null, "")
+    zorbaSpeaks?.speak(result, TextToSpeech.QUEUE_FLUSH, null, "")
 }
 
 /* This function returns all the greek characters from top line of the text until non greek is found */
@@ -288,17 +288,21 @@ fun conjugateAorist(textGreek: String): String {
                 val tripleVowelPos = stemSingle.indexOfAny(allTripleVowels, stressPos + 1)
                 //     first check for double vowels; search past original stress.
                 val doubleVowelPos = stemSingle.indexOfAny(allDoubleVowels, stressPos + 1)
-                if (tripleVowelPos > -1) {  // if triple vowel, last one gets the accent, see wich character there is at that position
-                    targetCharacter = stemSingle[tripleVowelPos + 2]
-                    newStressPos = tripleVowelPos + 2
-                } else if (doubleVowelPos > -1) {  // if double vowel, second one gets the accent, see wich character there is at that position
-                    targetCharacter = stemSingle[doubleVowelPos + 1]
-                    newStressPos = doubleVowelPos + 1
-                } else {
-                    // 4 - no doubles found, so first single vowel gets the accent
-                    vowelPos = stemSingle.indexOfAny(allUnstressedVowels, stressPos + 1)
-                    targetCharacter = stemSingle[vowelPos]
-                    newStressPos = vowelPos
+                when {
+                    tripleVowelPos > -1 -> {  // if triple vowel, last one gets the accent, see wich character there is at that position
+                        targetCharacter = stemSingle[tripleVowelPos + 2]
+                        newStressPos = tripleVowelPos + 2
+                    }
+                    doubleVowelPos > -1 -> {  // if double vowel, second one gets the accent, see wich character there is at that position
+                        targetCharacter = stemSingle[doubleVowelPos + 1]
+                        newStressPos = doubleVowelPos + 1
+                    }
+                    else -> {
+                        // 4 - no doubles found, so first single vowel gets the accent
+                        vowelPos = stemSingle.indexOfAny(allUnstressedVowels, stressPos + 1)
+                        targetCharacter = stemSingle[vowelPos]
+                        newStressPos = vowelPos
+                    }
                 }
 
                 // 5 - replace target character with accented one
@@ -396,16 +400,83 @@ fun conjugateParatatikos(textGreek: String): String {
 }
 
 fun createProstaktiki(textGreek: String): String {
+//        Log.d("hvr", "Greek: \n$textGreek")
+    val enestotas = getEnestotas(textGreek)
     val mellontas = getMellontas(textGreek)
-    if (mellontas.isEmpty()) return "Tsja, mellontas is leeg"
-    val stem = mellontas.dropLast(1)
+    val aoristos = getAorist(textGreek)
+    val stemAorist: String
+    val prostaktiki: String
+    val prostaktikiPlural: String
+    val prostaktikiSingle: String
+    if (mellontas.isEmpty()) return "Geen mellontas in GR."
+
+    /* EXCEPTIONS */
+    prostaktiki = when (enestotas) {
+        "ανεβαίνω" -> "ανέβα – ανεβείτε"
+        "αφήνω" -> "άσε/άφισε – αφήστε"
+        "βγαίνω" -> "βγες – βγείτε"
+        "βλέπω" -> "δες – δείτε"
+        "βρίσκω" -> "βρες – βρείτε"
+        "έρχομαι" -> "άσε/άφισε – αφήστε"
+        "κάθομαι" -> "κάθισε/κάτσε – καθίστε"
+        "κατεβαίνω" -> "κατέβα – κατεβείτε"
+        "λέω" -> "πες – πείτε"
+        "μπαίνω" -> "μπες - μπείτε"
+        "πίνω" -> "πιες – πιείτε"
+        "τρώω" -> "φάε - φάτε"
+        "γίνομαι" -> "γίνε – γίνετε"
+        "επιτρέπομαι" -> "επιτρέψου - επιτραπείτε"
+        "προέρχομαι" -> "πρόελθε - προέλθετε"
+        "συνέρχομαι" -> "σύνελθε - συνέλθετε"
+        "φαίνομαι" -> "alleen meervoud: φανείτε"
+        "χρωστάω" -> "alleen enkelvoud: χρωστά"
+        "είμαι" -> "είμαι heeft geen gebiedende wijs"
+        else -> ""
+    }
+    if (prostaktiki.isNotEmpty()) return prostaktiki
+
+    /* PASSIVE VORM */
+    if (enestotas.endsWith("μαι")) {  // passieve vorm
+        if (aoristos.endsWith("ηκα")) {
+            /* regular */
+            stemAorist = aoristos.dropLast(3)
+            prostaktikiPlural = stemAorist.unStress() + "είτε"
+            prostaktikiSingle = when {
+                stemAorist.endsWith("θ") -> stemAorist.dropLast(1) + "σου"
+                stemAorist.endsWith("στ") -> stemAorist.dropLast(2) + "σου"
+                stemAorist.endsWith("χτ") -> stemAorist.dropLast(2) + "ξου"
+                stemAorist.endsWith("φτ") -> stemAorist.dropLast(2) + "ψου"
+                stemAorist.endsWith("υτ") -> stemAorist.dropLast(2) + "ψου"
+                stemAorist.endsWith("ύτ") -> stemAorist.dropLast(2) + "ψου"
+                else -> "stemAorist niet op: θ,στ,χτ,φτ,υτ"
+            }
+            return "$prostaktikiSingle - $prostaktikiPlural"
+        }
+        return "uitzondering"
+    }
+
+    /* remove final 'ω' to create the stem */
+    var stem = mellontas.dropLast(1)
+
+    /* If no accent in the stem then add accent to last vowel */
+    var stressPos = stem.indexOfAny(allStressedVowels)
+    if (stressPos == -1) {
+        /* find last vowel */
+        val vowelPos = stem.lastIndexOfAny(allUnstressedVowels)
+        stem = stem.replace(vowelPos, stressOneChar(stem[vowelPos]))
+        stressPos = vowelPos
+    }
+
     var single = stem + "ε"
-    val singleEndsWith = single.takeLast(2)
-    val plural = if (singleEndsWith in listOf("νε", "γε", "βε", "θε")) stem + "ετε" else stem + "τε"
-    val stressPos = single.indexOfAny(allStressedVowels)
+    val stemEndsWith = single.takeLast(1)
+    val plural = if (stemEndsWith in listOf("ν", "γ", "β", "θ", "χ")) stem + "ετε" else stem + "τε"
+
     //find vowel position before stress
-    val vowelPos = single.take(stressPos - 1).lastIndexOfAny(allUnstressedVowels)  // stressPos minus one to deal with double vowels
-    if (vowelPos > -1) single = single.unStress().replace(vowelPos, stressOneChar(single[vowelPos]))
+    if (stressPos > 0) {
+        val vowelPos = single.take(stressPos - 1).lastIndexOfAny(allUnstressedVowels)  // stressPos minus one to deal with double vowels
+        if (vowelPos > -1) single = single.unStress().replace(vowelPos, stressOneChar(single[vowelPos]))
+    }
+    /* return gebiedende wijs als 2e pers enkelvoud - 2e pers meervoud */
     return "$single - $plural"
 }
 

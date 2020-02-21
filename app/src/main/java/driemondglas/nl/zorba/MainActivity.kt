@@ -19,7 +19,6 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import com.koushikdutta.ion.Ion
 import kotlinx.android.synthetic.main.activity_main.*
-import driemondglas.nl.zorba.Utils.enabled
 import java.util.*
 
 /* Top-level Properties:
@@ -34,7 +33,7 @@ const val UNKNOWN_VERB = "Werkwoordvorm onbekend"
 lateinit var zorbaDBHelper: ZorbaDBHelper
 
 /* text to speech object used throughout the application*/
-lateinit var zorbaSpeaks: TextToSpeech
+var zorbaSpeaks: TextToSpeech? = null
 
 /* speech on or off */
 var useSpeech = true
@@ -44,10 +43,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     /* overriding onInit() is needed for the TextToSpeech.OnInitListener */
     override fun onInit(status: Int) {
-        if (status == TextToSpeech.SUCCESS) {
-            /* set Greek as language for text to speech object */
-            zorbaSpeaks.setLanguage(Locale("el_GR"))
-        } else Log.e("hvr", "peech initilization problem!")
+        /* set Greek as language for text to speech object */
+        if (status == TextToSpeech.SUCCESS)          zorbaSpeaks?.language = Locale("el_GR")
+        else Log.d("hvr", "speech initilization problem!")
     }
 
     /* Initialise the Query Manager class.
@@ -77,26 +75,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         val myIntent = Intent(this,FlashCard::class.java)
         myIntent.putExtra("idx",thisIdx)
         startActivity(myIntent)
-
-
-//        /* take the property you need and show to the user */
-//        val textToDisplay = thisLemmaItem.textGreek + "\n\n" + thisLemmaItem.meaningNL
-//
-//        val bob = AlertDialog.Builder(this)
-//              .setMessage(textToDisplay)
-//              .setIcon(R.drawable.greneth)
-//              .setTitle(" ") // needed to display the icon on the title line
-//              .setPositiveButton(R.string.emoji_ok, null)  // no action, just close the message
-//              .setNeutralButton(R.string.speak, null)  // we write our own custom listener below
-//        val alertDialog = bob.create()
-//        alertDialog.show()
-//
-//        val neutralButton = alertDialog.getButton(AlertDialog.BUTTON_NEUTRAL)
-//        neutralButton.setOnClickListener { if (useSpeech) cleanSpeech(thisLemmaItem.textGreek, thisLemmaItem.woordsoort) }
-//        neutralButton.textSize = 28f
-//        neutralButton.enabled(useSpeech)
-//
-//        alertDialog.getButton(DialogInterface.BUTTON_POSITIVE).textSize = 28f
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -119,6 +97,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             myBar.subtitle = "  " + getString(R.string.app_subtitle)
             myBar.setIcon(R.drawable.greneth)
         }
+
+        /* Init reference to tts */
+        zorbaSpeaks = TextToSpeech(this, this)
 
         /* set listener for changes in search field   */
         text_search.addTextChangedListener(object : TextWatcher {
@@ -192,10 +173,13 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         return true
     }
 
-    override fun onStart() {
-        /* initialise (late) the reference to the text to speech object */
-        if (!::zorbaSpeaks.isInitialized) zorbaSpeaks = TextToSpeech(this, this)
-        super.onStart()
+    override fun onDestroy() {
+        // Shutdown TTS
+        if (zorbaSpeaks != null) {
+            zorbaSpeaks?.stop()
+            zorbaSpeaks?.shutdown()
+        }
+        super.onDestroy()
     }
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         /* Handle action bar (menu) item clicks here. */

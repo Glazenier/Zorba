@@ -14,6 +14,7 @@ import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
 import android.text.style.TypefaceSpan
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
@@ -59,8 +60,6 @@ class VerbGame : AppCompatActivity() {
         /* get a reference to the database */
         db = zorbaDBHelper.readableDatabase
 
-        /* get the specific selection query from the Query manager  */
-        gameCursor = db.rawQuery(queryManager.verbGameQuery(), null)
 
         btn_go.setOnTouchListener { v: View, m: MotionEvent -> touche(v, m); true }
         btn_show_ladder.setOnClickListener { txt_conjugations.visibility = if (txt_conjugations.visibility == View.VISIBLE) View.INVISIBLE else View.VISIBLE }
@@ -73,27 +72,43 @@ class VerbGame : AppCompatActivity() {
         sw_level_gevorderd.setOnClickListener { onLevelChange() }
         sw_level_ballast.setOnClickListener { onLevelChange() }
         btn_previous.setOnClickListener { backwardToPreviousMatch() }
-        btn_verbal.setOnClickListener { cleanSpeech("$thePersonGR,$theConjugation", "anders") }
+        btn_verbal.setOnClickListener { cleanSpeech("$thePersonGR  $theConjugation", "anders") }
+//        btn_verbal.setOnClickListener { testGw() }
 
-        /* set level switches according to QueryManager's values */
+        /* save original QueryManager's level values */
         savedLevelBasic= queryManager.levelBasic
         savedLevelAdvanced= queryManager.levelAdvanced
         savedLevelBallast= queryManager.levelBallast
 
         /* for the game start with basic level only */
         sw_level_basis.isChecked = true
-        queryManager.levelBasic=true
         sw_level_gevorderd.isChecked = false
-        queryManager.levelAdvanced=false
         sw_level_ballast.isChecked = false
+
+        queryManager.levelBasic=true
+        queryManager.levelAdvanced=false
         queryManager.levelBallast=false
+
+        /* get the specific selection query from the Query manager  */
+        gameCursor = db.rawQuery(queryManager.verbGameQuery(), null)
 
         /* if indeed a record is returned...
            ... setup the game */
         forwardToNextMatch()
     }
 
+    private fun testGw(){
+        val testCursor=db.rawQuery("SELECT PureLemma, GR FROM woorden WHERE woordsoort = 'werkwoord' ORDER BY PureLemma" ,null)
+        while (testCursor.moveToNext()) {
+            val theRawGreek = testCursor.getString(testCursor.getColumnIndex("GR"))
+            val lemma =   testCursor.getString(testCursor.getColumnIndex("PureLemma"))
+            Log.d("hvr","\t$lemma\t${createProstaktiki(theRawGreek)}")
+        }
+        testCursor.close()
+    }
+
     override fun onStop() {
+        /* restore original level values as before the game started */
         queryManager.levelBasic=savedLevelBasic
         queryManager.levelAdvanced=savedLevelAdvanced
         queryManager.levelBallast=savedLevelBallast
@@ -150,6 +165,7 @@ class VerbGame : AppCompatActivity() {
         if (hasMellontas(theGreek) && chk_mellontas.isChecked) tenseIsAvailable += "m"
         if (hasAorist(theGreek) && chk_aoristos.isChecked) tenseIsAvailable += "a"
         if (hasParatatikos(theGreek) && chk_paratatikos.isChecked) tenseIsAvailable += "p"
+        if (hasMellontas(theGreek) && chk_prostaktiki.isChecked) tenseIsAvailable += "g"  // need mellondas to build gebiedende wijs
 
         if (tenseIsAvailable.isNotEmpty()) {
             /* pick a random position in the string with available tenses */
@@ -170,6 +186,10 @@ class VerbGame : AppCompatActivity() {
                     theTense = "Onvoltooid verleden tijd"
                     conjugateParatatikos(theGreek)
                 }
+                'g' -> {
+                    theTense = "Gebiedende wijs"
+                    createProstaktiki(theGreek)
+                }
                 else -> UNKNOWN_VERB
             }
 
@@ -187,13 +207,13 @@ class VerbGame : AppCompatActivity() {
                 txt_conjugations.text = sixConjugations.replace(", ".toRegex(), "\n")
                 val conjugationParts = sixConjugations.split(",")
                 if (conjugationParts.size == 1) {
-                    theConjugation = theVerb
-                    theTense = ""
+                    theConjugation = conjugationParts[0]
+//                    theTense = ""
                     thePersonGR = ""
                 } else {
                     /* pick one of the choosen conjugations */
                     val pickOne = selectedPersons.shuffled().last()
-                    theConjugation = conjugationParts[pickOne]
+                    theConjugation = conjugationParts[pickOne].trim()
                     val persoonsvormGR = listOf("Εγώ", "Εσύ", listOf("Αυτός", "Αυτή", "Αυτό").random(), "Εμείς", "Εσείς", listOf("Αυτοί", "Αυτές", "Αυτά").random())
                     thePersonGR = persoonsvormGR[pickOne]
                 }
@@ -220,6 +240,7 @@ class VerbGame : AppCompatActivity() {
         text_reveal.visibility = View.VISIBLE
         text_ask.setTextColor(ContextCompat.getColor(this, R.color.kobaltblauw))
         text_ask.text = "$thePersonGR $theConjugation"
+
         val textReveal = SpannableString("$theTense van $theVerb ($theMeaning).")
         val spanStart = "$theTense van ".length
         val spanEnd = spanStart + theVerb.length

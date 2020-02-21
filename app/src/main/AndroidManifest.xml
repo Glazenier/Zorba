@@ -21,7 +21,7 @@
                 android:name=".Splash"
                 android:configChanges="orientation"
                 android:screenOrientation="portrait"
-                ></activity>
+                />
         <activity
                 android:name=".Hangman"
                 android:configChanges="orientation"
@@ -52,7 +52,6 @@
                 >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
