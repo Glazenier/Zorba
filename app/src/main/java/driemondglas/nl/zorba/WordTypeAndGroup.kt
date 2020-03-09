@@ -5,23 +5,24 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.MenuItem
 import android.widget.ArrayAdapter
-import kotlinx.android.synthetic.main.activity_groep_woordsoort.*
+import kotlinx.android.synthetic.main.wordgroup_wordtype.*
 import java.util.ArrayList
 
-class GroepWoordsoort : AppCompatActivity() {
+class WordTypeAndGroup : AppCompatActivity() {
     private val zorbaDBHelper: ZorbaDBHelper = ZorbaDBHelper(this)
     private val queryManager: QueryManager = QueryManager.getInstance()
 
-    private val alleGroepen = ArrayList<String>()
-    private val alleSoorten = ArrayList<String>()
+    private val allGroups = ArrayList<String>()
+    private val allTypes = ArrayList<String>()
 
     /* save initial values to restore when cancel is pressed */
-    private val oldGroep=queryManager.wordGroup
-    private val oldSoort=queryManager.wordType
+    private val origGroup = queryManager.wordGroup
+    private val origType = queryManager.wordType
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_groep_woordsoort)
+        setContentView(R.layout.wordgroup_wordtype)
 
         val myBar = supportActionBar
         if (myBar != null) {
@@ -31,23 +32,23 @@ class GroepWoordsoort : AppCompatActivity() {
              */
             myBar.setDisplayHomeAsUpEnabled(true)
             myBar.title = "ZORBA"
-            myBar.subtitle = "Selecteer woordsoort en/of woordgroep"
+            myBar.subtitle = getString(R.string.word_group_type_subtitle)
         }
 
         btn_select.setOnClickListener { selectAndFinish() }
         btn_cancel.setOnClickListener { cancelChanges() }
         btn_default.setOnClickListener { clearSelections() }
 
-        populateGroepen()
-        populateWoordsoort()
+        populateWordGroups()
+        populateWordTypes()
 
-        lst_groep.setOnItemClickListener { _, _, position, _ ->
-            val selGroep = alleGroepen[position]
-            queryManager.wordGroup = if (selGroep == "*") "" else  selGroep.substringBeforeLast(" (")
+        lst_wordgroup.setOnItemClickListener { _, _, position, _ ->
+            val selGroep = allGroups[position]
+            queryManager.wordGroup = if (selGroep == "*") "" else selGroep.substringBeforeLast(" (")
         }
 
-        lst_woordsoort.setOnItemClickListener { _, _, position, _ ->
-            val selWoordsoort = alleSoorten[position]
+        lst_wordtype.setOnItemClickListener { _, _, position, _ ->
+            val selWoordsoort = allTypes[position]
             queryManager.wordType = if (selWoordsoort == "*") "" else selWoordsoort.substringBeforeLast(" (")
         }
     }
@@ -70,16 +71,16 @@ class GroepWoordsoort : AppCompatActivity() {
     }
 
     private fun clearSelections() {
-        queryManager.wordGroup=""
-        queryManager.wordType=""
-        lst_groep.setItemChecked(0, true)
-        lst_woordsoort.setItemChecked(0, true)
+        queryManager.wordGroup = ""
+        queryManager.wordType = ""
+        lst_wordgroup.setItemChecked(0, true)
+        lst_wordtype.setItemChecked(0, true)
     }
 
-    private fun cancelChanges(){
+    private fun cancelChanges() {
         /* restore initial values */
-        queryManager.wordType = oldSoort
-        queryManager.wordGroup = oldGroep
+        queryManager.wordType = origType
+        queryManager.wordGroup = origGroup
         // go back to calling activity
         val myIntent = Intent()
         myIntent.putExtra("result", "cancel")
@@ -87,11 +88,11 @@ class GroepWoordsoort : AppCompatActivity() {
         finish()
     }
 
-    private fun populateGroepen() {
-        var oldPosition=0
-        var thisPosition=0
+    private fun populateWordGroups() {
+        var oldPosition = 0
+        var thisPosition = 0
         // prepopulate arrayList with '*' (all)
-        alleGroepen.add("*")
+        allGroups.add("*")
 
         // this query returns all distinct wordgroups (column "groep") and
         // the number of records per wordgroup (column "groeptotaal")
@@ -103,28 +104,28 @@ class GroepWoordsoort : AppCompatActivity() {
         while (myCursor.moveToNext()) {
             val groep = myCursor.getString(myCursor.getColumnIndex("groep"))
             val groeptotaal: Int = myCursor.getInt(myCursor.getColumnIndex("groeptotaal"))
-            alleGroepen.add("$groep ($groeptotaal)")
+            allGroups.add("$groep ($groeptotaal)")
             thisPosition++
-            if (groep == oldGroep) oldPosition = thisPosition
+            if (groep == origGroup) oldPosition = thisPosition
         }
         myCursor.close()
         db.close()
 
         // attach data to listbox via adapter
-        val myAdapter = ArrayAdapter<String>(this,android.R.layout.simple_list_item_checked, alleGroepen)
-        lst_groep.adapter = myAdapter
-        lst_groep.setItemChecked(oldPosition, true)
+        val myAdapter = ArrayAdapter<String>(this, android.R.layout.simple_list_item_checked, allGroups)
+        lst_wordgroup.adapter = myAdapter
+        lst_wordgroup.setItemChecked(oldPosition, true)
     }
 
-    private fun populateWoordsoort() {
-        var oldPosition=0
-        var thisPosition=0
+    private fun populateWordTypes() {
+        var oldPosition = 0
+        var thisPosition = 0
         // prepopulate arrayList with '*' (all)
-        alleSoorten.add("*")
+        allTypes.add("*")
 
         // this query returns all distinct wordtypes (column "woordsoort") and
         // the number of records per wordtype (column "soorttotaal")
-        val query= queryManager.queryAlleWoordSoorten
+        val query = queryManager.queryAlleWoordSoorten
         val db = zorbaDBHelper.readableDatabase
         val myCursor = db.rawQuery(query, null)
 
@@ -132,16 +133,16 @@ class GroepWoordsoort : AppCompatActivity() {
         while (myCursor.moveToNext()) {
             val woordsoort = myCursor.getString(myCursor.getColumnIndex("woordsoort"))
             val soorttotaal = myCursor.getInt(myCursor.getColumnIndex("soorttotaal"))
-            alleSoorten.add("$woordsoort ($soorttotaal)")
+            allTypes.add("$woordsoort ($soorttotaal)")
             thisPosition++
-            if (woordsoort==oldSoort) oldPosition = thisPosition
+            if (woordsoort == origType) oldPosition = thisPosition
         }
 
         myCursor.close()
         db.close()
         // attach data to listbox via adapter
-        val myAdapter = ArrayAdapter<String>(this,android.R.layout.simple_list_item_checked, alleSoorten)
-        lst_woordsoort.adapter = myAdapter
-        lst_woordsoort.setItemChecked(oldPosition, true)
+        val myAdapter = ArrayAdapter<String>(this, android.R.layout.simple_list_item_checked, allTypes)
+        lst_wordtype.adapter = myAdapter
+        lst_wordtype.setItemChecked(oldPosition, true)
     }
 }

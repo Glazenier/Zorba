@@ -15,8 +15,9 @@
         <activity
                 android:name=".VerbGame"
                 android:configChanges="orientation"
+                android:parentActivityName=".MainActivity"
                 android:screenOrientation="portrait"
-                ></activity>
+                />
         <activity
                 android:name=".Splash"
                 android:configChanges="orientation"
@@ -27,24 +28,24 @@
                 android:configChanges="orientation"
                 android:parentActivityName=".MainActivity"
                 android:screenOrientation="portrait"
-                ></activity>
+                />
         <activity
-                android:name=".Selecties"
+                android:name=".FilterAndSort"
                 android:configChanges="orientation"
                 android:screenOrientation="portrait"
                 android:windowSoftInputMode="stateHidden"
-                ></activity>
+                />
         <activity
-                android:name=".GroepWoordsoort"
+                android:name=".WordTypeAndGroup"
                 android:configChanges="orientation"
                 android:screenOrientation="portrait"
-                ></activity>
+                />
         <activity
                 android:name=".FlashCard"
                 android:configChanges="orientation"
                 android:parentActivityName=".MainActivity"
                 android:screenOrientation="portrait"
-                ></activity>
+                />
         <activity
                 android:name=".MainActivity"
                 android:configChanges="orientation"

@@ -3,7 +3,7 @@ package driemondglas.nl.zorba
 /* This file contains 3 classes all related to the splash screen:
 *   Splash      Activity that gets called from main activity and finishes after animation is done.
 *   SplashView  Custom view to draw graphic objects (blue lines mostly)
-*               Note: this custom view is used in the activity_splash.xml layout file,
+*               Note: this custom view is used in the splashut file,
 *               as type: driemondglas.nl.zorba.SplashView and id: "@+id/sundown"
 *   BlueLine    Template for each line, contains start and and points as well as draw and show methods
 */
@@ -16,7 +16,7 @@ import android.os.Bundle
 import androidx.core.content.ContextCompat
 import android.util.AttributeSet
 import android.view.View
-import kotlinx.android.synthetic.main.activity_splash.*
+import kotlinx.android.synthetic.main.splash.*
 import java.util.ArrayList
 
 /* Top level properties can be used by all classes in the project */
@@ -57,7 +57,7 @@ private var lineList: ArrayList<BlueLine> = ArrayList()
 class Splash : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_splash)
+        setContentView(R.layout.splash)
         sundown.init()
         t.start()
     }

@@ -7,21 +7,25 @@ import android.database.sqlite.SQLiteDatabase
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Typeface
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.text.SpannableString
+import android.text.style.RelativeSizeSpan
+import android.text.style.StyleSpan
 import android.util.AttributeSet
 import android.view.MenuItem
 import android.view.View
 
 import driemondglas.nl.zorba.Utils.colorToast
 import driemondglas.nl.zorba.Utils.normalize
-import kotlinx.android.synthetic.main.activity_hangman.*
+import kotlinx.android.synthetic.main.hangman.*
 
 
 /* This file contains 2 classes related to the hangman game activity:
 *   Hangman        Activity that gets called from main activity.
 *   HangmanCanvas  Custom view to draw graphic to form the gallow and the increasing number of body parts
-*                  Note: this custom view is used in the activity_hangman.xml layout file as
+*                  Note: this custom view is used in the hangman.xmlile as
 *                  type: driemondglas.nl.zorba.HangmanCanvas and
 *                  id: "@+id/gallow"
 */
@@ -41,17 +45,22 @@ class Hangman : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_hangman)
+        setContentView(R.layout.hangman)
+
+        val ztitle= SpannableString("Δήμιος - Galgje")
+        ztitle.setSpan(StyleSpan(Typeface.BOLD_ITALIC), 0, 5, 0)
+        ztitle.setSpan(StyleSpan(Typeface.BOLD), 5, 15, 0)
+        ztitle.setSpan(RelativeSizeSpan(1.2f), 0, 15, 0)
 
         val myBar = supportActionBar
         if (myBar != null) {
             /* This next line shows the home/back button.
-             * The functionality is handled by the android system as long as a parent activity
+             * The functionality is handled by the android system if a parent activity
              * is specified in the manifest.xls file
              */
             myBar.setDisplayHomeAsUpEnabled(true)
             myBar.title = "ZORBA"
-            myBar.subtitle = "by Herman"
+            myBar.subtitle = ztitle
         }
 
         /* get a reference to the database */

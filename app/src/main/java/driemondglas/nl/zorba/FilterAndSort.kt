@@ -9,7 +9,7 @@ import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import driemondglas.nl.zorba.Utils.colorToast
-import kotlinx.android.synthetic.main.activity_selecties.*
+import kotlinx.android.synthetic.main.filter_and_sort.*
 
 
 /*  This class represents the the activity "Selecties" that holds
@@ -19,7 +19,7 @@ import kotlinx.android.synthetic.main.activity_selecties.*
  *  The landscape layout is solved by putting it all in a vertical scroller
  */
 
-class Selecties : AppCompatActivity() {
+class FilterAndSort : AppCompatActivity() {
     private val queryManager: QueryManager = QueryManager.getInstance()
 
     /* save initial values to prepare for possible cancel action */
@@ -38,7 +38,7 @@ class Selecties : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_selecties)
+        setContentView(R.layout.filter_and_sort)
 
         val myBar = supportActionBar
         if (myBar != null) {
@@ -98,10 +98,11 @@ class Selecties : AppCompatActivity() {
     /* this function sets all UI views to values found in the QueryManager */
     private fun setLikeQueryManager(){
         /* set level switches according to QueryManager's values */
-        sw_level1.isChecked = queryManager.levelBasic
-        sw_level2.isChecked = queryManager.levelAdvanced
-        sw_level3.isChecked = queryManager.levelBallast
-
+        queryManager.apply {
+            sw_level1.isChecked = levelBasic
+            sw_level2.isChecked = levelAdvanced
+            sw_level3.isChecked = levelBallast
+        }
         /* set lemma length to queryManager's value */
         sw_use_length.isChecked = queryManager.useLength
         text_length.setText(queryManager.pureLemmaLength.toString())
@@ -155,9 +156,11 @@ class Selecties : AppCompatActivity() {
         }
 
         /* forward to query manager */
-        queryManager.levelBasic = sw_level1.isChecked
-        queryManager.levelAdvanced = sw_level2.isChecked
-        queryManager.levelBallast = sw_level3.isChecked
+        queryManager.apply{
+            levelBasic = sw_level1.isChecked
+            levelAdvanced = sw_level2.isChecked
+            levelBallast = sw_level3.isChecked
+        }
     }
 
     private fun onBlockSwitch() {
@@ -316,21 +319,22 @@ class Selecties : AppCompatActivity() {
         }
     }
 
-    private fun cancelChanges(){
+    private fun cancelChanges() {
         /* restore initial values */
-        queryManager.levelBasic = oldLevel1
-        queryManager.levelAdvanced = oldLevel2
-        queryManager.levelBallast = oldLevel3
-        queryManager.useLength = oldUseLength
-        queryManager.pureLemmaLength = oldPureLength
-        queryManager.initial = oldInitiaalGrieks
-        queryManager.useBlocks = oldUseBlocks
-        queryManager.blockSize = oldBlockSize
-        queryManager.orderbyTag = oldSortTag
-        queryManager.orderDecending = oldDecending
-        queryManager.hideJumpers = oldHideJumpers
-        queryManager.jumpThreshold = oldThreshold
-
+        queryManager.apply{
+            levelBasic = oldLevel1
+            levelAdvanced = oldLevel2
+            levelBallast = oldLevel3
+            useLength = oldUseLength
+            pureLemmaLength = oldPureLength
+            initial = oldInitiaalGrieks
+            useBlocks = oldUseBlocks
+            blockSize = oldBlockSize
+            orderbyTag = oldSortTag
+            orderDecending = oldDecending
+            hideJumpers = oldHideJumpers
+            jumpThreshold = oldThreshold
+        }
         /* go back to calling activity */
         val myIntent = Intent()
         myIntent.putExtra("result", "cancel")

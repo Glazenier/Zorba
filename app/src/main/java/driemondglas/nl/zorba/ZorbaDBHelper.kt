@@ -27,7 +27,8 @@ class ZorbaDBHelper(zorbaContext: Context) : SQLiteOpenHelper(zorbaContext, DATA
     }
 
     companion object {
-        const val DATABASE_URI = "https://driemondglas.nl/RESTgrieks_v2.php?limit=3000"
+
+
         private const val DATABASE_VERSION = 1
         private const val DATABASE_NAME = "ZorbaDB"
         private const val SQL_DELETE_ENTRIES = "DROP TABLE IF EXISTS woorden"

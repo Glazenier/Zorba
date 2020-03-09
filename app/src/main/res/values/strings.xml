@@ -63,15 +63,15 @@
 
     <string name="level">Niveau:</string>
 
-    <string name="menu_caption_about">ⓘ About Zorba…</string>
+    <string name="menu_caption_about">ⓘ Over Zorba…</string>
     <string name="menu_caption_detail_selections">&#128736; Detail selecties</string>
     <string name="menu_caption_email">\u2709 Email this lemma</string>
     <string name="menu_caption_group_type">&#128218; Kies woordgroep of woordsoort </string>
-    <string name="menu_caption_import_database">&#9889; Ververs Database</string>
+    <string name="menu_caption_import_database">&#128451; Vernieuw database</string>
     <string name="menu_caption_neurolingo">&#127760; Lookup - NeuroLingo</string>
     <string name="menu_caption_reset_score">\u24ff-\u24ff Reset Scores</string>
-    <string name="menu_caption_reset_selects">&#128260; Wis alle selecties</string>
-    <string name="menu_caption_use_speech">&#128264; Use speech</string>
+    <string name="menu_caption_reset_selects">&#128465; Wis alle selecties</string>
+    <string name="menu_caption_use_speech">&#128264; Gebruik spraak</string>
     <string name="menu_caption_wordreference">&#127760; Lookup - WordReference</string>
 
     <string name="msg_blocksize_number">Vul positief getal in voor de blokgrootte.</string>
@@ -102,13 +102,14 @@
     <string name="threshold_post"> x goed.</string>
     <string name="threshold_pre">Geslaagd bij </string>
 
-    <string name="version_info">Last change: Verb Game</string>
+    <string name="version_info">Last change: Gebiedende wijs toegevoegd aan Game</string>
 
     <string name="wordgroup">Groep</string>
 
     <string name="wordtype">Woordsoort</string>
     <string name="ask">Ask</string>
     <string name="reveal">Reveal</string>
-    <string name="volgende">Volgende</string>
-    <string name="laat_zien">Toon rijtje</string>
+    <string name="volgende">Next</string>
+    <string name="laat_zien">GOED</string>
+    <string name="word_group_type_subtitle">Selecteer woordsoort en/of woordgroep</string>
 </resources>

@@ -11,9 +11,9 @@ import driemondglas.nl.zorba.Utils.enabled
 class LemmaRecyclerAdapter(private val lemmaArrayList: ArrayList<LemmaItem>) : RecyclerView.Adapter<LemmaRecyclerAdapter.MyViewHolder>() {
     private var viewHolderClickListener: View.OnClickListener? = null
 
-    /* display greek or dutch or both */
-    var showGreek=true
-    var showDutch=true
+    /* display greek, dutch or both */
+    var showGreek = true
+    var showDutch = true
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
         val itemView = LayoutInflater.from(parent.context).inflate(R.layout.item_layout, parent, false)
@@ -21,19 +21,18 @@ class LemmaRecyclerAdapter(private val lemmaArrayList: ArrayList<LemmaItem>) : R
     }
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
-        holder.meaningNl.visibility = if (showDutch) View.VISIBLE else View.GONE
-        holder.lemmaGr.visibility = if (showGreek) View.VISIBLE else  View.GONE
-        holder.speaker.visibility = if (showGreek) View.VISIBLE else  View.GONE
+        with(holder) {
+            meaningNl.text = lemmaArrayList[position].meaningNL
+            meaningNl.visibility = if (showDutch) View.VISIBLE else View.GONE
 
-        holder.lemmaGr.text = lemmaArrayList[position].pureLemma
-        holder.meaningNl.text = lemmaArrayList[position].meaningNL
-        holder.speaker.tag = lemmaArrayList[position].woordsoort
-//        holder.speaker.text = if (soundOn) "\uD83D\uDD08" else  "\uD83D\uDD07"
-        holder.speaker.enabled(useSpeech)
+            lemmaGr.text = lemmaArrayList[position].pureLemma
+            lemmaGr.visibility = if (showGreek) View.VISIBLE else View.GONE
 
-
-        /* This is the speaker in the recycler list itself */
-        if(useSpeech) holder.speaker.setOnClickListener { cleanSpeech(holder.lemmaGr.text.toString(), "standard") }
+            /* This is the speaker button in the recycler list itself */
+            speaker.tag = lemmaArrayList[position].woordsoort
+            speaker.enabled(useSpeech)
+            if (useSpeech) speaker.setOnClickListener { cleanSpeech(lemmaGr.text.toString(), "standard") }
+        }
     }
 
     override fun getItemCount(): Int = lemmaArrayList.size
@@ -50,14 +49,12 @@ class LemmaRecyclerAdapter(private val lemmaArrayList: ArrayList<LemmaItem>) : R
     inner class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val lemmaGr: TextView = itemView.findViewById(R.id.lemma_gr) as TextView
         val meaningNl: TextView = itemView.findViewById(R.id.meaning_nl) as TextView
-        val speaker: TextView=itemView.findViewById(R.id.speaker) as TextView
-
+        val speaker: TextView = itemView.findViewById(R.id.speaker) as TextView
 
         init {
-            /* setTag() as current view holder along with
-             * setOnClickListener() as your local View.OnClickListener variable.
-             * You can set the same viewHolderClickListener on multiple views if required
-             * and later differentiate those clicks using view's id.*/
+            /* set tag as current view holder
+             * setOnClickListener() as local View.OnClickListener variable.
+             */
             itemView.tag = this
             itemView.setOnClickListener(viewHolderClickListener)
         }

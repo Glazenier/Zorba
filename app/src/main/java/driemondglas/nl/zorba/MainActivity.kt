@@ -1,21 +1,18 @@
 package driemondglas.nl.zorba
 
 import android.app.AlertDialog
-import android.content.Context
-import android.content.DialogInterface
-import android.content.Intent
+import android.content.*
 import android.database.DatabaseUtils
+import android.graphics.Typeface
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import android.text.Editable
-import android.text.TextWatcher
+import android.text.*
+import android.text.style.*
 import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
+import android.view.*
 import android.view.inputmethod.InputMethodManager
 import com.koushikdutta.ion.Ion
 import kotlinx.android.synthetic.main.activity_main.*
@@ -28,6 +25,8 @@ const val SHOW_CARDS_CODE = 3108
 const val GROEP_SOORT_CODE = 3208
 const val SELECTIES_CODE = 3308
 const val UNKNOWN_VERB = "Werkwoordvorm onbekend"
+
+const val DATABASE_URI = "https://driemondglas.nl/RESTgrieks_v3.php"
 
 /*  Initialise the database helper class. */
 lateinit var zorbaDBHelper: ZorbaDBHelper
@@ -44,7 +43,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     /* overriding onInit() is needed for the TextToSpeech.OnInitListener */
     override fun onInit(status: Int) {
         /* set Greek as language for text to speech object */
-        if (status == TextToSpeech.SUCCESS)          zorbaSpeaks?.language = Locale("el_GR")
+        if (status == TextToSpeech.SUCCESS) zorbaSpeaks?.language = Locale("el_GR")
         else Log.d("hvr", "speech initilization problem!")
     }
 
@@ -70,10 +69,10 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         /* lookup the item in the ArrayList */
         val thisLemmaItem: LemmaItem = lemmaArrayList[position]
 
-        val thisIdx=thisLemmaItem.idx
+        val thisIdx = thisLemmaItem.idx
 
-        val myIntent = Intent(this,FlashCard::class.java)
-        myIntent.putExtra("idx",thisIdx)
+        val myIntent = Intent(this, FlashCard::class.java)
+        myIntent.putExtra("idx", thisIdx)
         startActivity(myIntent)
     }
 
@@ -89,12 +88,18 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         zorbaDBHelper = ZorbaDBHelper(applicationContext)
 
+        val ztitle = SpannableString("ZORBA by Herman")
+        with (ztitle) {
+            setSpan(StyleSpan(Typeface.BOLD_ITALIC), 0, 4, 0)
+            setSpan(StyleSpan(Typeface.NORMAL), 5, 15, 0)
+            setSpan(RelativeSizeSpan(0.75f), 5, 15, 0)
+        }
+
         /* create action bar on top */
         val myBar = supportActionBar
         if (myBar != null) {
             myBar.setDisplayShowHomeEnabled(true)
-            myBar.title = "  " + getString(R.string.app_name)
-            myBar.subtitle = "  " + getString(R.string.app_subtitle)
+            myBar.title = ztitle
             myBar.setIcon(R.drawable.greneth)
         }
 
@@ -103,7 +108,10 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         /* set listener for changes in search field   */
         text_search.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable) { onSearch(s) }
+            override fun afterTextChanged(s: Editable) {
+                onSearch(s)
+            }
+
             override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
         })
@@ -181,6 +189,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
         super.onDestroy()
     }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         /* Handle action bar (menu) item clicks here. */
 
@@ -188,14 +197,14 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             /* menu set woordsoort/woordgroep */
             R.id.menu_set_groep_soort -> {
                 /* launch the Groep/Woordsoort Selection Activity */
-                val myIntent = Intent(this, GroepWoordsoort::class.java)
+                val myIntent = Intent(this, WordTypeAndGroup::class.java)
                 startActivityForResult(myIntent, GROEP_SOORT_CODE)
             }
 
             /*  menu detail selecties */
             R.id.menu_set_block_sort -> {
                 /* launch the Selecties Activity */
-                val myIntent = Intent(this, Selecties::class.java)
+                val myIntent = Intent(this, FilterAndSort::class.java)
                 startActivityForResult(myIntent, SELECTIES_CODE)
             }
 
@@ -224,13 +233,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
         return true
     }
-
-//    override fun onDestroy() {
-//        /* Shutdown TTS when app gets destroyed by android */
-//        zorbaSpeaks.stop()
-//        zorbaSpeaks.shutdown()
-//        super.onDestroy()
-//    }
 
     private fun refreshData() {
         /* method clears the existing array list and refills it with fresh data from the database */
@@ -291,16 +293,16 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private fun buidAbout() {
         val textToDisplay =
             getString(R.string.description) +
-            "\n" + "Author: " + getString(R.string.author) +
-            "\n" + "Version: " + BuildConfig.VERSION_NAME +
-            "\n" + "Build: " + BuildConfig.VERSION_CODE +
-            "\n" + getString(R.string.version_info) +
-            showCount()
+                  "\n" + "Author: " + getString(R.string.author) +
+                  "\n" + "Version: " + BuildConfig.VERSION_NAME +
+                  "\n" + "Build: " + BuildConfig.VERSION_CODE +
+                  "\n" + getString(R.string.version_info) +
+                  showCount()
 
         val bob = AlertDialog.Builder(this)
-            .setTitle("About Zorba")
-            .setMessage(textToDisplay)
-            .setPositiveButton(R.string.emoji_ok, null)
+              .setTitle("About Zorba")
+              .setMessage(textToDisplay)
+              .setPositiveButton(R.string.emoji_ok, null)
 
         /* create the dialog from the builder */
         val alertDialog = bob.create()
@@ -336,14 +338,14 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private fun importJson() {
         progress_bar.visibility = View.VISIBLE
         Ion.with(this)
-        .load(ZorbaDBHelper.DATABASE_URI)
-        .asString()
-        .setCallback { _, result ->
-              zorbaDBHelper.jsonToSqlite(result)
-              refreshData()
-              recyclerViewAdapter.notifyDataSetChanged()
-              progress_bar.visibility = View.INVISIBLE
-        }
+              .load(DATABASE_URI)
+              .asString()
+              .setCallback { _, result ->
+                  zorbaDBHelper.jsonToSqlite(result)
+                  refreshData()
+                  recyclerViewAdapter.notifyDataSetChanged()
+                  progress_bar.visibility = View.INVISIBLE
+              }
     }
 
     private fun onSearch(searchText: CharSequence) {

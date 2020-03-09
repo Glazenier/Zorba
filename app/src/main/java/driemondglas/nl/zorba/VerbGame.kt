@@ -10,10 +10,10 @@ import android.graphics.Typeface
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.SystemClock
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
-import android.text.style.TypefaceSpan
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -44,7 +44,8 @@ class VerbGame : AppCompatActivity() {
     private var savedLevelBasic =true
     private var savedLevelAdvanced=true
     private var savedLevelBallast=true
-
+    private var seconds = 0
+    private var scores= mutableListOf<Int>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,10 +61,12 @@ class VerbGame : AppCompatActivity() {
         /* get a reference to the database */
         db = zorbaDBHelper.readableDatabase
 
+        chronometer.base = SystemClock.elapsedRealtime()
 
-        btn_go.setOnTouchListener { v: View, m: MotionEvent -> touche(v, m); true }
+        btn_go.setOnTouchListener{ v: View, m: MotionEvent -> touche(v, m); true }
         btn_show_ladder.setOnClickListener { txt_conjugations.visibility = if (txt_conjugations.visibility == View.VISIBLE) View.INVISIBLE else View.VISIBLE }
         sw_mode.setOnClickListener { switchMode() }
+        btn_fout.setOnClickListener { startOver() }
         lbl_herken.setOnClickListener {
             sw_mode.isChecked = !sw_mode.isChecked
             switchMode()
@@ -92,11 +95,20 @@ class VerbGame : AppCompatActivity() {
         /* get the specific selection query from the Query manager  */
         gameCursor = db.rawQuery(queryManager.verbGameQuery(), null)
 
-        /* if indeed a record is returned...
-           ... setup the game */
-        forwardToNextMatch()
+        /* if indeed a record is returned ... setup the game */
+        forwardUntilMatch()
     }
 
+    private fun startOver(){
+        scores.clear()
+        lbl_total.text=""
+        lbl_min.text=""
+        lbl_max.text=""
+        lbl_average.text=""
+        lbl_count.text=""
+        forwardUntilMatch()
+
+    }
     private fun testGw(){
         val testCursor=db.rawQuery("SELECT PureLemma, GR FROM woorden WHERE woordsoort = 'werkwoord' ORDER BY PureLemma" ,null)
         while (testCursor.moveToNext()) {
@@ -133,7 +145,7 @@ class VerbGame : AppCompatActivity() {
     }
 
     /* move forward in cursor until a verb is found that contains selected conjugation (ex: Not all have Paratatikos!) */
-    private fun forwardToNextMatch() {
+    private fun forwardUntilMatch() {
         txt_conjugations.visibility = View.INVISIBLE
         text_ask.setTextColor(Color.DKGRAY)
         while (gameCursor.moveToNext()) {
@@ -208,7 +220,6 @@ class VerbGame : AppCompatActivity() {
                 val conjugationParts = sixConjugations.split(",")
                 if (conjugationParts.size == 1) {
                     theConjugation = conjugationParts[0]
-//                    theTense = ""
                     thePersonGR = ""
                 } else {
                     /* pick one of the choosen conjugations */
@@ -218,6 +229,9 @@ class VerbGame : AppCompatActivity() {
                     thePersonGR = persoonsvormGR[pickOne]
                 }
                 dashes = "⎽ ".repeat(theConjugation.length)
+                chronometer.base = SystemClock.elapsedRealtime()
+                chronometer.start()
+
 
                 return true
             } else return false
@@ -244,12 +258,29 @@ class VerbGame : AppCompatActivity() {
         val textReveal = SpannableString("$theTense van $theVerb ($theMeaning).")
         val spanStart = "$theTense van ".length
         val spanEnd = spanStart + theVerb.length
-        textReveal.setSpan(StyleSpan(Typeface.BOLD), spanStart, spanEnd, 0)
+//        textReveal.setSpan(StyleSpan(Typeface.BOLD), spanStart, spanEnd, 0)
         textReveal.setSpan(StyleSpan(Typeface.BOLD_ITALIC), spanStart, spanEnd, 0)
 
         textReveal.setSpan(ForegroundColorSpan(ContextCompat.getColor(this, R.color.kobaltblauw)), spanStart, spanEnd, 0)
 
         text_reveal.text = textReveal
+
+        chronometer.stop()
+        seconds = chronometer.text.take(2).toString().toInt()*60 + chronometer.text.takeLast(2).toString().toInt()
+        scores.add(seconds)
+
+        val aantal=scores.size
+        val totaal=intToMinSec(scores.sum())
+        val min=intToMinSec(scores.min()!!)
+        val max=intToMinSec(scores.max()!!)
+        val gemiddeld=intToMinSec(scores.average().toInt())
+        lbl_total.text="Totaal:\t$totaal"
+        lbl_min.text="Min:\t$min"
+        lbl_max.text="Max:\t$max"
+        lbl_average.text="Gemidd.:\t$gemiddeld"
+        lbl_count.text="Aantal:\t$aantal"
+
+//        colorToast(this, "Aantal: $aantal\nTotaal: $totaal\nMax:$max\nMin: $min\nGemidd.: $gemiddeld", duur=1)
     }
 
     /* finish intent and return to main activity */
@@ -267,7 +298,7 @@ class VerbGame : AppCompatActivity() {
             MotionEvent.ACTION_UP -> {
                 /* check if release is  within the source view */
                 val boundaries = Rect(0, 0, v.width, v.height)
-                if (boundaries.contains(m.x.toInt(), m.y.toInt())) forwardToNextMatch()
+                if (boundaries.contains(m.x.toInt(), m.y.toInt())) forwardUntilMatch()
             }
         }
     }
@@ -293,7 +324,7 @@ class VerbGame : AppCompatActivity() {
         queryManager.levelBallast = sw_level_ballast.isChecked
 
         gameCursor = db.rawQuery(queryManager.verbGameQuery(), null)
-        forwardToNextMatch()
+        forwardUntilMatch()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -340,5 +371,12 @@ class VerbGame : AppCompatActivity() {
               .putExtra(Intent.EXTRA_SUBJECT, subject)
               .putExtra(Intent.EXTRA_TEXT, body)
         startActivity(Intent.createChooser(emailIntent, "Send lemma by email..."))
+    }
+
+    private fun intToMinSec( seconds: Int): String{
+        val wholeMins=(seconds/60)
+        val restSeconds=seconds-(wholeMins*60)
+
+        return ("00" + wholeMins).takeLast(2) + ":" + ("00" + restSeconds).takeLast(2)
     }
 }

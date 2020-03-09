@@ -1,23 +1,17 @@
 package driemondglas.nl.zorba
 
 import android.app.AlertDialog
-import android.content.DialogInterface
-import android.content.Intent
-import android.database.Cursor
-import android.database.DatabaseUtils
+import android.content.*
+import android.database.*
 import android.database.sqlite.SQLiteDatabase
-import android.graphics.Color
-import android.graphics.Rect
+import android.graphics.*
 import android.net.Uri
 import android.os.Bundle
 import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
 import android.text.method.ScrollingMovementMethod
 import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
-import android.view.MotionEvent
-import android.view.View
+import android.view.*
 import android.widget.TextView
 import driemondglas.nl.zorba.Utils.enabled
 import driemondglas.nl.zorba.Utils.visible
@@ -75,7 +69,7 @@ class FlashCard : AppCompatActivity() {
         text_note.movementMethod = ScrollingMovementMethod()
 
         /* initialize the buttons' listeners
-         * Note that the text fields also double as (large) buttons:
+         * NOTE that the text fields also double as (large) buttons:
          * Greek text field: go to previous card
          * Dutch text field: wrong answer, go to next card
          * Note text field:  correct answer, go to next card
@@ -92,7 +86,7 @@ class FlashCard : AppCompatActivity() {
         btn_OTTT.setOnClickListener { showVerb(conjugateMellontas(thisGreekText), "Toekomende tijd van $thisPureLemma") }
         btn_VVT.setOnClickListener { showVerb(conjugateAorist(thisGreekText), "Verleden tijd van $thisPureLemma") }
         btn_OVT.setOnClickListener { showVerb(conjugateParatatikos(thisGreekText), "Paratatikos van $thisPureLemma") }
-        btn_GW.setOnClickListener { showVerb(createProstaktiki(thisGreekText), "Gebiedende wijs van $thisPureLemma") }
+        btn_GW.setOnClickListener { showVerb(createProstaktiki(thisGreekText), "Gebiedende wijs (ev, mv) van $thisPureLemma") }
         btn_speak.setOnClickListener { cleanSpeech(thisGreekText, thisWoordsoort) }
         lbl_jumper.setOnClickListener { unJump() }
 
@@ -172,12 +166,12 @@ class FlashCard : AppCompatActivity() {
         when (item.itemId) {
             R.id.menu_set_groep_soort -> {
                 // launch the wordgroup/wordtype selection activity
-                val myIntent = Intent(this, GroepWoordsoort::class.java)
+                val myIntent = Intent(this, WordTypeAndGroup::class.java)
                 startActivityForResult(myIntent, GROEP_SOORT_CODE)
             }
             R.id.menu_set_block_sort -> {
                 // launch the detail selections and order-by activity
-                val myIntent = Intent(this, Selecties::class.java)
+                val myIntent = Intent(this, FilterAndSort::class.java)
                 startActivityForResult(myIntent, SELECTIES_CODE)
             }
 
@@ -418,7 +412,8 @@ class FlashCard : AppCompatActivity() {
     private fun showVerb(verb: String, title: String) {
 
         /* make a column by adding newline to each delimiter */
-        val ladder = verb.replace(", ".toRegex(), ",\n")
+        var ladder = verb.replace(", ".toRegex(), ",\n")
+       ladder = ladder.replace(" - ".toRegex(), ", ")
 
         val bob = AlertDialog.Builder(this)
               .setTitle(title)

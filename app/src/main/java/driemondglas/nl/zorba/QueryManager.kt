@@ -22,7 +22,7 @@ class QueryManager private constructor() {
         /* constants */
         const val DEFAULT_BLOCKSIZE = 20
         const val DEFAULT_LENGTH = 0
-        const val DEFAULT_THRESHOLD = 2    // 3 goede antwoorden: JUMP
+        const val DEFAULT_THRESHOLD = 2    // 3 goede antwoorden => JUMP
         const val DEFAULT_ORDERBY = "index"
     }
 

@@ -5,8 +5,7 @@ import android.graphics.Color
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.view.View
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import driemondglas.nl.zorba.Utils.replace
 import driemondglas.nl.zorba.Utils.stressOneChar
 import driemondglas.nl.zorba.Utils.unStress
@@ -170,23 +169,23 @@ fun conjugateEnestotas(textGreek: String): String {
                     }
                     enestotas.endsWith("ομαι") -> {
                         stem = enestotas.dropLast(4)
-                        verbType = "C1"
+                        verbType = "Γ1"
                     }
                     enestotas.endsWith("άμαι") -> {
                         stem = enestotas.dropLast(4)
-                        verbType = "C2"
+                        verbType = "Γ2"
                     }
                     enestotas.endsWith("ιέμαι") -> {
                         stem = enestotas.dropLast(5)
-                        verbType = "C3"
+                        verbType = "Γ3"
                     }
                     enestotas.endsWith("ούμαι") -> {
                         stem = enestotas.dropLast(5)
-                        verbType = "C4"
+                        verbType = "Γ4"
                     }
                     enestotas.endsWith("είμαι") -> {
                         stem = enestotas.dropLast(5)
-                        verbType = "C5"
+                        verbType = "Γ5"
                     }
                 }
             }
@@ -198,11 +197,11 @@ fun conjugateEnestotas(textGreek: String): String {
             "B2" -> "${stem}ώ, ${stem}είς, ${stem}εί, ${stem}ούμε, ${stem}είτε, ${stem}ούν"
             "B3" -> "${stem}ώ, ${stem}άς, ${stem}ά, ${stem}ούμε, ${stem}άτε, ${stem}ούν"
             "B4" -> "${stem}ω, ${stem}εις, ${stem}ει, ${stem}ούμε, ${stem}είτε, ${stem}ουν"
-            "C1" -> "${stem}ομαι, ${stem}εσαι, ${stem}εται, ${stem.unStress()}όμαστε, ${stem}εστε, ${stem}ονται"
-            "C2" -> "${stem}άμαι, ${stem}άσαι, ${stem}άται, ${stem}όμαστε, ${stem}άστε, ${stem}ούνται"
-            "C3" -> "${stem}ιέμαι, ${stem}ιέσαι, ${stem}ιέται, ${stem}ιόμαστε, ${stem}ιέστε, ${stem}ιούνται"
-            "C4" -> "${stem}ούμαι, ${stem}είσαι, ${stem}είται, ${stem}ούμαστε, ${stem}είστε, ${stem}ούνται"
-            "C5" -> "${stem}είμαι, ${stem}είσαι, ${stem}είναι, ${stem}είμαστε, ${stem}είστε, ${stem}είναι"
+            "Γ1" -> "${stem}ομαι, ${stem}εσαι, ${stem}εται, ${stem.unStress()}όμαστε, ${stem}εστε, ${stem}ονται"
+            "Γ2" -> "${stem}άμαι, ${stem}άσαι, ${stem}άται, ${stem}όμαστε, ${stem}άστε, ${stem}ούνται"
+            "Γ3" -> "${stem}ιέμαι, ${stem}ιέσαι, ${stem}ιέται, ${stem}ιόμαστε, ${stem}ιέστε, ${stem}ιούνται"
+            "Γ4" -> "${stem}ούμαι, ${stem}είσαι, ${stem}είται, ${stem}ούμαστε, ${stem}είστε, ${stem}ούνται"
+            "Γ5" -> "${stem}είμαι, ${stem}είσαι, ${stem}είναι, ${stem}είμαστε, ${stem}είστε, ${stem}είναι"
             else -> UNKNOWN_VERB
         }
     }
@@ -309,7 +308,13 @@ fun conjugateAorist(textGreek: String): String {
                 stemPlural = stemPlural.replace(newStressPos, stressOneChar(targetCharacter))
 
                 // 6 - if needed, lose the extraneous ή or έ at the start
-                if (unStressOneChar(enestotas[0]) != unStressOneChar(aorist[0])) stemPlural = stemPlural.drop(1)
+                if (aorist[0]=='ή' || aorist[0]=='έ') {
+                    /* is the 1st character added as 3rd syllable or was it already part of the verb ??? */
+                    if (unStressOneChar(enestotas[0]) != unStressOneChar(aorist[0])) {   // ελέγχω  ->  έλεγξα, ελέγχαμε, ελέγχατε So keep the ε in plural (it was not added)
+                                                                                         // ελπίζω  ->  έλπισα, ελπίσαμε ...
+                        stemPlural = stemPlural.drop(1)
+                    }
+                }
 
                 /* step 7 can only be done if mellontas is available for comparison */
                 if (mellontas.isNotEmpty()) {
@@ -400,62 +405,61 @@ fun conjugateParatatikos(textGreek: String): String {
 }
 
 fun createProstaktiki(textGreek: String): String {
-//        Log.d("hvr", "Greek: \n$textGreek")
     val enestotas = getEnestotas(textGreek)
     val mellontas = getMellontas(textGreek)
     val aoristos = getAorist(textGreek)
     val stemAorist: String
     val prostaktiki: String
-    val prostaktikiPlural: String
     val prostaktikiSingle: String
+    val prostaktikiPlural: String
     if (mellontas.isEmpty()) return "Geen mellontas in GR."
 
-    /* EXCEPTIONS */
+    /***** EXCEPTIONS *****/
     prostaktiki = when (enestotas) {
         "ανεβαίνω" -> "ανέβα – ανεβείτε"
-        "αφήνω" -> "άσε/άφισε – αφήστε"
+        "αφήνω" -> "άσε/άφισε – άστε/αφήστε"
         "βγαίνω" -> "βγες – βγείτε"
         "βλέπω" -> "δες – δείτε"
         "βρίσκω" -> "βρες – βρείτε"
-        "έρχομαι" -> "άσε/άφισε – αφήστε"
+        "γίνομαι" -> "γίνε – γίνετε"
+        "είμαι" -> "είμαι heeft geen gebiedende wijs"
+        "επιτρέπομαι" -> "επιτρέψου - επιτραπείτε"
+        "έρχομαι" -> "έλα – ελάτε"
         "κάθομαι" -> "κάθισε/κάτσε – καθίστε"
         "κατεβαίνω" -> "κατέβα – κατεβείτε"
         "λέω" -> "πες – πείτε"
         "μπαίνω" -> "μπες - μπείτε"
-        "πίνω" -> "πιες – πιείτε"
-        "τρώω" -> "φάε - φάτε"
-        "γίνομαι" -> "γίνε – γίνετε"
-        "επιτρέπομαι" -> "επιτρέψου - επιτραπείτε"
+        "πηγαίνω" -> "πήγαινε - πηγαίνετε"
         "προέρχομαι" -> "πρόελθε - προέλθετε"
+        "πίνω" -> "πιες – πιείτε"
         "συνέρχομαι" -> "σύνελθε - συνέλθετε"
+        "τρώω" -> "φάε - φάτε"
         "φαίνομαι" -> "alleen meervoud: φανείτε"
         "χρωστάω" -> "alleen enkelvoud: χρωστά"
-        "είμαι" -> "είμαι heeft geen gebiedende wijs"
         else -> ""
     }
     if (prostaktiki.isNotEmpty()) return prostaktiki
 
-    /* PASSIVE VORM */
-    if (enestotas.endsWith("μαι")) {  // passieve vorm
-        if (aoristos.endsWith("ηκα")) {
-            /* regular */
-            stemAorist = aoristos.dropLast(3)
-            prostaktikiPlural = stemAorist.unStress() + "είτε"
-            prostaktikiSingle = when {
-                stemAorist.endsWith("θ") -> stemAorist.dropLast(1) + "σου"
-                stemAorist.endsWith("στ") -> stemAorist.dropLast(2) + "σου"
-                stemAorist.endsWith("χτ") -> stemAorist.dropLast(2) + "ξου"
-                stemAorist.endsWith("φτ") -> stemAorist.dropLast(2) + "ψου"
-                stemAorist.endsWith("υτ") -> stemAorist.dropLast(2) + "ψου"
-                stemAorist.endsWith("ύτ") -> stemAorist.dropLast(2) + "ψου"
-                else -> "stemAorist niet op: θ,στ,χτ,φτ,υτ"
-            }
-            return "$prostaktikiSingle - $prostaktikiPlural"
+    /***** PASSIVE FORM *****/
+    if (aoristos.endsWith("ηκα")) {
+        stemAorist = aoristos.dropLast(3)
+        prostaktikiPlural = stemAorist.unStress() + "είτε"
+        prostaktikiSingle = when {
+            stemAorist.endsWith("θ") -> stemAorist.dropLast(1) + "σου"
+            stemAorist.endsWith("στ") -> stemAorist.dropLast(2) + "σου"
+            stemAorist.endsWith("χτ") -> stemAorist.dropLast(2) + "ξου"
+            stemAorist.endsWith("φτ") -> stemAorist.dropLast(2) + "ψου"
+            stemAorist.endsWith("υτ") -> stemAorist.dropLast(2) + "ψου"
+            stemAorist.endsWith("εύτ") -> stemAorist.dropLast(3) + "έψου"
+            stemAorist.endsWith("αύτ") -> stemAorist.dropLast(3) + "άψου"
+            else -> "stemAorist niet op: θ,στ,χτ,φτ,υτ"
         }
-        return "uitzondering"
+        return "$prostaktikiSingle - $prostaktikiPlural"
     }
 
-    /* remove final 'ω' to create the stem */
+    /***** ACTIVE FORM *****/
+
+    /* remove final 'ω' from mellontas to create the 2nd stem */
     var stem = mellontas.dropLast(1)
 
     /* If no accent in the stem then add accent to last vowel */
@@ -467,16 +471,18 @@ fun createProstaktiki(textGreek: String): String {
         stressPos = vowelPos
     }
 
+    /* create single Imperative from the stem */
     var single = stem + "ε"
-    val stemEndsWith = single.takeLast(1)
-    val plural = if (stemEndsWith in listOf("ν", "γ", "β", "θ", "χ")) stem + "ετε" else stem + "τε"
 
-    //find vowel position before stress
+    /* create plural Imperative from the stem, suffix depends on last character of the stem: '-ετε' or '-τε'  */
+    val plural = if (stem.takeLast(1) in listOf("ν", "γ", "β", "θ", "χ")) stem + "ετε" else stem + "τε"
+
+    /* move stress 1 syllable to the left, if possible */
     if (stressPos > 0) {
         val vowelPos = single.take(stressPos - 1).lastIndexOfAny(allUnstressedVowels)  // stressPos minus one to deal with double vowels
         if (vowelPos > -1) single = single.unStress().replace(vowelPos, stressOneChar(single[vowelPos]))
     }
-    /* return gebiedende wijs als 2e pers enkelvoud - 2e pers meervoud */
+    /* return Imperative as: 2nd person single - 2nd person plural */
     return "$single - $plural"
 }
 
@@ -514,10 +520,11 @@ object Utils {
         return if (idx < length) take(idx) + replacement + drop(idx + 1) else this
     }
 
-
-    fun colorToast(context: Context, msg: String, bgColor: Int = Color.DKGRAY, fgColor: Int = Color.WHITE) {
+    fun colorToast(context: Context, msg: String, bgColor: Int = Color.DKGRAY, fgColor: Int = Color.WHITE, duur: Int = 0) {
         /* create the normal Toast message */
-        val myToast = Toast.makeText(context, msg, Toast.LENGTH_SHORT)
+
+        val duurt = if (duur == 0) Toast.LENGTH_SHORT else Toast.LENGTH_LONG
+        val myToast = Toast.makeText(context, msg, duurt)
 
         /* create a reference to the view that holds this Toast */
         val myView = myToast.view
