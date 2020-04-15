@@ -114,4 +114,6 @@
     <string name="volgende">Next</string>
     <string name="laat_zien">GOED</string>
     <string name="word_group_type_subtitle">Selecteer woordsoort en/of woordgroep</string>
+    <string name="werkwoordjes_oefenen">Werkwoordjes oefenen</string>
+    <string name="luister_oefening">Luister oefening</string>
 </resources>
