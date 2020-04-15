@@ -8,6 +8,10 @@
             android:checkable="true"
             />
     <item
+            android:id="@+id/menu_reset_hiscore"
+            android:title="@string/menu_caption_reset_hiscore"
+            />
+    <item
             android:id="@+id/menu_mail_lemma"
             android:title="@string/menu_caption_email"
             />

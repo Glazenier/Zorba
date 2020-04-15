@@ -1,22 +1,31 @@
 package driemondglas.nl.zorba
 
 import android.app.AlertDialog
-import android.content.*
+import android.content.Context
+import android.content.DialogInterface
+import android.content.Intent
+import android.content.SharedPreferences
 import android.database.DatabaseUtils
 import android.graphics.Typeface
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
+import android.text.Editable
+import android.text.SpannableString
+import android.text.TextWatcher
+import android.text.style.RelativeSizeSpan
+import android.text.style.StyleSpan
+import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import android.text.*
-import android.text.style.*
-import android.util.Log
-import android.view.*
-import android.view.inputmethod.InputMethodManager
 import com.koushikdutta.ion.Ion
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
+
 
 /* Top-level Properties:
  * below are the self chosen 'unique' request codes used to start the various activities
@@ -25,7 +34,6 @@ const val SHOW_CARDS_CODE = 3108
 const val GROEP_SOORT_CODE = 3208
 const val SELECTIES_CODE = 3308
 const val UNKNOWN_VERB = "Werkwoordvorm onbekend"
-
 const val DATABASE_URI = "https://driemondglas.nl/RESTgrieks_v3.php"
 
 /*  Initialise the database helper class. */
@@ -37,20 +45,23 @@ var zorbaSpeaks: TextToSpeech? = null
 /* speech on or off */
 var useSpeech = true
 
+lateinit var  zorbaPreferences: SharedPreferences
+
 /* main activity class implements TextToSpeech.OnInitListener */
 class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     /* overriding onInit() is needed for the TextToSpeech.OnInitListener */
     override fun onInit(status: Int) {
         /* set Greek as language for text to speech object */
-        if (status == TextToSpeech.SUCCESS) zorbaSpeaks?.language = Locale("el_GR")
+        if (status == TextToSpeech.SUCCESS) {
+            zorbaSpeaks?.language = Locale("el_GR")
+        }
         else Log.d("hvr", "speech initilization problem!")
     }
 
     /* Initialise the Query Manager class.
      * This class builds and manages all queries to the database */
     private var queryManager = QueryManager.getInstance()
-
 
     /* list containing all the Lemma data items that attaches to the recycler through the adapter */
     private val lemmaArrayList: ArrayList<LemmaItem> = ArrayList()
@@ -88,23 +99,25 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         zorbaDBHelper = ZorbaDBHelper(applicationContext)
 
-        val ztitle = SpannableString("ZORBA by Herman")
-        with (ztitle) {
+        zorbaPreferences = applicationContext.getSharedPreferences("zorbaPrefKey", Context.MODE_PRIVATE)
+
+        val zTitle = SpannableString("ZORBA by Herman")
+        with (zTitle) {
             setSpan(StyleSpan(Typeface.BOLD_ITALIC), 0, 4, 0)
             setSpan(StyleSpan(Typeface.NORMAL), 5, 15, 0)
             setSpan(RelativeSizeSpan(0.75f), 5, 15, 0)
         }
 
         /* create action bar on top */
-        val myBar = supportActionBar
-        if (myBar != null) {
-            myBar.setDisplayShowHomeEnabled(true)
-            myBar.title = ztitle
-            myBar.setIcon(R.drawable.greneth)
+        with (supportActionBar!!){
+            setDisplayShowHomeEnabled(true)
+            title = zTitle
+            setIcon(R.drawable.greneth)
         }
 
         /* Init reference to tts */
         zorbaSpeaks = TextToSpeech(this, this)
+
 
         /* set listener for changes in search field   */
         text_search.addTextChangedListener(object : TextWatcher {
@@ -168,6 +181,12 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         btn_verb_game.setOnClickListener {
             /* launch the Hangman Activity */
             val myIntent = Intent(this, VerbGame::class.java)
+            startActivity(myIntent)
+        }
+
+        btn_luister.setOnClickListener {
+            /* launch the Hangman Activity */
+            val myIntent = Intent(this, Luisterlijst::class.java)
             startActivity(myIntent)
         }
     }
@@ -347,6 +366,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                   progress_bar.visibility = View.INVISIBLE
               }
     }
+
 
     private fun onSearch(searchText: CharSequence) {
         queryManager.search = searchText.toString()

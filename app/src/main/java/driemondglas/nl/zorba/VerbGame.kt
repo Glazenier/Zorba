@@ -1,6 +1,8 @@
 package driemondglas.nl.zorba
 
 import android.annotation.SuppressLint
+import android.app.AlertDialog
+import android.content.DialogInterface
 import android.content.Intent
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
@@ -8,27 +10,28 @@ import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.Typeface
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.SystemClock
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import driemondglas.nl.zorba.Utils.enabled
 import driemondglas.nl.zorba.Utils.colorToast
+import driemondglas.nl.zorba.Utils.enabled
 import kotlinx.android.synthetic.main.verb_game.*
+
 
 @SuppressLint("SetTextI18n")
 class VerbGame : AppCompatActivity() {
     private val queryManager: QueryManager = QueryManager.getInstance()
     private lateinit var gameCursor: Cursor
     private lateinit var db: SQLiteDatabase
+
 
     private var mode = "conjugate"
 
@@ -41,11 +44,12 @@ class VerbGame : AppCompatActivity() {
     private var thePersonGR = ""     // keeps greek personal pronoun in sync with choosen conjugation
     private var dashes = ""          // creates baseline of dashes
 
-    private var savedLevelBasic =true
-    private var savedLevelAdvanced=true
-    private var savedLevelBallast=true
+    private var savedLevelBasic = true
+    private var savedLevelAdvanced = true
+    private var savedLevelBallast = true
     private var seconds = 0
-    private var scores= mutableListOf<Int>()
+    private var scores = mutableListOf<Int>()
+    private var fastest = 3000
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,81 +57,68 @@ class VerbGame : AppCompatActivity() {
 
         /* setup action bar on top */
         val actionBar = supportActionBar
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true)
-            actionBar.title = "ZORBA Werkwoord Game"
-        }
+        actionBar?.setDisplayHomeAsUpEnabled(true)
+        actionBar?.title = "ZORBA Werkwoord Game"
 
         /* get a reference to the database */
         db = zorbaDBHelper.readableDatabase
 
+        /* setup chronometer/stopwatch */
         chronometer.base = SystemClock.elapsedRealtime()
 
-        btn_go.setOnTouchListener{ v: View, m: MotionEvent -> touche(v, m); true }
+        /* retrieve 'high score' (fastest time) from shared preferences */
+        fastest = zorbaPreferences.getInt("fastest", 3000)  // 5 min is the default value
+
+        /* initialise all onClick listeners here */
+        btn_go.setOnTouchListener { v: View, m: MotionEvent -> touche(v, m); true }
         btn_show_ladder.setOnClickListener { txt_conjugations.visibility = if (txt_conjugations.visibility == View.VISIBLE) View.INVISIBLE else View.VISIBLE }
-        sw_mode.setOnClickListener { switchMode() }
+        sw_mode.setOnClickListener { switchGameMode() }
         btn_fout.setOnClickListener { startOver() }
         lbl_herken.setOnClickListener {
             sw_mode.isChecked = !sw_mode.isChecked
-            switchMode()
+            switchGameMode()
         }
         sw_level_basis.setOnClickListener { onLevelChange() }
         sw_level_gevorderd.setOnClickListener { onLevelChange() }
         sw_level_ballast.setOnClickListener { onLevelChange() }
         btn_previous.setOnClickListener { backwardToPreviousMatch() }
         btn_verbal.setOnClickListener { cleanSpeech("$thePersonGR  $theConjugation", "anders") }
-//        btn_verbal.setOnClickListener { testGw() }
 
-        /* save original QueryManager's level values */
-        savedLevelBasic= queryManager.levelBasic
-        savedLevelAdvanced= queryManager.levelAdvanced
-        savedLevelBallast= queryManager.levelBallast
+        /* save original QueryManager's level values mand set initial values for the game*/
+        with (queryManager) {
+            savedLevelBasic = levelBasic
+            savedLevelAdvanced = levelAdvanced
+            savedLevelBallast = levelBallast
 
-        /* for the game start with basic level only */
-        sw_level_basis.isChecked = true
-        sw_level_gevorderd.isChecked = false
-        sw_level_ballast.isChecked = false
+            /* for the game start with basic level only */
+            sw_level_basis.isChecked = true
+            sw_level_gevorderd.isChecked = false
+            sw_level_ballast.isChecked = false
 
-        queryManager.levelBasic=true
-        queryManager.levelAdvanced=false
-        queryManager.levelBallast=false
+            levelBasic = true
+            levelAdvanced = false
+            levelBallast = false
+        }
 
         /* get the specific selection query from the Query manager  */
         gameCursor = db.rawQuery(queryManager.verbGameQuery(), null)
 
-        /* if indeed a record is returned ... setup the game */
+        /* ... and setup the game */
         forwardUntilMatch()
-    }
-
-    private fun startOver(){
-        scores.clear()
-        lbl_total.text=""
-        lbl_min.text=""
-        lbl_max.text=""
-        lbl_average.text=""
-        lbl_count.text=""
-        forwardUntilMatch()
-
-    }
-    private fun testGw(){
-        val testCursor=db.rawQuery("SELECT PureLemma, GR FROM woorden WHERE woordsoort = 'werkwoord' ORDER BY PureLemma" ,null)
-        while (testCursor.moveToNext()) {
-            val theRawGreek = testCursor.getString(testCursor.getColumnIndex("GR"))
-            val lemma =   testCursor.getString(testCursor.getColumnIndex("PureLemma"))
-            Log.d("hvr","\t$lemma\t${createProstaktiki(theRawGreek)}")
-        }
-        testCursor.close()
     }
 
     override fun onStop() {
         /* restore original level values as before the game started */
-        queryManager.levelBasic=savedLevelBasic
-        queryManager.levelAdvanced=savedLevelAdvanced
-        queryManager.levelBallast=savedLevelBallast
+        with (queryManager) {
+            levelBasic = savedLevelBasic
+            levelAdvanced = savedLevelAdvanced
+            levelBallast = savedLevelBallast
+        }
         super.onStop()
     }
 
-    private fun switchMode() {
+    /*  Switch between recognising (determinate) a conjugation and conjugating a given verb */
+    private fun switchGameMode() {
         if (sw_mode.isChecked) {
             mode = "determinate"
             sw_mode.setTextColor(Color.DKGRAY)
@@ -258,29 +249,17 @@ class VerbGame : AppCompatActivity() {
         val textReveal = SpannableString("$theTense van $theVerb ($theMeaning).")
         val spanStart = "$theTense van ".length
         val spanEnd = spanStart + theVerb.length
-//        textReveal.setSpan(StyleSpan(Typeface.BOLD), spanStart, spanEnd, 0)
+
         textReveal.setSpan(StyleSpan(Typeface.BOLD_ITALIC), spanStart, spanEnd, 0)
-
         textReveal.setSpan(ForegroundColorSpan(ContextCompat.getColor(this, R.color.kobaltblauw)), spanStart, spanEnd, 0)
-
         text_reveal.text = textReveal
 
         chronometer.stop()
-        seconds = chronometer.text.take(2).toString().toInt()*60 + chronometer.text.takeLast(2).toString().toInt()
+        seconds = chronometer.text.take(2).toString().toInt() * 60 + chronometer.text.takeLast(2).toString().toInt()
         scores.add(seconds)
 
-        val aantal=scores.size
-        val totaal=intToMinSec(scores.sum())
-        val min=intToMinSec(scores.min()!!)
-        val max=intToMinSec(scores.max()!!)
-        val gemiddeld=intToMinSec(scores.average().toInt())
-        lbl_total.text="Totaal:\t$totaal"
-        lbl_min.text="Min:\t$min"
-        lbl_max.text="Max:\t$max"
-        lbl_average.text="Gemidd.:\t$gemiddeld"
-        lbl_count.text="Aantal:\t$aantal"
-
-//        colorToast(this, "Aantal: $aantal\nTotaal: $totaal\nMax:$max\nMin: $min\nGemidd.: $gemiddeld", duur=1)
+        lbl_total.text = "Totaaltijd:  ${intToTime(scores.sum())}"
+        lbl_count.text = "Aantal:  ${scores.size}"
     }
 
     /* finish intent and return to main activity */
@@ -298,7 +277,9 @@ class VerbGame : AppCompatActivity() {
             MotionEvent.ACTION_UP -> {
                 /* check if release is  within the source view */
                 val boundaries = Rect(0, 0, v.width, v.height)
-                if (boundaries.contains(m.x.toInt(), m.y.toInt())) forwardUntilMatch()
+                if (boundaries.contains(m.x.toInt(), m.y.toInt())) {
+                    if (scores.size == 10)  buidScoreResult() else forwardUntilMatch()
+                }
             }
         }
     }
@@ -319,10 +300,11 @@ class VerbGame : AppCompatActivity() {
             sw_level_ballast.isChecked = true
         }
         /* forward to query manager */
-        queryManager.levelBasic = sw_level_basis.isChecked
-        queryManager.levelAdvanced = sw_level_gevorderd.isChecked
-        queryManager.levelBallast = sw_level_ballast.isChecked
-
+        with (queryManager) {
+            levelBasic = sw_level_basis.isChecked
+            levelAdvanced = sw_level_gevorderd.isChecked
+            levelBallast = sw_level_ballast.isChecked
+        }
         gameCursor = db.rawQuery(queryManager.verbGameQuery(), null)
         forwardUntilMatch()
     }
@@ -345,6 +327,15 @@ class VerbGame : AppCompatActivity() {
                 btn_verbal.enabled(useSpeech)
             }
             R.id.menu_mail_lemma -> mailLemma()
+
+            R.id.menu_reset_hiscore -> {
+                /*  reset fastest time */
+                zorbaPreferences.edit()
+                      .putInt("fastest", 3000)
+                      .apply()
+                fastest = 3000
+            }
+
             R.id.menu_wordreference -> {
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.wordreference.com/gren/$theVerb"))
                 startActivity(intent)
@@ -364,8 +355,8 @@ class VerbGame : AppCompatActivity() {
     private fun mailLemma() {
         val subject = "$theIdx: $theVerb"
         val body = "Idx: $theIdx $theVerb\n\n" +
-                  "Ask:\n$thePersonGR $theConjugation\n\n" +
-                  "Reveal:\n$theTense van $theVerb ($theMeaning)."
+              "Ask:\n$thePersonGR $theConjugation\n\n" +
+              "Reveal:\n$theTense van $theVerb ($theMeaning)."
 
         val emailIntent = Intent(Intent.ACTION_SENDTO, Uri.fromParts("mailto", getString(R.string.contact_email), null))
               .putExtra(Intent.EXTRA_SUBJECT, subject)
@@ -373,10 +364,54 @@ class VerbGame : AppCompatActivity() {
         startActivity(Intent.createChooser(emailIntent, "Send lemma by email..."))
     }
 
-    private fun intToMinSec( seconds: Int): String{
-        val wholeMins=(seconds/60)
-        val restSeconds=seconds-(wholeMins*60)
+    private fun intToTime(seconds: Int): String {
+        val wholeMins = (seconds / 60)
+        val restSeconds = seconds - (wholeMins * 60)
+        return "${("0$wholeMins").takeLast(2)}:${("0$restSeconds").takeLast(2)}"
+    }
 
-        return ("00" + wholeMins).takeLast(2) + ":" + ("00" + restSeconds).takeLast(2)
+    private fun intToMinSec(seconds: Int): String {
+        val wholeMins = (seconds / 60)
+        val restSeconds = seconds - (wholeMins * 60)
+        return "$wholeMins minuut $restSeconds sec."
+    }
+
+    /* show the score of the answers after X correct */
+    private fun buidScoreResult() {
+        val aantal = scores.size
+        val totaal = scores.sum()
+        val min = intToTime(scores.min()!!)
+        val max = intToTime(scores.max()!!)
+        val gemiddeld = intToTime(scores.average().toInt())
+        var bravo=""
+        if (totaal < fastest) {
+            // maintain 'high score' (fastest) in shared preferences
+            zorbaPreferences.edit()
+                  .putInt("fastest", totaal)
+                  .apply()
+            fastest=totaal
+            bravo = "Bravo! Dit is de snelste tijd.\n\n"
+        }
+        val textToDisplay = "$bravo${intToMinSec(totaal)}\n    voor $aantal antwoorden." +
+                  "\nGemiddeld: $gemiddeld" +
+                  "\nSnelste:   $min" +
+                  "\nTraagste:  $max"
+
+        val bob = AlertDialog.Builder(this)
+              .setTitle("Goed gedaan.")
+              .setMessage(textToDisplay)
+              .setPositiveButton(R.string.emoji_ok) { _, _ -> startOver() }
+
+        /* create the dialog from the builder */
+        val alertDialog = bob.create()
+        alertDialog.show()
+        alertDialog.getButton(DialogInterface.BUTTON_POSITIVE).textSize = 28f
+    }
+
+    private fun startOver() {
+        scores.clear()
+        lbl_total.text = ""
+        lbl_count.text = ""
+        forwardUntilMatch()
     }
 }

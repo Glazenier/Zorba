@@ -5,7 +5,8 @@ import android.graphics.Color
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.view.View
-import android.widget.*
+import android.widget.TextView
+import android.widget.Toast
 import driemondglas.nl.zorba.Utils.replace
 import driemondglas.nl.zorba.Utils.stressOneChar
 import driemondglas.nl.zorba.Utils.unStress
@@ -26,6 +27,7 @@ val articleRegex = """(.*?),\s(τ?[ηοα]ι?)""".toRegex()
 val adjectiveRegex = """(.*?)([οηόύή][ςιί]),\s?-(ε?[αάεέηήιί][αάς]?),\s?-([άαεέίοόύ]ς?)""".toRegex()   //βαρύς, -εία, -ύ
 val inBracketsRegex = """\(.*?\)""".toRegex()
 val firstWordRegex = """^[\p{InGreek}]*""".toRegex()
+val ieklankRegex="""\b[οε]?[ιηυίήύ]""".toRegex()
 
 fun cleanSpeech(rawText: String, wordType: String) {
     var result = ""
@@ -65,10 +67,27 @@ fun cleanSpeech(rawText: String, wordType: String) {
                 val matchResult = articleRegex.find(it)
                 if (matchResult != null) {
                     /* put article before noun */
-                    result += matchResult.groups[2]?.value + " " + matchResult.groups[1]?.value + ","
+                    val noun = matchResult.groups[1]?.value
+
+                    var article  = matchResult.groups[2]?.value
+                    if (noun != null && article != null) {
+                        /* if article ends with 'o' and noun begins with 'o', the speech engine combines to one 'o'
+                        *  This is not what we want in this case
+                        *  An extra ',' is inserted to ensure we hear two separate 'o's
+                        *
+                        *  Same thing for ee-sound (ie-klank)
+                        */
+                        if (unStressOneChar(noun.first()) == 'ο' && article.last() == 'ο') article += ','
+                        if (ieklankRegex.find(noun) != null && (article == "η" || article == "οι")) article += ','
+                    }
+                    result += "$article $noun,"
+                } else {
+                    result += "$it,"
                 }
             }
+
             result = result.dropLast(1)  // undo last comma
+
         }
         "lidwoord" -> {
             result = rawText.replace(" ", ",")

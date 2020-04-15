@@ -88,6 +88,17 @@
             android:src="@drawable/werkinuitvoering"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/btn_hangman"
+            />
+    <ImageButton
+            android:id="@+id/btn_luister"
+            style="@android:style/Widget.ImageButton"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:contentDescription="Luister oefening"
+            android:scaleType="centerCrop"
+            android:src="@drawable/oor"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btn_verb_game"
             app:layout_constraintStart_toEndOf="@+id/btn_OpenDeck"
             />
     <androidx.recyclerview.widget.RecyclerView

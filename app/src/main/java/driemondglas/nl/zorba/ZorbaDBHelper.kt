@@ -3,6 +3,7 @@ package driemondglas.nl.zorba
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Log
 import org.json.JSONArray
 
 /** This must be a singleton class so all classes can use the same instance. No class can call "new ZorbaDBHelper"
@@ -72,7 +73,7 @@ class ZorbaDBHelper(zorbaContext: Context) : SQLiteOpenHelper(zorbaContext, DATA
             val thisFlash = jsonRecord.getString("Flash").toInt()
             val thisLevel = jsonRecord.getString("Level").toInt()
             val thisWoordsoort = jsonRecord.getString("Woordsoort")
-            val pureLemma = pureLemma(thisGR)
+            val pureLemma = pureLemma(thisGR).trim()
             val pureLength = pureLemma.length
 
             val query = "INSERT INTO woorden VALUES " +
@@ -80,14 +81,19 @@ class ZorbaDBHelper(zorbaContext: Context) : SQLiteOpenHelper(zorbaContext, DATA
                   " $thisLevel, '$thisWoordsoort', '$pureLemma', $pureLength);"
             db.execSQL(query)
         }
-        //todo: Remove records from jumpers if idx gets removed from new woorden table
+
+        /* Remove records from jumpers if idx is no longer present in reloaded woorden table */
+        db.execSQL("DELETE  FROM jumpers WHERE jumpers.idx IN (SELECT jumpers.idx FROM jumpers LEFT JOIN woorden ON jumpers.idx=woorden.idx WHERE woorden.idx IS NULL);")
         db.close()
     }
 
     private fun pureLemma(greekText: String): String {
         /* regex pattern returns all characters from the start that are not a delimiter
+         * ^ beginning of line
+         * [^ ]  character class not being one of ,\r(*;!.↔
          * \u2194 = ↔ double headed arrow
          * return result ?: ""   //Elvis: return result, if null return empty string "" */
+
         return "^[^,\r(*;!.\u2194]*".toRegex().find(greekText)?.value ?: ""
     }
 }

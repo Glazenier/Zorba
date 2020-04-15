@@ -69,7 +69,8 @@
     <string name="menu_caption_group_type">&#128218; Kies woordgroep of woordsoort </string>
     <string name="menu_caption_import_database">&#128451; Vernieuw database</string>
     <string name="menu_caption_neurolingo">&#127760; Lookup - NeuroLingo</string>
-    <string name="menu_caption_reset_score">\u24ff-\u24ff Reset Scores</string>
+    <string name="menu_caption_reset_score">\u24ff-\u24ff Reset scores</string>
+    <string name="menu_caption_reset_hiscore">\u23f1 Reset high score</string>
     <string name="menu_caption_reset_selects">&#128465; Wis alle selecties</string>
     <string name="menu_caption_use_speech">&#128264; Gebruik spraak</string>
     <string name="menu_caption_wordreference">&#127760; Lookup - WordReference</string>
@@ -96,6 +97,7 @@
 
     <!-- 🔈 luidspreker &#128264;  U+1F508  \ud83d\udd08-->
     <string name="speak">&#128264;</string>
+    <string name="no_speak">&#128263;</string>
 
     <string name="standard">standaard</string>
 

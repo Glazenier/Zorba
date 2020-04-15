@@ -200,7 +200,7 @@ class QueryManager private constructor() {
 
     /* The 3 boolean level-flags (Basic-Advanced-Ballast) are consolidated into an SQL clause
      * Note: when NO flags are set, or when ALL flags are set, the clause is empty (no filter on level)
-     * So we only have to consider single flag or two flags set
+     * So we only have to consider a single flag or two flags set
      */
     private fun buildLevelClause(): String {
         var levelString = ""

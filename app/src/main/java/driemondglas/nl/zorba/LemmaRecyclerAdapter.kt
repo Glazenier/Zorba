@@ -1,5 +1,6 @@
 package driemondglas.nl.zorba
 
+import android.speech.tts.TextToSpeech
 import androidx.recyclerview.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
@@ -31,7 +32,9 @@ class LemmaRecyclerAdapter(private val lemmaArrayList: ArrayList<LemmaItem>) : R
             /* This is the speaker button in the recycler list itself */
             speaker.tag = lemmaArrayList[position].woordsoort
             speaker.enabled(useSpeech)
-            if (useSpeech) speaker.setOnClickListener { cleanSpeech(lemmaGr.text.toString(), "standard") }
+            if (useSpeech) speaker.setOnClickListener {
+                zorbaSpeaks?.speak(lemmaArrayList[position].pureLemma, TextToSpeech.QUEUE_FLUSH, null, "")
+            }
         }
     }
 

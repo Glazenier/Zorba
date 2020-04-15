@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.graphics.*
 import android.net.Uri
 import android.os.Bundle
+import android.speech.tts.TextToSpeech
 import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
 import android.text.method.ScrollingMovementMethod
@@ -33,8 +34,13 @@ class FlashCard : AppCompatActivity() {
     /* declare and initialise local vars */
     private var thisIdx = 0
     private var thisGreekText = ""
+    private var thisDutchText = ""
+    private var thisOpm = ""
     private var thisPureLemma = ""
-    private var thisWoordsoort = ""
+    private var thisWordType = ""
+    private var thisWordGroup = ""
+    private var thisLevel = 1
+
     private var blockSize = 0
     private var blockOffset = 0
     private var positionInBlock = 0
@@ -47,16 +53,9 @@ class FlashCard : AppCompatActivity() {
 
         /* initialise the ZORBA Action Bar */
         val zorbaActionBar = supportActionBar
-        if (zorbaActionBar != null) {
-            /* This next line shows the home/back button.
-             * The functionality is handled by the android system as long as a parent activity
-             * is specified in the manifest.xls file
-             * We OVERRIDE this functionality with our own goBack() function to cleanly close cursor and database
-             */
-            zorbaActionBar.setDisplayHomeAsUpEnabled(true)
-            zorbaActionBar.title = "ZORBA"
-            zorbaActionBar.subtitle = "Flashcards Nederlands-Grieks"
-        }
+        zorbaActionBar?.setDisplayHomeAsUpEnabled(true)
+        zorbaActionBar?.title = "ZORBA"
+        zorbaActionBar?.subtitle = "Flashcards Nederlands-Grieks"
 
         shadow_grieks.setOnTouchListener { v: View, m: MotionEvent -> if (!singleLemma) touche(v, m, false); true }
         text_grieks.setOnTouchListener { v: View, m: MotionEvent -> if (!singleLemma) touche(v, m, false); true }
@@ -64,7 +63,7 @@ class FlashCard : AppCompatActivity() {
         text_note.setOnTouchListener { v: View, m: MotionEvent -> if (!singleLemma) touche(v, m, true); true }
 
         /* enable scrolling for long texts */
-        text_grieks.movementMethod = ScrollingMovementMethod()
+        text_grieks.movementMethod =ScrollingMovementMethod()
         text_nederlands.movementMethod = ScrollingMovementMethod()
         text_note.movementMethod = ScrollingMovementMethod()
 
@@ -87,7 +86,7 @@ class FlashCard : AppCompatActivity() {
         btn_VVT.setOnClickListener { showVerb(conjugateAorist(thisGreekText), "Verleden tijd van $thisPureLemma") }
         btn_OVT.setOnClickListener { showVerb(conjugateParatatikos(thisGreekText), "Paratatikos van $thisPureLemma") }
         btn_GW.setOnClickListener { showVerb(createProstaktiki(thisGreekText), "Gebiedende wijs (ev, mv) van $thisPureLemma") }
-        btn_speak.setOnClickListener { cleanSpeech(thisGreekText, thisWoordsoort) }
+        btn_speak.setOnClickListener { cleanSpeech(thisGreekText, thisWordType) }
         lbl_jumper.setOnClickListener { unJump() }
 
 
@@ -123,8 +122,7 @@ class FlashCard : AppCompatActivity() {
     /* Actions needed when touching and releasing text fields, emulating key-down / key-up events
      * Checks if release is inside or outside original field boundaries */
     private fun touche(v: View, m: MotionEvent, isCorrect: Boolean) {
-        val action = m.actionMasked
-        when (action) {
+        when (m.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 text_grieks.visibility = View.VISIBLE
                 text_note.visibility = View.VISIBLE
@@ -133,12 +131,13 @@ class FlashCard : AppCompatActivity() {
             MotionEvent.ACTION_UP -> {
                 /* check if release is  within the source view */
                 val boundaries = Rect(0, 0, v.width, v.height)
-                /* correct false negative/positive count */
+
                 if (boundaries.contains(m.getX().toInt(), m.getY().toInt())) {
                     text_grieks.visibility = View.INVISIBLE
                     text_note.visibility = View.INVISIBLE
                     next()
-                } else if (!ScoreBoard.allAreCorrect()) ScoreBoard.undoLastScore()
+
+                } else if (!ScoreBoard.allAreCorrect()) ScoreBoard.undoLastScore() // correct false negative/positive count
             }
         }
         showScores()
@@ -195,6 +194,11 @@ class FlashCard : AppCompatActivity() {
                 useSpeech = !item.isChecked
                 item.isChecked = !item.isChecked
                 btn_speak.enabled(useSpeech)
+            }
+
+            /* heel blok laten horen */
+            R.id.menu_speak_block-> {
+                speakBlock()
             }
 
             R.id.menu_mail_lemma -> {
@@ -266,9 +270,9 @@ class FlashCard : AppCompatActivity() {
         /* create attention before removing from jumper table */
         AlertDialog.Builder(this)
               .setTitle("Jumper")
-              .setMessage("Lemma vaak genoeg goed beantwoord.\nVerwijder deze status voor dit lemma?")
-              .setNegativeButton("Nee, laat maar zo.", null)
-              .setPositiveButton("Ja, verwijder") { _, _ ->
+              .setMessage("Lemma vaak genoeg goed beantwoord.\nReset deze status voor dit lemma?")
+              .setNegativeButton("Nee, is goed zo.", null)
+              .setPositiveButton("Ja, reset!") { _, _ ->
                   db.execSQL("DELETE FROM jumpers WHERE idx=$thisIdx")
                   populateFields()
               }
@@ -332,15 +336,19 @@ class FlashCard : AppCompatActivity() {
     private fun populateFields() {
         thisIdx = mainCursor.getInt(mainCursor.getColumnIndex("idx"))
         thisGreekText = mainCursor.getString(mainCursor.getColumnIndex("GR"))
-        thisWoordsoort = mainCursor.getString(mainCursor.getColumnIndex("Woordsoort"))
+        thisDutchText = mainCursor.getString(mainCursor.getColumnIndex("NL"))
+        thisOpm = mainCursor.getString(mainCursor.getColumnIndex("Opm"))
+        thisWordType = mainCursor.getString(mainCursor.getColumnIndex("Woordsoort"))
+        thisWordGroup = mainCursor.getString(mainCursor.getColumnIndex("Groep"))
         thisPureLemma = mainCursor.getString(mainCursor.getColumnIndex("PureLemma"))
+        thisLevel = mainCursor.getInt(mainCursor.getColumnIndex("Level"))
         text_grieks.text = thisGreekText
-        text_nederlands.text = mainCursor.getString(mainCursor.getColumnIndex("NL"))
-        text_note.text = mainCursor.getString(mainCursor.getColumnIndex("Opm"))
+        text_nederlands.text = thisDutchText
+        text_note.text = thisOpm
         Log.d("hvr", "Current record: $thisIdx lemma: $thisPureLemma")
 
         /* enable/disable buttons when applicable */
-        val isVerb = (thisWoordsoort == "werkwoord")
+        val isVerb = (thisWordType == "werkwoord")
         btn_OTT.enabled(isVerb)
         btn_OTTT.enabled(isVerb && hasMellontas(thisGreekText))
         btn_VVT.enabled(isVerb && hasAorist(thisGreekText))
@@ -426,27 +434,34 @@ class FlashCard : AppCompatActivity() {
         alertDialog.show()
 
         /* change properties of the alert dialog internal views */
-        val messageView = alertDialog.findViewById(android.R.id.message) as TextView
-        messageView.textSize = 20f
+        (alertDialog.findViewById(android.R.id.message) as TextView).textSize = 20f
 
-        val neutralButton = alertDialog.getButton(AlertDialog.BUTTON_NEUTRAL)
-        neutralButton.textSize = 28f
-        neutralButton.setOnClickListener { cleanSpeech(verb, "standaard") }
-        neutralButton.enabled(useSpeech)
+        with(alertDialog.getButton(AlertDialog.BUTTON_NEUTRAL)) {
+            textSize = 28f
+            setOnClickListener { cleanSpeech(verb, "standaard") }
+            enabled(useSpeech)
+        }
 
         alertDialog.getButton(DialogInterface.BUTTON_POSITIVE).textSize = 28f
     }
 
     private fun mailLemma() {
-        val subject = "$thisIdx: $thisPureLemma"
-        val body = "Idx: $thisIdx\n\n" +
-              "Nederlands:\n ${text_nederlands.text.toString()}\n\n" +
-              "Grieks:\n $thisGreekText\n\n" +
-              "Note:\n ${text_note.text.toString()}"
+        val subject = "$thisIdx:\t$thisPureLemma"
+        val body = "Idx:\t$thisIdx\n\n" +
+              "Grieks:\t$thisGreekText\n\n" +
+              "Nederlands:\t$thisDutchText\n\n" +
+              "Note:\t$thisOpm\n\n" +
+              "Woordsoort:\t$thisWordType\n\n" +
+              "Woordgroep:\t$thisWordGroup\n\n" +
+              "Level:\t$thisLevel"
 
         val emailIntent = Intent(Intent.ACTION_SENDTO, Uri.fromParts("mailto", getString(R.string.contact_email), null))
               .putExtra(Intent.EXTRA_SUBJECT, subject )
               .putExtra(Intent.EXTRA_TEXT, body)
         startActivity(Intent.createChooser(emailIntent, "Send lemma by email..."))
+    }
+
+    private fun speakBlock(){
+
     }
 }
