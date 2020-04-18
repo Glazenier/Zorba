@@ -23,10 +23,6 @@
             android:checkable="true"
             />
     <item
-            android:id="@+id/menu_speak_block"
-            android:title="Spreek heel blok per lemma"
-            />
-    <item
             android:id="@+id/menu_mail_lemma"
             android:title="@string/menu_caption_email"
             />

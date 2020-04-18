@@ -97,7 +97,10 @@
 
     <!-- 🔈 luidspreker &#128264;  U+1F508  \ud83d\udd08-->
     <string name="speak">&#128264;</string>
-    <string name="no_speak">&#128263;</string>
+    <string name="btn_caption_play">▶</string>
+    <string name="btn_caption_pause">⏸</string>
+    <string name="btn_caption_rewind">⏮</string>
+    <string name="btn_caption_eye">👁</string>
 
     <string name="standard">standaard</string>
 
@@ -116,4 +119,7 @@
     <string name="word_group_type_subtitle">Selecteer woordsoort en/of woordgroep</string>
     <string name="werkwoordjes_oefenen">Werkwoordjes oefenen</string>
     <string name="luister_oefening">Luister oefening</string>
+    <string name="positie">%1$d - %2$d</string>
+    <string name="thatsall">ThatsAll</string>
+    <string name="one_one">1 &#8211; 1</string>
 </resources>

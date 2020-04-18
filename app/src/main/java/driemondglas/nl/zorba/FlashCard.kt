@@ -196,11 +196,6 @@ class FlashCard : AppCompatActivity() {
                 btn_speak.enabled(useSpeech)
             }
 
-            /* heel blok laten horen */
-            R.id.menu_speak_block-> {
-                speakBlock()
-            }
-
             R.id.menu_mail_lemma -> {
                 mailLemma()
             }

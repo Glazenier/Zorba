@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
-        >
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
             android:id="@+id/menu_set_groep_soort"
             android:title="@string/menu_caption_group_type"
@@ -14,16 +13,8 @@
             android:title="@string/menu_caption_reset_selects"
             />
     <item
-            android:id="@+id/action_import"
-            android:title="@string/menu_caption_import_database"
-            />
-    <item
             android:id="@+id/menu_speech"
             android:checkable="true"
             android:title="@string/menu_caption_use_speech"
-            />
-    <item
-            android:id="@+id/menu_about"
-            android:title="@string/menu_caption_about"
             />
 </menu>
