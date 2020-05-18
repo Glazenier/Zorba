@@ -1,5 +1,6 @@
 package driemondglas.nl.zorba
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
@@ -7,19 +8,20 @@ import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
+import android.view.*
+import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.luisterlijst.*
 import java.util.*
 import kotlin.concurrent.thread
 import driemondglas.nl.zorba.Utils.enabled
 
+@SuppressLint("SetTextI18n")
+
 class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     /* text to speech object used in this activity */
-    private lateinit var  spreker: TextToSpeech
+    private lateinit var spreker: TextToSpeech
 
     /* declare references to database helper class and query manager */
     private val zorbaDBHelper = ZorbaDBHelper(this)
@@ -43,6 +45,7 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
         /* set Greek as language for text to speech object */
         if (status == TextToSpeech.SUCCESS) {
             spreker.language = Locale("el_GR")
+            spreker.setSpeechRate(1f)
         } else {
             Log.d("hvr", "[spreker] speech initilization problem!")
         }
@@ -85,6 +88,16 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
             isDone = true
             startListening()
         }
+
+        sb_speed.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(sb_speed: SeekBar, progress: Int, fromUser: Boolean) {
+                val speed = sb_speed.progress / 10f
+                spreker.setSpeechRate(speed)
+                txt_speed.text = "${sb_speed.progress * 10}%"
+                }
+            override fun onStartTrackingTouch(sb_speed: SeekBar) {}
+            override fun onStopTrackingTouch(sb_speed: SeekBar) {}
+        })
 
         /* (late)init database */
         db = zorbaDBHelper.readableDatabase
@@ -134,7 +147,7 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
                 useSpeech = !item.isChecked
                 item.isChecked = !item.isChecked
                 btn_play.enabled(useSpeech)
-                stopTalking=true
+                stopTalking = true
                 spreker.stop()
             }
 
@@ -177,13 +190,13 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
     private fun startListening() {
         if (stopTalking and useSpeech) {
 
-            /* einde stilte */
-            stopTalking = false
-
             /* stop all ongoing speech */
             spreker.stop()
 
-            /* show disabled speaker icon */
+            /* remove stop sign */
+            stopTalking = false
+
+            /* show pause icon */
             btn_play.text = getString(R.string.btn_caption_pause)
 
             thread {
@@ -194,15 +207,16 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
 
                     /* if no more lemmas in cursor -> exit loop */
                     if (thisCursor.isAfterLast) {
-                        runOnUiThread {iv_thatsall.visibility=View.VISIBLE}
-                        break
+                        runOnUiThread { img_thatsall.visibility = View.VISIBLE }
+                        return@thread
                     }
 
                     /* display this position as progress indicatior to the user*/
-                    runOnUiThread { tv_blockpos.text = getString(R.string.positie, 1 + blockOffset, 1 + positionInBlock) }// users count from 1...
+                    runOnUiThread { txt_blockpos.text = getString(R.string.positie, 1 + blockOffset, 1 + positionInBlock) }  // users count from 1
 
                     /* get the first pure lemma text to speak */
                     val lemma = thisCursor.getString(thisCursor.getColumnIndex("PureLemma"))
+                    val meaning = thisCursor.getString(thisCursor.getColumnIndex("NL"))
 
                     /* say it. */
                     hasStarted = false
@@ -226,8 +240,8 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
 
                     /* display greek and meaning */
                     runOnUiThread {
-                        tv_lemma.text = thisCursor.getString(thisCursor.getColumnIndex("PureLemma"))
-                        tv_meaning.text = thisCursor.getString(thisCursor.getColumnIndex("NL"))
+                        txt_lemma.text = lemma
+                        txt_meaning.text = meaning
                     }
 
                     /* time text remains visible */
@@ -235,30 +249,35 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
 
                     /* clear text */
                     runOnUiThread {
-                        tv_lemma.text = ""
-                        tv_meaning.text = ""
+                        txt_lemma.text = ""
+                        txt_meaning.text = ""
                     }
 
                     /* move to next lemma */
                     if (!stopTalking) positionInBlock++
-                }
+
+                }  // end while
             }  // end of thread
         } else {
+            /* raise stop sign */
             stopTalking = true
-            /* show speaker icon */
+
+            /* show play icon */
             btn_play.text = getString(R.string.btn_caption_play)
-            iv_thatsall.visibility=View.INVISIBLE
+
+            /* hide 'that's all folkes' */
+            img_thatsall.visibility = View.INVISIBLE
         }
     }
 
     /* move one block forward */
     private fun nextBlock() {
 
-        /* set state to waiting for start */
+        /* raise stop sign */
         stopTalking = true
 
         /* check how many block are possible */
-        val maxOffset = if (blockSize == 0) 0 else (thisCursor.count-1) / blockSize
+        val maxOffset = if (blockSize == 0) 0 else (thisCursor.count - 1) / blockSize
 
         /* increase the offset to go to the next block */
         if (blockOffset < maxOffset) blockOffset++
@@ -270,19 +289,19 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
         thisCursor.moveToPosition(blockOffset * blockSize)
 
         /* reset the ui fields */
-        tv_lemma.text = ""
-        tv_meaning.text = ""
-        tv_blockpos.text = getString(R.string.positie, 1 + blockOffset, 1)
-        iv_thatsall.visibility=View.INVISIBLE
+        txt_lemma.text = ""
+        txt_meaning.text = ""
+        txt_blockpos.text = getString(R.string.positie, 1 + blockOffset, 1)
+        img_thatsall.visibility = View.INVISIBLE
 
-        /* show speaker icon */
+        /* show play icon */
         btn_play.text = getString(R.string.btn_caption_play)
     }
 
     /* move one block (set of lemmas) back */
     private fun prevBlock() {
 
-        /* set state to waiting for start */
+        /* raise the stop sign */
         stopTalking = true
 
         /* decrease the offset to go to the previous block */
@@ -295,44 +314,52 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
         thisCursor.moveToPosition(blockOffset * blockSize)
 
         /* reset the ui fields */
-        tv_lemma.text = ""
-        tv_meaning.text = ""
-        tv_blockpos.text = getString(R.string.positie, 1 + blockOffset, 1)
-        iv_thatsall.visibility=View.INVISIBLE
+        txt_lemma.text = ""
+        txt_meaning.text = ""
+        txt_blockpos.text = getString(R.string.positie, 1 + blockOffset, 1)
+        img_thatsall.visibility = View.INVISIBLE
 
-        /* show speaker icon */
+        /* show play icon */
         btn_play.text = getString(R.string.btn_caption_play)
     }
 
     /* finish intent and return to main activity */
     private fun finishIntent() {
+        /* close database related */
         thisCursor.close()
         db.close()
+
+        /* release tts resources */
         spreker.stop()
         spreker.shutdown()
+
+        /* finish activity */
         val myIntent = Intent()
         myIntent.putExtra("action", "stop")
         setResult(RESULT_OK, myIntent)
         finish()
     }
 
-    override fun onRestart() {
+    override fun onResume() {
         /* set state to waiting for start */
         stopTalking = true
-        /* show speaker icon */
+        /* show play icon */
         btn_play.text = getString(R.string.btn_caption_play)
-        super.onRestart()
+        super.onResume()
     }
 
-    override fun onStop() {
+    override fun onPause() {
         stopTalking = true
         spreker.stop()
-        super.onStop()
+        super.onPause()
     }
 
     override fun onDestroy() {
+        stopTalking
         spreker.stop()
         spreker.shutdown()
         super.onDestroy()
     }
+
+
 }

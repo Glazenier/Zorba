@@ -21,7 +21,6 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import driemondglas.nl.zorba.Utils.colorToast
 import driemondglas.nl.zorba.Utils.enabled
 import kotlinx.android.synthetic.main.verb_game.*
 
@@ -142,7 +141,7 @@ class VerbGame : AppCompatActivity() {
         while (gameCursor.moveToNext()) {
             if (setupVerb()) break
         }
-        if (gameCursor.isAfterLast) colorToast(this, "Thats all", Color.BLUE) else showByMode()
+        if (gameCursor.isAfterLast) colorToast(context = this, msg = "Thats all", bgColor = Color.BLUE) else showByMode()
     }
 
     /* move backwards in cursor until a verb is found that contains selected conjugation (ex: Not all have Paratatikos!) */
@@ -152,7 +151,7 @@ class VerbGame : AppCompatActivity() {
         while (gameCursor.moveToPrevious()) {
             if (setupVerb()) break
         }
-        if (gameCursor.isBeforeFirst) colorToast(this, "Thats all", Color.BLUE) else showByMode()
+        if (gameCursor.isBeforeFirst) colorToast(context = this, msg = "Thats all", bgColor = Color.BLUE) else showByMode()
     }
 
     private fun setupVerb(): Boolean {
@@ -287,7 +286,7 @@ class VerbGame : AppCompatActivity() {
     @Suppress("UNUSED_PARAMETER")
     fun onPersonClick(view: View) {
         if (!(chk_1.isChecked || chk_2.isChecked || chk_3.isChecked || chk_4.isChecked || chk_5.isChecked || chk_6.isChecked)) {
-            colorToast(this, "Need at least one person selected.", Color.RED)
+            colorToast(context = this, msg = "Need at least one person selected.", bgColor = Color.RED)
             chk_1.isChecked = true
         }
     }

@@ -6,6 +6,7 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.content.SharedPreferences
 import android.database.DatabaseUtils
+import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
@@ -22,7 +23,10 @@ import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.koushikdutta.ion.Ion
+import com.android.volley.Request
+import com.android.volley.Response
+import com.android.volley.toolbox.StringRequest
+import com.android.volley.toolbox.Volley
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 
@@ -40,27 +44,20 @@ const val DATABASE_URI = "https://driemondglas.nl/RESTgrieks_v3.php"
 lateinit var zorbaDBHelper: ZorbaDBHelper
 
 /* text to speech object used throughout the application*/
-var zorbaSpeaks: TextToSpeech? = null
+lateinit var zorbaSpeaks: TextToSpeech
 
 /* speech on or off */
 var useSpeech = true
 
 lateinit var  zorbaPreferences: SharedPreferences
 
+
+
 /* main activity class implements TextToSpeech.OnInitListener */
 class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
-    /* overriding onInit() is needed for the TextToSpeech.OnInitListener */
-    override fun onInit(status: Int) {
-        /* set Greek as language for text to speech object */
-        if (status == TextToSpeech.SUCCESS) {
-            zorbaSpeaks?.language = Locale("el_GR")
-        }
-        else Log.d("hvr", "speech initilization problem!")
-    }
-
     /* Initialise the Query Manager class.
-     * This class builds and manages all queries to the database */
+       This class builds and manages all queries to the database */
     private var queryManager = QueryManager.getInstance()
 
     /* list containing all the Lemma data items that attaches to the recycler through the adapter */
@@ -116,7 +113,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
 
         /* Init reference to tts */
-        zorbaSpeaks = TextToSpeech(this, this)
+        zorbaSpeaks = TextToSpeech(applicationContext, this)
 
 
         /* set listener for changes in search field   */
@@ -191,6 +188,30 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
     }
 
+    /* overriding onInit() is needed for the TextToSpeech.OnInitListener */
+    override fun onInit(status: Int) {
+        /* set Greek as language for text to speech object */
+        if (status == TextToSpeech.SUCCESS) {
+            zorbaSpeaks.language = Locale("el_GR")
+        }
+        else {
+            Log.d("hvr", "speech initilization problem!")
+            colorToast(context = this, msg = "speech initilization problem!",fgColor = Color.RED)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        zorbaSpeaks.language = Locale("el_GR")
+    }
+
+    override fun onDestroy() {
+        // Shutdown TTS
+        zorbaSpeaks.stop()
+        zorbaSpeaks.shutdown()
+        super.onDestroy()
+    }
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         /*  Inflate the menu from the layout file
          *  this adds menu items to the action bar if it is present.
@@ -198,15 +219,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         menuInflater.inflate(R.menu.menu_main, menu)
         menu.findItem(R.id.menu_speech).isChecked = useSpeech
         return true
-    }
-
-    override fun onDestroy() {
-        // Shutdown TTS
-        if (zorbaSpeaks != null) {
-            zorbaSpeaks?.stop()
-            zorbaSpeaks?.shutdown()
-        }
-        super.onDestroy()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -254,8 +266,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun refreshData() {
-        /* method clears the existing array list and refills it with fresh data from the database */
-        var lemmaItem: LemmaItem
+        /* method clears the existing array list and refills it with fresh data from the local database */
         val db = zorbaDBHelper.readableDatabase
         val myCursor = db.rawQuery(queryManager.mainQuery(), null)
 
@@ -264,7 +275,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         /* step through the records (wordtypes) */
         while (myCursor.moveToNext()) {
-            lemmaItem = LemmaItem(
+            val lemmaItem = LemmaItem(
                 myCursor.getString(myCursor.getColumnIndex("PureLemma")),
                 myCursor.getString(myCursor.getColumnIndex("GR")),
                 myCursor.getString(myCursor.getColumnIndex("NL")),
@@ -355,18 +366,26 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     /* import function moved here in stead of DbHelper class to address the progressBar in this context.
      * also, all synchronous code must be in the callback lambda */
     private fun importJson() {
-        progress_bar.visibility = View.VISIBLE
-        Ion.with(this)
-              .load(DATABASE_URI)
-              .asString()
-              .setCallback { _, result ->
-                  zorbaDBHelper.jsonToSqlite(result)
-                  refreshData()
-                  recyclerViewAdapter.notifyDataSetChanged()
-                  progress_bar.visibility = View.INVISIBLE
-              }
-    }
 
+        progress_bar.visibility = View.VISIBLE
+
+        /* initialise the Volley Request Queue */
+        val queue = Volley.newRequestQueue(this)
+
+        /* Request a string response from the URL */
+        val stringRequest = StringRequest(
+            Request.Method.GET, DATABASE_URI,
+            Response.Listener { response ->
+                progress_bar.visibility = View.INVISIBLE
+                zorbaDBHelper.jsonToSqlite(response)
+                refreshData()
+                recyclerViewAdapter.notifyDataSetChanged()
+            },
+            Response.ErrorListener { error -> Log.d("hvr", "That didn't work: $error") })
+
+        /* Add the requests to the RequestQueue. */
+        queue.add(stringRequest)
+    }
 
     private fun onSearch(searchText: CharSequence) {
         queryManager.search = searchText.toString()

@@ -3,7 +3,6 @@ package driemondglas.nl.zorba
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.util.Log
 import org.json.JSONArray
 
 /** This must be a singleton class so all classes can use the same instance. No class can call "new ZorbaDBHelper"
@@ -28,8 +27,6 @@ class ZorbaDBHelper(zorbaContext: Context) : SQLiteOpenHelper(zorbaContext, DATA
     }
 
     companion object {
-
-
         private const val DATABASE_VERSION = 1
         private const val DATABASE_NAME = "ZorbaDB"
         private const val SQL_DELETE_ENTRIES = "DROP TABLE IF EXISTS woorden"
@@ -94,6 +91,7 @@ class ZorbaDBHelper(zorbaContext: Context) : SQLiteOpenHelper(zorbaContext, DATA
          * \u2194 = ↔ double headed arrow
          * return result ?: ""   //Elvis: return result, if null return empty string "" */
 
-        return "^[^,\r(*;!.\u2194]*".toRegex().find(greekText)?.value ?: ""
+        // return "^[^,\r(*;!.\u2194]*".toRegex().find(greekText)?.value ?: ""
+        return "^[^,.\r(*\u2194]*".toRegex().find(greekText)?.value ?: ""    //leave exclamation and questionmark
     }
 }

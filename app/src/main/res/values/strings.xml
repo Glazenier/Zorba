@@ -107,7 +107,7 @@
     <string name="threshold_post"> x goed.</string>
     <string name="threshold_pre">Geslaagd bij </string>
 
-    <string name="version_info">Last change: Gebiedende wijs toegevoegd aan Game</string>
+    <string name="version_info">Last change: Luisterlijst. Luisteren per blok</string>
 
     <string name="wordgroup">Groep</string>
 
@@ -121,5 +121,6 @@
     <string name="luister_oefening">Luister oefening</string>
     <string name="positie">%1$d - %2$d</string>
     <string name="thatsall">ThatsAll</string>
-    <string name="one_one">1 &#8211; 1</string>
+    <string name="pct100">100%</string>
+    <string name="tempo">tempo</string>
 </resources>

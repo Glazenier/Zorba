@@ -455,8 +455,4 @@ class FlashCard : AppCompatActivity() {
               .putExtra(Intent.EXTRA_TEXT, body)
         startActivity(Intent.createChooser(emailIntent, "Send lemma by email..."))
     }
-
-    private fun speakBlock(){
-
-    }
 }

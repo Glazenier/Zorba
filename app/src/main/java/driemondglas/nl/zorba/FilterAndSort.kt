@@ -8,7 +8,6 @@ import android.text.TextWatcher
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
-import driemondglas.nl.zorba.Utils.colorToast
 import kotlinx.android.synthetic.main.filter_and_sort.*
 
 
@@ -169,7 +168,7 @@ class FilterAndSort : AppCompatActivity() {
             /* check valid block size in text field */
             val numberInField = text_blocksize.text.toString().toIntOrNull()
             if (numberInField == null || numberInField < 1) {
-               colorToast(this, getString(R.string.msg_blocksize_number))
+               colorToast(context = this, msg=getString(R.string.msg_blocksize_number))
                 sw_use_blocks.isChecked = false
             } else {
                 queryManager.useBlocks = true
@@ -184,7 +183,7 @@ class FilterAndSort : AppCompatActivity() {
         val targetSize = numberAsString.toString().toIntOrNull()
         when (targetSize) {
             null -> {
-                colorToast(this, getString(R.string.msg_blocksize_number))
+                colorToast(context = this, msg = getString(R.string.msg_blocksize_number))
                 queryManager.useBlocks = false
                 sw_use_blocks.isChecked = false
             }
@@ -207,7 +206,7 @@ class FilterAndSort : AppCompatActivity() {
             /* check valid length in text field */
             val textField = text_length.text.toString().toIntOrNull()
             if (textField==null || textField<1){
-                colorToast(this, getString(R.string.msg_lemmalength_number))
+                colorToast(context = this, msg = getString(R.string.msg_lemmalength_number))
                 sw_use_length.isChecked = false
             } else {
                 queryManager.useLength=true
@@ -222,7 +221,7 @@ class FilterAndSort : AppCompatActivity() {
         val targetLength = numberAsString.toString().toIntOrNull()
         when (targetLength) {
             null -> {
-                colorToast(this, getString(R.string.msg_lemmalength_number))
+                colorToast(context = this, msg = getString(R.string.msg_lemmalength_number))
                 queryManager.useLength = false
                 sw_use_length.isChecked = false
             }
@@ -291,7 +290,7 @@ class FilterAndSort : AppCompatActivity() {
             /* check valid length in text field */
             val textField = text_threshold.text.toString().toIntOrNull()
             if (textField==null || textField<1){
-                colorToast(this, getString(R.string.msg_threshold_number))
+                colorToast(context = this,msg = getString(R.string.msg_threshold_number))
                 sw_hide_jumpers.isChecked = false
             } else {
                 queryManager.hideJumpers=true
@@ -306,7 +305,7 @@ class FilterAndSort : AppCompatActivity() {
         val targetHeight = numberAsString.toString().toIntOrNull()
         when (targetHeight) {
             null -> {
-                colorToast(this, getString(R.string.msg_threshold_number))
+                colorToast(context = this, msg = getString(R.string.msg_threshold_number))
                 queryManager.hideJumpers = false
                 sw_hide_jumpers.isChecked = false
             }

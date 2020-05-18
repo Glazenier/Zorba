@@ -16,8 +16,6 @@ import android.text.style.StyleSpan
 import android.util.AttributeSet
 import android.view.MenuItem
 import android.view.View
-
-import driemondglas.nl.zorba.Utils.colorToast
 import driemondglas.nl.zorba.Utils.normalize
 import kotlinx.android.synthetic.main.hangman.*
 
@@ -81,7 +79,7 @@ class Hangman : AppCompatActivity() {
 
     fun again(@Suppress("UNUSED_PARAMETER") v: View) {
         /* if any more secret words are available, setup the next turn */
-        if (mainCursor.moveToNext()) setupSecret() else colorToast(this,"Thats all")
+        if (mainCursor.moveToNext()) setupSecret() else colorToast(context = this, msg = "Thats all")
     }
 
     @SuppressLint("DefaultLocale")
@@ -137,7 +135,7 @@ class Hangman : AppCompatActivity() {
 
             /* check if already dead */
             if (aantalFout > 7) {
-                colorToast(this, "You Hang !!!", Color.RED)
+                colorToast(context = this, msg = "You Hang !!!", bgColor = Color.RED)
                 text_dashed.text = theSecretWord
                 text_nl.text = getString(R.string.hangman_meaning, theTranslation)
             }
@@ -156,7 +154,7 @@ class Hangman : AppCompatActivity() {
             /* check if the game is over (when the revealed word equals the secret word) */
             if (reveal == theSecretWord) {
                 /* display congratulations  and show the translation */
-                colorToast(this,"YOU GOT IT !!!", Color.GREEN, Color.BLACK)
+                colorToast(context = this, msg = "YOU GOT IT !!!", bgColor = Color.GREEN, fgColor = Color.BLACK)
                 text_nl.text = getString(R.string.hangman_meaning, theTranslation)
             }
         }

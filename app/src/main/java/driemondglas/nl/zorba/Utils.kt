@@ -99,7 +99,7 @@ fun cleanSpeech(rawText: String, wordType: String) {
             result = rawText.replace(inBracketsRegex, "")
 
             /* 2: change greek questionmark ";" to normal "?" for speech */
-            result = result.replaceFirst(";", "?")
+            //result = result.replaceFirst(";", "?")
 
             /* 3: Change space dash space to comma and newline for speech to force pause (gebiedende wijs) */
             result = result.replace(" - ", ", ")
@@ -109,12 +109,12 @@ fun cleanSpeech(rawText: String, wordType: String) {
         }
     }
     Log.d("hvr", result)
-    zorbaSpeaks?.speak(result, TextToSpeech.QUEUE_FLUSH, null, "")
+    zorbaSpeaks.speak(result, TextToSpeech.QUEUE_FLUSH, null, "")
 }
 
 /* This function returns all the greek characters from top line of the text until non greek is found */
 fun getEnestotas(textGreek: String): String {
-    return firstWordRegex.find(textGreek)?.value ?: ""
+    return firstWordRegex.find(input = textGreek)?.value ?: ""
 }
 
 /* This function returns all the greek characters from the second line of the text until non greek is found */
@@ -324,7 +324,7 @@ fun conjugateAorist(textGreek: String): String {
                 }
 
                 // 5 - replace target character with accented one
-                stemPlural = stemPlural.replace(newStressPos, stressOneChar(targetCharacter))
+                stemPlural = stemPlural.replace(atPosition=newStressPos, replacement=stressOneChar(targetCharacter))
 
                 // 6 - if needed, lose the extraneous ή or έ at the start
                 if (aorist[0]=='ή' || aorist[0]=='έ') {
@@ -351,7 +351,7 @@ fun conjugateAorist(textGreek: String): String {
                             stemPlural.removeRange(positionOfStressedE, positionOfStressedE + 1)
                         } else {
                             // put back original vowel from same position in future tense
-                            stemPlural.replace(positionOfStressedE, mellontas[positionOfStressedE])
+                            stemPlural.replace(atPosition = positionOfStressedE, replacement = mellontas[positionOfStressedE])
                         }
                     }
                 }
@@ -402,7 +402,7 @@ fun conjugateParatatikos(textGreek: String): String {
                 }
 
                 // 5 - replace target character with accented one
-                stemPlural = stemPlural.replace(newStressPos, stressOneChar(charTarget))
+                stemPlural = stemPlural.replace(atPosition = newStressPos, replacement = stressOneChar(charTarget))
 
                 // 6 - if needed, lose the extraneous ή or έ at the start
                 if (unStressOneChar(enestotas[0]) != unStressOneChar(paratatikos[0])) stemPlural = stemPlural.drop(1)
@@ -413,7 +413,7 @@ fun conjugateParatatikos(textGreek: String): String {
                     //  Find stressed epsilon (έ) but not on position 0, save position
                     //  put back original vowel (α) from same position in present tense
                     val positionOfStressedE = stemSingle.indexOf('έ', 1)
-                    if (positionOfStressedE > -1) stemPlural = stemPlural.replace(positionOfStressedE, mellontas[positionOfStressedE])
+                    if (positionOfStressedE > -1) stemPlural = stemPlural.replace(atPosition = positionOfStressedE, replacement = mellontas[positionOfStressedE])
                 }
                 return "${stemSingle}α, ${stemSingle}ες, ${stemSingle}ε, ${stemPlural}αμε, ${stemPlural}ατε, ${stemSingle}αν"
             }
@@ -486,7 +486,7 @@ fun createProstaktiki(textGreek: String): String {
     if (stressPos == -1) {
         /* find last vowel */
         val vowelPos = stem.lastIndexOfAny(allUnstressedVowels)
-        stem = stem.replace(vowelPos, stressOneChar(stem[vowelPos]))
+        stem = stem.replace(atPosition = vowelPos, replacement = stressOneChar(unStressed = stem[vowelPos]))
         stressPos = vowelPos
     }
 
@@ -499,10 +499,31 @@ fun createProstaktiki(textGreek: String): String {
     /* move stress 1 syllable to the left, if possible */
     if (stressPos > 0) {
         val vowelPos = single.take(stressPos - 1).lastIndexOfAny(allUnstressedVowels)  // stressPos minus one to deal with double vowels
-        if (vowelPos > -1) single = single.unStress().replace(vowelPos, stressOneChar(single[vowelPos]))
+        if (vowelPos > -1) single = single.unStress().replace(atPosition = vowelPos, replacement = stressOneChar(unStressed = single[vowelPos]))
     }
     /* return Imperative as: 2nd person single - 2nd person plural */
     return "$single - $plural"
+}
+
+
+fun colorToast(context: Context, msg: String, bgColor: Int = Color.DKGRAY, fgColor: Int = Color.WHITE, duration: Int = 0) {
+    /* create the normal Toast message */
+    val myToast = Toast.makeText(context, msg, if (duration==0) Toast.LENGTH_SHORT else Toast.LENGTH_LONG)
+
+    /* create a reference to the view that holds this Toast */
+    val myView = myToast.view
+
+    /* create a reference to the text-view part of the Toast */
+    val myText = myView.findViewById(android.R.id.message) as TextView
+
+    /* change the text color */
+    myText.setTextColor(fgColor)
+
+    /* change background */
+    myView.setBackgroundColor(bgColor)
+
+    /* and  finally ... show this differently colored Toast */
+    myToast.show()
 }
 
 object Utils {
@@ -520,9 +541,9 @@ object Utils {
      * input: exactly one(1) stressed greek character.
      * output: same character without stress (tonos / accent).
      * if input not part of stressed vowels it returns original input character. */
-    fun unStressOneChar(stressed: Char): Char {
-        val matchIndex = allStressedVowels.indexOf(stressed)
-        return if (matchIndex >= 0) allUnstressedVowels[matchIndex] else stressed
+    fun unStressOneChar(target: Char): Char {
+        val matchIndex = allStressedVowels.indexOf(target)
+        return if (matchIndex >= 0) allUnstressedVowels[matchIndex] else target
     }
 
     /* Extension function unStress
@@ -531,35 +552,12 @@ object Utils {
      * if input not containing stressed vowel it returns original input string. */
     fun String.unStress(): String {
         val stressPos = this.indexOfAny(allStressedVowels)
-        return if (stressPos > -1) this.replace(stressPos, unStressOneChar(this[stressPos])) else this
+        return if (stressPos > -1) this.replace(atPosition = stressPos, replacement = unStressOneChar(target = this[stressPos])) else this
     }
 
     /* Extension function replace character at index */
-    fun String.replace(idx: Int, replacement: Char): String {
-        return if (idx < length) take(idx) + replacement + drop(idx + 1) else this
-    }
-
-    fun colorToast(context: Context, msg: String, bgColor: Int = Color.DKGRAY, fgColor: Int = Color.WHITE, duur: Int = 0) {
-        /* create the normal Toast message */
-
-        val duurt = if (duur == 0) Toast.LENGTH_SHORT else Toast.LENGTH_LONG
-        val myToast = Toast.makeText(context, msg, duurt)
-
-        /* create a reference to the view that holds this Toast */
-        val myView = myToast.view
-
-        /* create a reference to the text-view part of the Toast */
-        val myText = myView.findViewById(android.R.id.message) as TextView
-
-        /* change the text color */
-        myText.setTextColor(fgColor)
-
-        /* change background while keeping original border */
-//        myView.background.setColorFilter(bgColor, PorterDuff.Mode.SRC_IN)
-        myView.setBackgroundColor(bgColor)
-
-        /* and  finally ... show this alternatively colored Toast */
-        myToast.show()
+    fun String.replace(atPosition: Int, replacement: Char): String {
+        return if (atPosition < length) take(atPosition) + replacement + drop(atPosition + 1) else this
     }
 
     fun String.normalize(): String {

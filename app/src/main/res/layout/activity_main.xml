@@ -20,9 +20,9 @@
             android:textAlignment="center"
             android:textSize="16sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             />
     <ImageView
             android:id="@+id/img_flag_greek"
@@ -31,8 +31,8 @@
             android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
             android:contentDescription="@string/flag_greek"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:srcCompat="@drawable/flaggrsmall"
             />
     <ImageView
@@ -42,8 +42,8 @@
             android:layout_marginTop="8dp"
             android:layout_marginEnd="16dp"
             android:contentDescription="@string/flag_dutch"
-            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             app:srcCompat="@drawable/flagnlsmall"
             />
     <View
@@ -52,31 +52,36 @@
             android:layout_height="2dp"
             android:layout_margin="8dp"
             android:background="?android:attr/listDivider"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/img_flag_greek"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             />
     <ImageButton
             android:id="@+id/btn_OpenDeck"
             style="@android:style/Widget.ImageButton"
             android:layout_width="80dp"
             android:layout_height="80dp"
+            android:layout_marginStart="8dp"
             android:contentDescription="@string/open_flashcards"
             android:scaleType="centerCrop"
             android:src="@drawable/flash"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintBottom_toBottomOf="parent"
             />
     <ImageButton
-            android:id="@+id/btn_hangman"
+            android:id="@+id/btn_luister"
             style="@android:style/Widget.ImageButton"
             android:layout_width="80dp"
             android:layout_height="80dp"
-            android:contentDescription="@string/play_hangman"
-            android:scaleType="centerCrop"
-            android:src="@drawable/galgje"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:contentDescription="@string/luister_oefening"
+            android:scaleType="fitCenter"
+            android:src="@drawable/listen"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.33"
+            app:layout_constraintBottom_toBottomOf="parent"
             />
     <ImageButton
             android:id="@+id/btn_verb_game"
@@ -86,20 +91,24 @@
             android:contentDescription="@string/werkwoordjes_oefenen"
             android:scaleType="centerCrop"
             android:src="@drawable/werkinuitvoering"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.67"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/btn_hangman"
             />
     <ImageButton
-            android:id="@+id/btn_luister"
+            android:id="@+id/btn_hangman"
             style="@android:style/Widget.ImageButton"
             android:layout_width="80dp"
             android:layout_height="80dp"
-            android:contentDescription="@string/luister_oefening"
+            android:layout_marginEnd="8dp"
+            android:contentDescription="@string/play_hangman"
             android:scaleType="centerCrop"
-            android:src="@drawable/oor"
+            android:src="@drawable/galgje"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/btn_verb_game"
-            app:layout_constraintStart_toEndOf="@+id/btn_OpenDeck"
             />
     <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_view"
@@ -108,10 +117,10 @@
             android:layout_marginBottom="8dp"
             android:background="@android:color/white"
             android:scrollbars="none"
-            app:layout_constraintBottom_toTopOf="@+id/text_search"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/divider"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toTopOf="@+id/text_search"
             tools:listitem="@layout/item_layout"
             />
     <ProgressBar

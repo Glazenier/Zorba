@@ -33,7 +33,7 @@ class LemmaRecyclerAdapter(private val lemmaArrayList: ArrayList<LemmaItem>) : R
             speaker.tag = lemmaArrayList[position].woordsoort
             speaker.enabled(useSpeech)
             if (useSpeech) speaker.setOnClickListener {
-                zorbaSpeaks?.speak(lemmaArrayList[position].pureLemma, TextToSpeech.QUEUE_FLUSH, null, "")
+                zorbaSpeaks.speak(lemmaArrayList[position].pureLemma, TextToSpeech.QUEUE_FLUSH, null, "")
             }
         }
     }
@@ -55,10 +55,10 @@ class LemmaRecyclerAdapter(private val lemmaArrayList: ArrayList<LemmaItem>) : R
         val speaker: TextView = itemView.findViewById(R.id.speaker) as TextView
 
         init {
-            /* set tag as current view holder
-             * setOnClickListener() as local View.OnClickListener variable.
-             */
+            /* set tag as current view holder */
             itemView.tag = this
+
+            /*  setOnClickListener() as local View.OnClickListener variable. */
             itemView.setOnClickListener(viewHolderClickListener)
         }
     }
