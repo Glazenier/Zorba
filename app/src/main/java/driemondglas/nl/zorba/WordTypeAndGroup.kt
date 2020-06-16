@@ -112,7 +112,7 @@ class WordTypeAndGroup : AppCompatActivity() {
         db.close()
 
         // attach data to listbox via adapter
-        val myAdapter = ArrayAdapter<String>(this, android.R.layout.simple_list_item_checked, allGroups)
+        val myAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_checked, allGroups)
         lst_wordgroup.adapter = myAdapter
         lst_wordgroup.setItemChecked(oldPosition, true)
     }
@@ -141,7 +141,7 @@ class WordTypeAndGroup : AppCompatActivity() {
         myCursor.close()
         db.close()
         // attach data to listbox via adapter
-        val myAdapter = ArrayAdapter<String>(this, android.R.layout.simple_list_item_checked, allTypes)
+        val myAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_checked, allTypes)
         lst_wordtype.adapter = myAdapter
         lst_wordtype.setItemChecked(oldPosition, true)
     }

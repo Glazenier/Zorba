@@ -9,7 +9,6 @@
     <string name="alphabetical">alfabetisch</string>
 
     <string name="app_name">Zorba</string>
-    <string name="app_subtitle">by Herman</string>
 
     <string name="apply">aan/uit</string>
 
@@ -100,7 +99,8 @@
     <string name="btn_caption_play">▶</string>
     <string name="btn_caption_pause">⏸</string>
     <string name="btn_caption_rewind">⏮</string>
-    <string name="btn_caption_eye">👁</string>
+    <string name="btn_caption_restart">🔄</string>
+
 
     <string name="standard">standaard</string>
 
@@ -114,12 +114,10 @@
     <string name="wordtype">Woordsoort</string>
     <string name="ask">Ask</string>
     <string name="reveal">Reveal</string>
-    <string name="volgende">Next</string>
-    <string name="laat_zien">GOED</string>
     <string name="word_group_type_subtitle">Selecteer woordsoort en/of woordgroep</string>
     <string name="werkwoordjes_oefenen">Werkwoordjes oefenen</string>
     <string name="luister_oefening">Luister oefening</string>
-    <string name="positie">%1$d - %2$d</string>
+    <string name="positie">blok %1$d - %2$d</string>
     <string name="thatsall">ThatsAll</string>
     <string name="pct100">100%</string>
     <string name="tempo">tempo</string>

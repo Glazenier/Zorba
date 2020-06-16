@@ -49,9 +49,8 @@ lateinit var zorbaSpeaks: TextToSpeech
 /* speech on or off */
 var useSpeech = true
 
+/* shared preferences to keep certain user values */
 lateinit var  zorbaPreferences: SharedPreferences
-
-
 
 /* main activity class implements TextToSpeech.OnInitListener */
 class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {

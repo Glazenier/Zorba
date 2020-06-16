@@ -112,6 +112,10 @@ fun cleanSpeech(rawText: String, wordType: String) {
     zorbaSpeaks.speak(result, TextToSpeech.QUEUE_FLUSH, null, "")
 }
 
+fun logThis (logWhat: String){
+    Log.d("hvr", logWhat)
+}
+
 /* This function returns all the greek characters from top line of the text until non greek is found */
 fun getEnestotas(textGreek: String): String {
     return firstWordRegex.find(input = textGreek)?.value ?: ""
