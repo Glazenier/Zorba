@@ -16,6 +16,7 @@ import android.text.style.StyleSpan
 import android.util.AttributeSet
 import android.view.MenuItem
 import android.view.View
+import androidx.core.content.ContextCompat
 import driemondglas.nl.zorba.Utils.normalize
 import kotlinx.android.synthetic.main.hangman.*
 
@@ -28,8 +29,6 @@ import kotlinx.android.synthetic.main.hangman.*
 *                  id: "@+id/gallow"
 */
 class Hangman : AppCompatActivity() {
-//    private val zorbaDBHelper = ZorbaDBHelper(this)
-    private val queryManager: QueryManager = QueryManager.getInstance()
     private lateinit var mainCursor: Cursor
     private lateinit var db: SQLiteDatabase
 
@@ -38,7 +37,7 @@ class Hangman : AppCompatActivity() {
     private var normalizedSecret = ""         // normalized secret word (the accented characters) and the final sigma(ς) replaced by sigma(σ))
     private var guessed: String = ""          // guessed character
     private var reveal = ""                   // displays guessed (accented) characters (and correct final sigma)
-    private var alreadyGuessedButWrong = ""   // string holding the faulty guesses
+    private var alreadyGuessedButWrong = ""  // string holding the faulty guesses
     private var aantalFout = 0                // error counter
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -67,8 +66,7 @@ class Hangman : AppCompatActivity() {
         /* get the specific 'hangman' selection query from the Query manager (ex. not larger than 16 characters)
         * and put the resulting records in the cursor
         */
-        val query = queryManager.hangmanQuery()
-        mainCursor = db.rawQuery(query, null)
+        mainCursor = db.rawQuery(QueryManager.hangmanQuery(), null)
 
         /* if there is indeed a record returned...
          * ... setup the game
@@ -218,7 +216,7 @@ class HangmanCanvas(context: Context, attrs: AttributeSet) : View(context, attrs
         super.onDraw(canvas)
         if (canvas == null) return
 
-        myPaint.setARGB(255, 0, 0, 0)
+        myPaint.setColor(ContextCompat.getColor(context, R.color.gallow_color))
         myPaint.strokeWidth = STROKEWIDTH * 1.5f
         myPaint.style = Paint.Style.STROKE  // unfilled shapes (the head)
 
@@ -226,7 +224,7 @@ class HangmanCanvas(context: Context, attrs: AttributeSet) : View(context, attrs
         canvas.drawLines(gallowParts, myPaint)
 
         /* change the line color */
-        myPaint.setARGB(255, 255, 0, 255)
+        myPaint.setColor(ContextCompat.getColor(context, R.color.body_color))
         myPaint.strokeWidth = STROKEWIDTH
         /* draw the head if error count is 1 or more */
         if (fout > 0) canvas.drawOval(headCoords[0], headCoords[1], headCoords[2], headCoords[3], myPaint)

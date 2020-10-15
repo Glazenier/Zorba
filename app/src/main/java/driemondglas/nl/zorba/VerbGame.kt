@@ -27,10 +27,8 @@ import kotlinx.android.synthetic.main.verb_game.*
 
 @SuppressLint("SetTextI18n")
 class VerbGame : AppCompatActivity() {
-    private val queryManager: QueryManager = QueryManager.getInstance()
     private lateinit var gameCursor: Cursor
     private lateinit var db: SQLiteDatabase
-
 
     private var mode = "conjugate"
 
@@ -69,7 +67,10 @@ class VerbGame : AppCompatActivity() {
         fastest = zorbaPreferences.getInt("fastest", 3000)  // 5 min is the default value
 
         /* initialise all onClick listeners here */
-        btn_go.setOnTouchListener { v: View, m: MotionEvent -> touche(v, m); true }
+        btn_go.setOnTouchListener { v: View, m: MotionEvent ->
+            touche(v, m)
+            v.performClick()
+            true }
         btn_show_ladder.setOnClickListener { txt_conjugations.visibility = if (txt_conjugations.visibility == View.VISIBLE) View.INVISIBLE else View.VISIBLE }
         sw_mode.setOnClickListener { switchGameMode() }
         btn_fout.setOnClickListener { startOver() }
@@ -83,24 +84,22 @@ class VerbGame : AppCompatActivity() {
         btn_previous.setOnClickListener { backwardToPreviousMatch() }
         btn_verbal.setOnClickListener { cleanSpeech("$thePersonGR  $theConjugation", "anders") }
 
-        /* save original QueryManager's level values mand set initial values for the game*/
-        with (queryManager) {
-            savedLevelBasic = levelBasic
-            savedLevelAdvanced = levelAdvanced
-            savedLevelBallast = levelBallast
+        /* save original level values mand set initial values for the game*/
+        savedLevelBasic = levelBasic
+        savedLevelAdvanced = levelAdvanced
+        savedLevelBallast = levelBallast
 
-            /* for the game start with basic level only */
-            sw_level_basis.isChecked = true
-            sw_level_gevorderd.isChecked = false
-            sw_level_ballast.isChecked = false
+        /* for the game start with basic level only */
+        sw_level_basis.isChecked = true
+        sw_level_gevorderd.isChecked = false
+        sw_level_ballast.isChecked = false
 
-            levelBasic = true
-            levelAdvanced = false
-            levelBallast = false
-        }
+        levelBasic = true
+        levelAdvanced = false
+        levelBallast = false
 
         /* get the specific selection query from the Query manager  */
-        gameCursor = db.rawQuery(queryManager.verbGameQuery(), null)
+        gameCursor = db.rawQuery(QueryManager.verbGameQuery(), null)
 
         /* ... and setup the game */
         forwardUntilMatch()
@@ -108,11 +107,9 @@ class VerbGame : AppCompatActivity() {
 
     override fun onStop() {
         /* restore original level values as before the game started */
-        with (queryManager) {
-            levelBasic = savedLevelBasic
-            levelAdvanced = savedLevelAdvanced
-            levelBallast = savedLevelBallast
-        }
+        levelBasic = savedLevelBasic
+        levelAdvanced = savedLevelAdvanced
+        levelBallast = savedLevelBallast
         super.onStop()
     }
 
@@ -120,7 +117,7 @@ class VerbGame : AppCompatActivity() {
     private fun switchGameMode() {
         if (sw_mode.isChecked) {
             mode = "determinate"
-            sw_mode.setTextColor(Color.DKGRAY)
+            sw_mode.setTextColor(ContextCompat.getColor(this, R.color.normal_text_color))
             sw_mode.setTypeface(null, Typeface.NORMAL)
             lbl_herken.setTextColor(ContextCompat.getColor(this, R.color.colorAccent))
             lbl_herken.setTypeface(null, Typeface.BOLD)
@@ -128,7 +125,7 @@ class VerbGame : AppCompatActivity() {
             mode = "conjugate"
             sw_mode.setTextColor(ContextCompat.getColor(this, R.color.colorAccent))
             sw_mode.setTypeface(null, Typeface.BOLD)
-            lbl_herken.setTextColor(Color.DKGRAY)
+            lbl_herken.setTextColor(ContextCompat.getColor(this, R.color.normal_text_color))
             lbl_herken.setTypeface(null, Typeface.NORMAL)
         }
         showByMode()
@@ -137,7 +134,7 @@ class VerbGame : AppCompatActivity() {
     /* move forward in cursor until a verb is found that contains selected conjugation (ex: Not all have Paratatikos!) */
     private fun forwardUntilMatch() {
         txt_conjugations.visibility = View.INVISIBLE
-        text_ask.setTextColor(Color.DKGRAY)
+        text_ask.setTextColor(ContextCompat.getColor(this, R.color.normal_text_color))
         while (gameCursor.moveToNext()) {
             if (setupVerb()) break
         }
@@ -147,7 +144,7 @@ class VerbGame : AppCompatActivity() {
     /* move backwards in cursor until a verb is found that contains selected conjugation (ex: Not all have Paratatikos!) */
     private fun backwardToPreviousMatch() {
         txt_conjugations.visibility = View.INVISIBLE
-        text_ask.setTextColor(Color.DKGRAY)
+        text_ask.setTextColor(ContextCompat.getColor(this, R.color.normal_text_color))
         while (gameCursor.moveToPrevious()) {
             if (setupVerb()) break
         }
@@ -192,7 +189,7 @@ class VerbGame : AppCompatActivity() {
                     theTense = "Gebiedende wijs"
                     createProstaktiki(theGreek)
                 }
-                else -> UNKNOWN_VERB
+                else -> "Werkwoordvorm onbekend"
             }
 
             /* Create set of selected persons: 0 = 1st person singular, 1 = 2nd person singular, ..., 3 = 1st person plural ... etc.
@@ -242,7 +239,7 @@ class VerbGame : AppCompatActivity() {
 
     private fun reveal() {
         text_reveal.visibility = View.VISIBLE
-        text_ask.setTextColor(ContextCompat.getColor(this, R.color.kobaltblauw))
+        text_ask.setTextColor(ContextCompat.getColor(this, R.color.blue_text_color))
         text_ask.text = "$thePersonGR $theConjugation"
 
         val textReveal = SpannableString("$theTense van $theVerb ($theMeaning).")
@@ -250,7 +247,7 @@ class VerbGame : AppCompatActivity() {
         val spanEnd = spanStart + theVerb.length
 
         textReveal.setSpan(StyleSpan(Typeface.BOLD_ITALIC), spanStart, spanEnd, 0)
-        textReveal.setSpan(ForegroundColorSpan(ContextCompat.getColor(this, R.color.kobaltblauw)), spanStart, spanEnd, 0)
+        textReveal.setSpan(ForegroundColorSpan(ContextCompat.getColor(this, R.color.blue_text_color)), spanStart, spanEnd, 0)
         text_reveal.text = textReveal
 
         chronometer.stop()
@@ -299,12 +296,10 @@ class VerbGame : AppCompatActivity() {
             sw_level_ballast.isChecked = true
         }
         /* forward to query manager */
-        with (queryManager) {
-            levelBasic = sw_level_basis.isChecked
-            levelAdvanced = sw_level_gevorderd.isChecked
-            levelBallast = sw_level_ballast.isChecked
-        }
-        gameCursor = db.rawQuery(queryManager.verbGameQuery(), null)
+        levelBasic = sw_level_basis.isChecked
+        levelAdvanced = sw_level_gevorderd.isChecked
+        levelBallast = sw_level_ballast.isChecked
+        gameCursor = db.rawQuery(QueryManager.verbGameQuery(), null)
         forwardUntilMatch()
     }
 
@@ -379,8 +374,8 @@ class VerbGame : AppCompatActivity() {
     private fun buidScoreResult() {
         val aantal = scores.size
         val totaal = scores.sum()
-        val min = intToTime(scores.min()!!)
-        val max = intToTime(scores.max()!!)
+        val min = intToTime(scores.minOrNull()!!)
+        val max = intToTime(scores.maxOrNull()!!)
         val gemiddeld = intToTime(scores.average().toInt())
         var bravo=""
         if (totaal < fastest) {

@@ -27,6 +27,10 @@
             android:title="@string/menu_caption_email"
             />
     <item
+            android:id="@+id/menu_raw_view"
+            android:title="@string/menu_caption_base_record"
+            />
+    <item
             android:id="@+id/menu_wordreference"
             android:title="@string/menu_caption_wordreference"
             />
@@ -34,4 +38,5 @@
             android:id="@+id/menu_neurolingo"
             android:title="@string/menu_caption_neurolingo"
             />
+
 </menu>

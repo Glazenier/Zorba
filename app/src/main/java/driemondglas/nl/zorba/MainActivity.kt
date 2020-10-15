@@ -20,11 +20,12 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import android.webkit.WebView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+
 import com.android.volley.Request
-import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import kotlinx.android.synthetic.main.activity_main.*
@@ -37,8 +38,31 @@ import java.util.*
 const val SHOW_CARDS_CODE = 3108
 const val GROEP_SOORT_CODE = 3208
 const val SELECTIES_CODE = 3308
-const val UNKNOWN_VERB = "Werkwoordvorm onbekend"
+
 const val DATABASE_URI = "https://driemondglas.nl/RESTgrieks_v3.php"
+const val TAG = "hvr"
+
+/* 'global' variables holding configuration data */
+var blockSize = 20        // number of lemma's to speak in one turn.
+var useBlocks = true      // turn off usage of blocks entirely. Database is then in fact one giant block
+var wordGroup = ""
+var wordType = ""
+var levelBasic = true
+var levelAdvanced = true
+var levelBallast = true
+var useLength = false
+var pureLemmaLength = 0
+var initial = ""
+var orderbyTag = "index"
+var orderDescending = true
+var search = ""
+
+/* Jumpers:
+ * Jumpers are lemmas with number of correct answers above the set threshold. "They jumped the threshold"
+ * The idea is to hide those lemmas in further selections to focus on remaining lemmas
+ */
+var jumpThreshold = 2
+var hideJumpers = false
 
 /*  Initialise the database helper class. */
 lateinit var zorbaDBHelper: ZorbaDBHelper
@@ -49,15 +73,11 @@ lateinit var zorbaSpeaks: TextToSpeech
 /* speech on or off */
 var useSpeech = true
 
-/* shared preferences to keep certain user values */
-lateinit var  zorbaPreferences: SharedPreferences
+/* shared preferences to keep configuration as well as certain progress ans score values */
+lateinit var zorbaPreferences: SharedPreferences
 
 /* main activity class implements TextToSpeech.OnInitListener */
 class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
-
-    /* Initialise the Query Manager class.
-       This class builds and manages all queries to the database */
-    private var queryManager = QueryManager.getInstance()
 
     /* list containing all the Lemma data items that attaches to the recycler through the adapter */
     private val lemmaArrayList: ArrayList<LemmaItem> = ArrayList()
@@ -97,15 +117,32 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         zorbaPreferences = applicationContext.getSharedPreferences("zorbaPrefKey", Context.MODE_PRIVATE)
 
+        /* retrieve config from shared preferences  */
+        useBlocks = zorbaPreferences.getBoolean("useblocks", true)
+        blockSize = zorbaPreferences.getInt("blocksize", 5)
+        wordGroup = zorbaPreferences.getString("wordgroup", "") ?: ""
+        wordType = zorbaPreferences.getString("wordtype", "") ?: ""
+        levelBasic = zorbaPreferences.getBoolean("levelbasic", true)
+        levelAdvanced = zorbaPreferences.getBoolean("leveladvanced", true)
+        levelBallast = zorbaPreferences.getBoolean("levelballast", true)
+        useLength = zorbaPreferences.getBoolean("uselength", true)
+        pureLemmaLength = zorbaPreferences.getInt("purelemmalenght", 6)
+        initial = zorbaPreferences.getString("initial", "") ?: ""
+        orderbyTag = zorbaPreferences.getString("orderbytag", "index") ?: "index"
+        orderDescending = zorbaPreferences.getBoolean("orderdecending", true)
+        jumpThreshold = zorbaPreferences.getInt("jumpthreshold", 2)
+        hideJumpers = zorbaPreferences.getBoolean("hidejumpers", false)
+
+
         val zTitle = SpannableString("ZORBA by Herman")
-        with (zTitle) {
+        with(zTitle) {
             setSpan(StyleSpan(Typeface.BOLD_ITALIC), 0, 4, 0)
             setSpan(StyleSpan(Typeface.NORMAL), 5, 15, 0)
             setSpan(RelativeSizeSpan(0.75f), 5, 15, 0)
         }
 
         /* create action bar on top */
-        with (supportActionBar!!){
+        with(supportActionBar!!) {
             setDisplayShowHomeEnabled(true)
             title = zTitle
             setIcon(R.drawable.greneth)
@@ -113,7 +150,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         /* Init reference to tts */
         zorbaSpeaks = TextToSpeech(applicationContext, this)
-
 
         /* set listener for changes in search field   */
         text_search.addTextChangedListener(object : TextWatcher {
@@ -192,10 +228,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         /* set Greek as language for text to speech object */
         if (status == TextToSpeech.SUCCESS) {
             zorbaSpeaks.language = Locale("el_GR")
-        }
-        else {
-            Log.d("hvr", "speech initilization problem!")
-            colorToast(context = this, msg = "speech initilization problem!",fgColor = Color.RED)
+        } else {
+            Log.d(TAG, "speech initilization problem!")
+            colorToast(context = this, msg = "speech initilization problem!", fgColor = Color.RED)
         }
     }
 
@@ -208,6 +243,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         // Shutdown TTS
         zorbaSpeaks.stop()
         zorbaSpeaks.shutdown()
+
+        zorbaPreferences.edit().putInt("last_viewed_block", 0).apply()
+
         super.onDestroy()
     }
 
@@ -240,7 +278,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
             /* menu wis alle selecties */
             R.id.menu_clear_selects -> {
-                queryManager.clearAll()
+                clearAll()
                 refreshData()
                 recyclerViewAdapter.notifyDataSetChanged()
             }
@@ -256,7 +294,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
 
             /*  about applicattion */
-            R.id.menu_about -> buidAbout()
+            R.id.menu_about -> about()
 
             /* perform any other actions triggered from parent or beyond */
             else -> super.onOptionsItemSelected(item)
@@ -267,7 +305,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private fun refreshData() {
         /* method clears the existing array list and refills it with fresh data from the local database */
         val db = zorbaDBHelper.readableDatabase
-        val myCursor = db.rawQuery(queryManager.mainQuery(), null)
+        val myCursor = db.rawQuery(QueryManager.mainQuery(), null)
 
         /* remove existing content */
         lemmaArrayList.clear()
@@ -319,19 +357,29 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     /* Implement the 'about...' method invoked through the main menu */
-    private fun buidAbout() {
-        val textToDisplay =
-            getString(R.string.description) +
-                  "\n" + "Author: " + getString(R.string.author) +
-                  "\n" + "Version: " + BuildConfig.VERSION_NAME +
-                  "\n" + "Build: " + BuildConfig.VERSION_CODE +
-                  "\n" + getString(R.string.version_info) +
-                  showCount()
+    private fun about() {
+        val webView = WebView(applicationContext)
+        val about = "<html><head><style>" +
+              "table{border: 1px solid black;border-collapse: collapse; background-color: gold;}" +
+              "td{border: 1px solid black;vertical-align:top;}" +
+              "</style></head>" +
+              "<body>" +
+              "<table>" +
+              "<tr><td>&nbsp;</td><td>${getString(R.string.description)}</td></tr>" +
+              "<tr><td>Author:</td><td>${getString(R.string.author)}</td></tr>" +
+              "<tr><td>Version:</td><td>" + BuildConfig.VERSION_NAME + "</td></tr>" +
+              "<tr><td>Build:</td><td>" + BuildConfig.VERSION_CODE + "</td></tr>" +
+              "<tr><td>Change:</td><td>" + getString(R.string.version_info) + "</td></tr>" +
+              "<tr><td>Lemmas:</td><td>" + lemmaCount() + "</td></tr>" +
+              "<tr><td>Selected:</td><td>" + selectionCount() + "</td></tr>" +
+              "<tr><td>Jumpers:</td><td>" + countJumpers() + "</td></tr>" +
+              "</table></body></html>"
+        webView.loadData(about, "text/html", "UTF-8")
 
         val bob = AlertDialog.Builder(this)
-              .setTitle("About Zorba")
-              .setMessage(textToDisplay)
-              .setPositiveButton(R.string.emoji_ok, null)
+            .setTitle("About Zorba")
+            .setView(webView)
+            .setPositiveButton(R.string.emoji_ok, null)
 
         /* create the dialog from the builder */
         val alertDialog = bob.create()
@@ -340,22 +388,17 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     /* count selected records */
-    private fun showCount(): String {
-        val db = zorbaDBHelper.readableDatabase
-        val countAll = DatabaseUtils.queryNumEntries(db, "woorden")
-        val countSelected = DatabaseUtils.queryNumEntries(db, "woorden", queryManager.selectionClauseOnly())
-        val countJumpers = DatabaseUtils.queryNumEntries(db, "jumpers")
-        db.close()
-        return "\n\n $countSelected selected of $countAll lemmas.\nJumpers: $countJumpers"
-    }
+    private fun lemmaCount() = DatabaseUtils.queryNumEntries(zorbaDBHelper.readableDatabase, "woorden")
+    private fun selectionCount() = DatabaseUtils.queryNumEntries(zorbaDBHelper.readableDatabase, "woorden", QueryManager.selectionClauseOnly())
+    private fun countJumpers() = DatabaseUtils.queryNumEntries(zorbaDBHelper.readableDatabase, "jumpers")
 
     /* create attention before importing new woorden table */
     private fun importTable() {
         val bob = AlertDialog.Builder(this)
-              .setTitle("Import from Server")
-              .setMessage("Do you want to re-import the database from the remote SQL server?")
-              .setPositiveButton(R.string.emoji_ok) { _, _ -> importJson() }
-              .setNegativeButton(R.string.emoji_not_ok, null)
+            .setTitle("Import from Server")
+            .setMessage("Do you want to re-import the database from the remote SQL server?")
+            .setPositiveButton(R.string.emoji_ok) { _, _ -> importJson() }
+            .setNegativeButton(R.string.emoji_not_ok, null)
         val alert = bob.show()
         alert.show()
         alert.getButton(DialogInterface.BUTTON_POSITIVE).textSize = 28f
@@ -374,20 +417,20 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         /* Request a string response from the URL */
         val stringRequest = StringRequest(
             Request.Method.GET, DATABASE_URI,
-            Response.Listener { response ->
+            { response ->
                 progress_bar.visibility = View.INVISIBLE
                 zorbaDBHelper.jsonToSqlite(response)
                 refreshData()
                 recyclerViewAdapter.notifyDataSetChanged()
             },
-            Response.ErrorListener { error -> Log.d("hvr", "That didn't work: $error") })
+            { error -> Log.d(TAG, "That didn't work: $error") })
 
         /* Add the requests to the RequestQueue. */
         queue.add(stringRequest)
     }
 
     private fun onSearch(searchText: CharSequence) {
-        queryManager.search = searchText.toString()
+        search = searchText.toString()
         refreshData()
         recyclerViewAdapter.notifyDataSetChanged()
     }

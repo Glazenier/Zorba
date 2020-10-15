@@ -4,30 +4,40 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
+import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import android.text.Spannable
+import android.text.SpannableString
 import android.text.method.ScrollingMovementMethod
+import android.text.style.ForegroundColorSpan
+import android.text.style.RelativeSizeSpan
+import android.text.style.TypefaceSpan
 import android.util.Log
-import android.view.*
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
 import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
+import driemondglas.nl.zorba.Utils.enabled
 import kotlinx.android.synthetic.main.luisterlijst.*
 import java.util.*
 import kotlin.concurrent.thread
-import driemondglas.nl.zorba.Utils.enabled
+import kotlin.math.pow
 import kotlin.properties.Delegates
+
+const val BRAINTIME =  1000L
+const val SHOWTIME =  1500L
 
 @SuppressLint("SetTextI18n")
 
 class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
-
     /* text to speech object used in this activity */
     private lateinit var spreker: TextToSpeech
-
-    /* declare references to database helper class and query manager */
-    private val zorbaDBHelper = ZorbaDBHelper(this)
-    private val queryManager: QueryManager = QueryManager.getInstance()
 
     /* initialize reference to the Zorba database */
     private lateinit var db: SQLiteDatabase
@@ -35,13 +45,14 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
     /* declare a cursor to hold records from main selection query result */
     private lateinit var thisCursor: Cursor
 
-    private var blockSize = 0         // number of lemma's to speak in one turn. This is taken from blocksize in Querymanager
     private var blockOffset: Int by Delegates.observable(0) { _, _, _ -> showProgress() }       // position of current block in cursor + action when changed
     private var positionInBlock: Int by Delegates.observable(0) { _, _, _ -> showProgress() }   // relative position of current lemma in the block + action when changed
 
-    private var stopTalking = true   // flags stop when speech is run in separate thread
-    private var hasStarted = false   // checks state of speech from separate thread
-    private var isDone = true        // checks state of speech from separate thread
+    private var stopTalking = true   // flags stop as speech is run in separate thread
+    private var hasStarted = false   // checks state of speech from utterance thread
+    private var isDone = true        // checks state of speech from utterance thread
+
+    private var history = ""
 
     /* overriding onInit() is needed for the TextToSpeech.OnInitListener */
     override fun onInit(status: Int) {
@@ -50,7 +61,7 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
             spreker.language = Locale("el_GR")
             spreker.setSpeechRate(1f)
         } else {
-            Log.d("hvr", "[spreker] speech initilization problem!")
+            Log.d(TAG, "[spreker] speech initilization problem!")
         }
     }
 
@@ -58,35 +69,37 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.luisterlijst)
 
-        farfarAway.setMovementMethod(ScrollingMovementMethod())
+        /* make text field scrollable */
+        farfarAway.movementMethod = ScrollingMovementMethod()
         /* Init tts object  */
         spreker = TextToSpeech(this, this)
 
-        /* triggers for speech progress events */
+        /* trigger for speech progress events */
         spreker.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
             /* these events runs in separate thread from UI thread!
              * All changes to UI must be run on UI thread or you get unpredictable results.
              */
             override fun onDone(utteranceId: String?) {
                 isDone = true
-                //  Log.d("hvr", "[spreker] Done $utteranceId")
+                //  Log.d(TAG, "[spreker] Done $utteranceId")
             }
 
             override fun onError(utteranceId: String?) {
-                Log.e("hvr", "[spreker] Error $utteranceId")
+                Log.d(TAG, "[spreker] Error $utteranceId")
             }
 
             override fun onStart(utteranceId: String?) {
                 hasStarted = true
-                // Log.d("hvr", "[spreker] Start $utteranceId")
+                // Log.d(TAG, "[spreker] Start $utteranceId")
             }
         })
 
         sb_speed.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+
             override fun onProgressChanged(sb_speed: SeekBar, progress: Int, fromUser: Boolean) {
-                val speed = sb_speed.progress / 10f
-                spreker.setSpeechRate(speed)
-                txt_speed.text = "${sb_speed.progress * 10}%"
+                val speed = sb_speed.progress
+                spreker.setSpeechRate(speed / 10f)
+                txt_speed.text = "${speed * 10}%"
             }
 
             override fun onStartTrackingTouch(sb_speed: SeekBar) {}
@@ -95,21 +108,24 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         /* (late)init database */
         db = zorbaDBHelper.readableDatabase
-        thisCursor = db.rawQuery(queryManager.mainQuery(), null)
-
-        /* configured blockSize is kept in the query manager instance */
-        blockSize = queryManager.blockSize
+        thisCursor = db.rawQuery(QueryManager.mainQuery(), null)
 
         /* check how many block are possible */
-        val maxOffset = if (blockSize == 0) 0 else (thisCursor.count - 1) / blockSize
-
+        val maxOffset = if (blockSize == 0 || !useBlocks) 0 else (thisCursor.count - 1) / blockSize
         /* retrieve last_listened_block from shared preferences (if it is not too big!)*/
-        blockOffset=minOf(zorbaPreferences.getInt("last_listened_block", 0),maxOffset)
+        blockOffset = minOf(zorbaPreferences.getInt("last_listened_block", 0), maxOffset)
 
-        btn_next_block.setOnClickListener { nextBlock() }
-        btn_prev_block.setOnClickListener { prevBlock() }
+        btn_next_block.setOnClickListener {
+            nextBlock()
+            startStop()
+        }
+        btn_prev_block.setOnClickListener {
+            prevBlock()
+            startStop()
+        }
         btn_play.setOnClickListener { startStop() }
         btn_play.enabled(useSpeech)
+
         btn_rewind.setOnClickListener {
             positionInBlock = 0
             stopTalking = true
@@ -145,8 +161,8 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
 
             /* menu wis alle selecties */
             R.id.menu_clear_selects -> {
-                queryManager.clearAll()
-                thisCursor = db.rawQuery(queryManager.mainQuery(), null)
+                clearAll()
+                thisCursor = db.rawQuery(QueryManager.mainQuery(), null)
             }
 
             /* speech on/off */
@@ -180,13 +196,13 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
                 GROEP_SOORT_CODE -> {
                     if (myIntent.getStringExtra("result") == "selected") {
                         /* refresh data in the mainCursor using the changed selections */
-                        thisCursor = db.rawQuery(queryManager.mainQuery(), null)
+                        thisCursor = db.rawQuery(QueryManager.mainQuery(), null)
                     }
                 }
                 SELECTIES_CODE -> {
                     if (myIntent.getStringExtra("result") == "selected") {
                         /* refresh data in the mainCursor using the changed selections */
-                        thisCursor = db.rawQuery(queryManager.mainQuery(), null)
+                        thisCursor = db.rawQuery(QueryManager.mainQuery(), null)
                     }
                 }
             }
@@ -203,7 +219,7 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
             btn_play.text = getString(R.string.btn_caption_pause)
 
             /* if talking stopped at the end of the block, we need to reset the position */
-            if (positionInBlock == blockSize -1) positionInBlock = 0
+            if (positionInBlock == blockSize - 1) positionInBlock = 0
 
             speakWholeBlock()
 
@@ -221,7 +237,8 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
     private fun speakWholeBlock() {
 
         thread {
-            while (positionInBlock < blockSize && !stopTalking) {
+            val maxPosition = if (useBlocks) blockSize else thisCursor.count
+            wholeblock@ while ((positionInBlock < maxPosition) && !stopTalking) {
 
                 /* position the database cursor in the current block on the relative position */
                 thisCursor.moveToPosition(blockOffset * blockSize + positionInBlock)
@@ -236,50 +253,63 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
                 val lemma = thisCursor.getString(thisCursor.getColumnIndex("PureLemma"))
                 var meaning = thisCursor.getString(thisCursor.getColumnIndex("NL"))
                 /* only first line */
-                meaning= meaning.substringBefore('\n')
+                meaning = meaning.substringBefore('\n')
 
                 /* say it. */
                 hasStarted = false
                 isDone = false
-                spreker.speak(lemma, TextToSpeech.QUEUE_FLUSH, null, lemma) // //UtteranceProgressListener set status hasStarted and isDone
+                spreker.speak(lemma, TextToSpeech.QUEUE_FLUSH, null, lemma)  // UtteranceProgressListener sets statii hasStarted and isDone
                 while (!hasStarted) { /* wait for speech to start */
+                    if (stopTalking) break@wholeblock
                 }
                 while (!isDone) {  /* wait for speech to finish */
+                    if (stopTalking) break@wholeblock
                 }
-
-                /* check if state has changed while speaking */
-                if (stopTalking) return@thread
 
                 /* pause before showing text */
-                Thread.sleep(750)
+                if (!stopTalking) Thread.sleep(BRAINTIME)
 
-                /* check if state has changed while sleeping */
-                if (stopTalking) return@thread
-
-                /* display greek lemma and meaning */
+                /* fade down text */
                 runOnUiThread {
-                    txt_lemma.text = lemma
-                    txt_meaning.text = meaning
+                    var runningStart = 0
+                    val cleanMeaning = (meaning.substringBefore("\n")).trim()
+                    val lemmaLine = "$lemma ~ $cleanMeaning"
+
+                    history = if (history.isEmpty()) lemmaLine else "$history\n$lemmaLine"
+                    // limit number of lines by removing the last line
+                    if (history.lines().count() > 12) history = history.substringAfter("\n").trim()
+                    val spannable = SpannableString(history)
+
+                    val numLines = history.lines().count()
+                    val factor = 0.9F
+                    history.lines().forEachIndexed { idx, line ->
+                        val runningSize = factor.pow(numLines - idx - 1)
+                        val delimiterStart = line.indexOf(" ~ ")
+                        val meaningStart = delimiterStart + 3
+                        val colorSpan = ForegroundColorSpan(ContextCompat.getColor(this, R.color.sky_text_greek))
+                        val typeface: Typeface? = ResourcesCompat.getFont(this, R.font.tinos_italic)
+                        val fontSpan = TypefaceSpan(typeface!!)
+                        with(spannable) {
+                            setSpan(RelativeSizeSpan(runningSize), runningStart, runningStart + line.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                            setSpan(colorSpan, runningStart, runningStart + delimiterStart, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                            setSpan(fontSpan, runningStart, runningStart + delimiterStart, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                            setSpan(ForegroundColorSpan(Color.BLACK), runningStart + delimiterStart, runningStart + meaningStart, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                        }
+                        runningStart += line.length + 1
+                    }
+                    farfarAway.text = spannable
                 }
+                /* pause before moving on to next lemma */
+                if (!stopTalking) Thread.sleep(SHOWTIME)
 
-                /* time text remains visible before moving on*/
-                Thread.sleep(1500)
-
-                /* clear text */
-                runOnUiThread {
-                    farfarAway.text= lemma + " - " + meaning + "\n\n" + farfarAway.text.toString()
-                    txt_lemma.text = ""
-                    txt_meaning.text = ""
-                }
-
-                /* move to next lemma */
-                if (!stopTalking) positionInBlock++
-
+                positionInBlock++
             }  // end while
-            positionInBlock = blockSize - 1
-            runOnUiThread { btn_play.text = getString(R.string.btn_caption_restart) }
-            stopTalking = true
 
+            if (!stopTalking) { // so at the end of the block
+                positionInBlock = maxPosition - 1
+                runOnUiThread { btn_play.text = getString(R.string.btn_caption_restart) }
+                stopTalking = true   // setup for restart
+            }
         }  // end of thread
     }
 
@@ -298,8 +328,8 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
             blockOffset++
             // maintain progress in shared preferences
             zorbaPreferences.edit()
-                  .putInt("last_listened_block", blockOffset)
-                  .apply()
+                .putInt("last_listened_block", blockOffset)
+                .apply()
         }
 
         /* start at first lemma in block */
@@ -307,11 +337,6 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         /* move cursor position to this lemma in the set */
         thisCursor.moveToPosition(blockOffset * blockSize)
-
-        /* reset the ui fields */
-        txt_lemma.text = ""
-        txt_meaning.text = ""
-
         img_thatsall.visibility = View.INVISIBLE
 
         /* show play icon */
@@ -329,8 +354,8 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
             blockOffset--
             // maintain progress in shared preferences
             zorbaPreferences.edit()
-                  .putInt("last_listened_block", blockOffset)
-                  .apply()
+                .putInt("last_listened_block", blockOffset)
+                .apply()
         }
 
         /* start at first lemma in block */
@@ -339,9 +364,7 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
         /* move cursor position to this lemma in the set */
         thisCursor.moveToPosition(blockOffset * blockSize)
 
-        /* reset the ui fields */
-        txt_lemma.text = ""
-        txt_meaning.text = ""
+        /* show the end image */
         img_thatsall.visibility = View.INVISIBLE
 
         /* show play icon */

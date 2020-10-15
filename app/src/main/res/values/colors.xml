@@ -1,17 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- color int as #AARRGGBB (alpha, red, green, blue) -->
     <color name="colorPrimary">#008577</color>
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color>
+
     <color name="borderBackground">#DCFDFF</color>
     <color name="border_color">#673AB7</color>
-    <color name="labelBackground">#36673AB7</color>
+
+    <color name="label_bgcolor">#B8A1E1</color>
     <color name="border_gray">#B4B4B4</color>
     <color name="helder_vermiljoen">#AE1C28</color>
     <color name="kobaltblauw">#21468B</color>
+    <!-- Wikipedia Flag of Greece -->
     <color name="κυανός">#004C98</color>
-    <color name="main_background">#F0F0F0</color>
-    <color name="color_item_background">#E3F2FD</color>
-    <color name="color_item_border">#B4B4B4</color>
+
+    <color name="activity_bgcolor">#C5E1A5</color>
+    <color name="listitem_bgcolor">#E3F2FD</color>
+    <color name="listitem_border_color">#B4B4B4</color>
+    <color name="table_about_bg">#FFF59D</color>
+    <color name="normal_text_color">#555555</color>
+    <color name="blue_text_color">@color/κυανός</color>
+
+    <color name="gallow_color">#121212</color>
+    <color name="body_color">#FF12FF</color>
+
+    <color name="night_sky">#111111</color>
+    <color name="sky_text_normal">#FFFFFF</color>
+    <color name="sky_text_greek">#00ffFF</color>
+
 </resources>
 

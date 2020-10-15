@@ -3,9 +3,11 @@
        android:shape="rectangle" >
 
     <!-- View background color -->
-    <!--<solid-->
-            <!--android:color="@color/shadowColor" >-->
-    <!--</solid>-->
+<!--
+    <solid
+            android:color="@color/some_defined_color" >
+    </solid>
+-->
 
     <!-- View border color and width -->
     <stroke

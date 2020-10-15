@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--    background of the splash screen (activity)-->
     <item>
         <shape>
-            <gradient
-                    android:startColor="#EBDA58"
-                    android:centerColor="#E2500B"
-                    android:endColor="#20EEEE"
-                    android:angle="90"/>
+            <gradient android:angle="90" android:centerColor="#E2500B" android:endColor="#20EEEE" android:startColor="#EBDA58" />
         </shape>
     </item>
 </selector>

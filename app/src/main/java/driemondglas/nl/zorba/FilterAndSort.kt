@@ -2,38 +2,35 @@ package driemondglas.nl.zorba
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.view.MenuItem
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.filter_and_sort.*
 
-
-/*  This class represents the the activity "Selecties" that holds
- *  the selection controls to filter the greek words on length, first letter or difficulty level etc.
- *  Sorting or shuffling is also done here.
+/*  This class represents the the activity "Selections" that holds
+ *  the selection controls to filter the greek words on length, first letter and/or difficulty level etc.
+ *  Sorting or shuffling is also set here.
  *  The layout currently only has a portrait version
  *  The landscape layout is solved by putting it all in a vertical scroller
  */
 
 class FilterAndSort : AppCompatActivity() {
-    private val queryManager: QueryManager = QueryManager.getInstance()
 
-    /* save initial values to prepare for possible cancel action */
-    private var oldLevel1 = queryManager.levelBasic
-    private var oldLevel2 = queryManager.levelAdvanced
-    private var oldLevel3 = queryManager.levelBallast
-    private var oldUseLength= queryManager.useLength
-    private val oldPureLength = queryManager.pureLemmaLength
-    private val oldInitiaalGrieks = queryManager.initial
-    private val oldUseBlocks=queryManager.useBlocks
-    private val oldBlockSize=queryManager.blockSize
-    private val oldHideJumpers=queryManager.hideJumpers
-    private val oldThreshold=queryManager.jumpThreshold
-    private val oldSortTag=queryManager.orderbyTag
-    private val oldDecending=queryManager.orderDecending
+    /* preserve initial values to prepare for possible cancel action */
+    private val oldLevel1 = levelBasic
+    private val oldLevel2 = levelAdvanced
+    private val oldLevel3 = levelBallast
+    private val oldUseLength = useLength
+    private val oldPureLength = pureLemmaLength
+    private val oldInitiaalGrieks = initial
+    private val oldUseBlocks = useBlocks
+    private val oldBlockSize = blockSize
+    private val oldHideJumpers = hideJumpers
+    private val oldThreshold = jumpThreshold
+    private val oldSortTag = orderbyTag
+    private val oldDescending = orderDescending
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,8 +49,8 @@ class FilterAndSort : AppCompatActivity() {
         }
 
         /* First of all,
-         *  grab the active settings from the query manager and set the respective controls.*/
-        setLikeQueryManager()
+         *  grab the active settings from the global variables and set the respective controls.*/
+        loadControlsWithGlobals()
 
         /* add listeners for switches and buttons */
         sw_level1.setOnClickListener { onLevelChange() }
@@ -66,28 +63,37 @@ class FilterAndSort : AppCompatActivity() {
         sw_alfa.setOnClickListener { onSort(it) }
         sw_random.setOnClickListener { onSort(it) }
         sw_desc.setOnClickListener { onDescending() }
-        sw_hide_jumpers.setOnClickListener{ onHideJumpersSwitch() }
+        sw_hide_jumpers.setOnClickListener { onHideJumpersSwitch() }
         btn_select.setOnClickListener { goBack() }
         btn_cancel.setOnClickListener { cancelChanges() }
         btn_default.setOnClickListener { defaultSelects() }
 
         /* set listener for changes in text field for block size  */
         text_blocksize.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable) { onBlockSizeChange(s) }
+            override fun afterTextChanged(s: Editable) {
+                onBlockSizeChange(s)
+            }
+
             override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
         })
 
         /* set listener for changes in text field for lemma length  */
         text_length.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable) { onLengthChange(s) }
+            override fun afterTextChanged(s: Editable) {
+                onLengthChange(s)
+            }
+
             override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
         })
 
         /* set listener for changes in text field for threshold  */
         text_threshold.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable) { onThresholdChange(s) }
+            override fun afterTextChanged(s: Editable) {
+                onThresholdChange(s)
+            }
+
             override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
         })
@@ -95,52 +101,47 @@ class FilterAndSort : AppCompatActivity() {
     }
 
     /* this function sets all UI views to values found in the QueryManager */
-    private fun setLikeQueryManager(){
-        /* set level switches according to QueryManager's values */
-        queryManager.apply {
-            sw_level1.isChecked = levelBasic
-            sw_level2.isChecked = levelAdvanced
-            sw_level3.isChecked = levelBallast
-        }
-        /* set lemma length to queryManager's value */
-        sw_use_length.isChecked = queryManager.useLength
-        text_length.setText(queryManager.pureLemmaLength.toString())
+    private fun loadControlsWithGlobals() {
+        /* set level switches according to global values */
+        sw_level1.isChecked = levelBasic
+        sw_level2.isChecked = levelAdvanced
+        sw_level3.isChecked = levelBallast
 
-        /* set the initial (first letter of a word) greek letter to queryManager's value */
-        val initiaalGrieks = queryManager.initial
-        if (queryManager.initial != "") {
-            tv_initial.text = initiaalGrieks
-            sw_initial.isChecked = true
-        }
+        /* set lemma length to global value */
+        sw_use_length.isChecked = useLength
+        text_length.setText(pureLemmaLength.toString())
 
-        /* set blockSize to queryManager's value */
-        sw_use_blocks.isChecked = queryManager.useBlocks
-        text_blocksize.setText(queryManager.blockSize.toString())
+        /* set the initial (first letter of a word) greek letter to global value */
+        tv_initial.text = initial
+        sw_initial.isChecked = initial.isNotEmpty()
+
+        /* set blocks to global value */
+        sw_use_blocks.isChecked = useBlocks
+        text_blocksize.setText(blockSize.toString())
 
         /* set sortby switches to queryManager's state */
         sw_index.isChecked = false
         sw_alfa.isChecked = false
         sw_random.isChecked = false
-        when (queryManager.orderbyTag) {
+        when (orderbyTag) {
             "alfa" -> sw_alfa.isChecked = true
             "random" -> sw_random.isChecked = true
             else -> sw_index.isChecked = true
         }
 
         /* descending or ascending order */
-        sw_desc.isChecked = queryManager.orderDecending
+        sw_desc.isChecked = orderDescending
 
-        /* hide the lemmas that jumped the threshold */
-        text_threshold.setText((queryManager.jumpThreshold + 1).toString())
-        Log.d("hvr","queryManager.hideJumpers = ${queryManager.hideJumpers}")
-        sw_hide_jumpers.isChecked = queryManager.hideJumpers
+        /* set to hide the lemmas that jumped the threshold */
+        text_threshold.setText((jumpThreshold + 1).toString())
+        sw_hide_jumpers.isChecked = hideJumpers
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         /* Handle action bar item clicks here. The action bar will
          * automatically handle clicks on the Home/Up button, so long
-         * as you specify a parent activity in AndroidManifest.decor.
-         * We have our own goBack routine (hvr)
+         * as you specify a parent activity in Android Manifest.
+         * We use our own goBack routine (hvr)
          */
         if (item.itemId == android.R.id.home) goBack()
         return true
@@ -154,12 +155,15 @@ class FilterAndSort : AppCompatActivity() {
             sw_level3.isChecked = true
         }
 
-        /* forward to query manager */
-        queryManager.apply{
-            levelBasic = sw_level1.isChecked
-            levelAdvanced = sw_level2.isChecked
-            levelBallast = sw_level3.isChecked
-        }
+        levelBasic = sw_level1.isChecked
+        levelAdvanced = sw_level2.isChecked
+        levelBallast = sw_level3.isChecked
+
+        zorbaPreferences.edit()
+              .putBoolean("levelbasic", levelBasic)
+              .putBoolean("leveladvanced", levelAdvanced)
+              .putBoolean("levelballast", levelBallast)
+              .apply()
     }
 
     private fun onBlockSwitch() {
@@ -168,14 +172,16 @@ class FilterAndSort : AppCompatActivity() {
             /* check valid block size in text field */
             val numberInField = text_blocksize.text.toString().toIntOrNull()
             if (numberInField == null || numberInField < 1) {
-               colorToast(context = this, msg=getString(R.string.msg_blocksize_number))
+                colorToast(context = this, msg = getString(R.string.msg_blocksize_number))
                 sw_use_blocks.isChecked = false
             } else {
-                queryManager.useBlocks = true
+                useBlocks = true
+                zorbaPreferences.edit().putBoolean("useblocks", true).apply()
             }
         } else {
             /* ON -> OFF  */
-            queryManager.useBlocks = false
+            useBlocks = false
+            zorbaPreferences.edit().putBoolean("useblocks", false).apply()
         }
     }
 
@@ -184,17 +190,22 @@ class FilterAndSort : AppCompatActivity() {
         when (targetSize) {
             null -> {
                 colorToast(context = this, msg = getString(R.string.msg_blocksize_number))
-                queryManager.useBlocks = false
+                useBlocks = false
                 sw_use_blocks.isChecked = false
             }
             0 -> {
-                queryManager.blockSize = targetSize
-                queryManager.useBlocks = false
+                zorbaPreferences.edit().putInt("blocksize", 0).apply()
+                zorbaPreferences.edit().putBoolean("useblocks", false).apply()
+                blockSize = 0
+                useBlocks = false
                 sw_use_blocks.isChecked = false
             }
             else -> {
-                queryManager.blockSize = targetSize
-                queryManager.useBlocks = true
+                zorbaPreferences.edit().putInt("blocksize", targetSize).apply()
+                zorbaPreferences.edit().putBoolean("useblocks", true).apply()
+
+                blockSize = targetSize
+                useBlocks = true
                 sw_use_blocks.isChecked = true
             }
         }
@@ -205,16 +216,17 @@ class FilterAndSort : AppCompatActivity() {
         if (sw_use_length.isChecked) {
             /* check valid length in text field */
             val textField = text_length.text.toString().toIntOrNull()
-            if (textField==null || textField<1){
+            if (textField == null || textField < 1) {
                 colorToast(context = this, msg = getString(R.string.msg_lemmalength_number))
                 sw_use_length.isChecked = false
             } else {
-                queryManager.useLength=true
+                useLength = true
             }
         } else {
             /* ON -> OFF  */
-            queryManager.useLength=false
+            useLength = false
         }
+        zorbaPreferences.edit().putBoolean("uselength", useLength).apply()
     }
 
     private fun onLengthChange(numberAsString: CharSequence) {
@@ -222,43 +234,50 @@ class FilterAndSort : AppCompatActivity() {
         when (targetLength) {
             null -> {
                 colorToast(context = this, msg = getString(R.string.msg_lemmalength_number))
-                queryManager.useLength = false
+                useLength = false
                 sw_use_length.isChecked = false
             }
             0 -> {
-                queryManager.pureLemmaLength = targetLength
-                queryManager.useLength = false
+                pureLemmaLength = 0
+                useLength = false
                 sw_use_length.isChecked = false
             }
             else -> {
-                queryManager.pureLemmaLength = targetLength
-                queryManager.useLength = true
+                pureLemmaLength = targetLength
+                useLength = true
                 sw_use_length.isChecked = true
             }
         }
+        zorbaPreferences.edit()
+              .putBoolean("uselength", useLength)
+              .putInt("purelemmalenght", pureLemmaLength)
+              .apply()
     }
 
     fun onGreekLetter(view: View) {
         val tag = view.tag.toString()
         if (tag == "_") {
             tv_initial.text = ""
-            queryManager.initial = ""
+            initial = ""
             sw_initial.isChecked = false
         } else {
             tv_initial.text = tag
-            queryManager.initial = tag
+            initial = tag
             sw_initial.isChecked = true
         }
+        zorbaPreferences.edit().putString("initial", initial).apply()
     }
+
 
     private fun onInitialChange() {
         val textvalue = tv_initial.text.toString()
-        if (sw_initial.isChecked && textvalue != "") {
-            queryManager.initial = textvalue
+        if (sw_initial.isChecked && textvalue.isNotEmpty()) {
+            initial = textvalue
         } else {
-            queryManager.initial = ""
+            initial = ""
             sw_initial.isChecked = false
         }
+        zorbaPreferences.edit().putString("initial", initial).apply()
     }
 
     private fun onSort(view: View) {
@@ -276,64 +295,84 @@ class FilterAndSort : AppCompatActivity() {
             "alfa" -> sw_alfa.isChecked = true
             "random" -> sw_random.isChecked = true
         }
-        /* inform the query manager */
-        queryManager.orderbyTag = tag
+        orderbyTag = tag
+        zorbaPreferences.edit().putString("orderbytag", orderbyTag).apply()
     }
 
-    private fun onDescending(){
-        queryManager.orderDecending = sw_desc.isChecked
+    private fun onDescending() {
+        orderDescending = sw_desc.isChecked
+        zorbaPreferences.edit().putBoolean("orderdescending", orderDescending).apply()
     }
 
-    private fun onHideJumpersSwitch(){
-        /* OFF -> ON  */
+    private fun onHideJumpersSwitch() {
+        /* OFF --> ON  */
         if (sw_hide_jumpers.isChecked) {
             /* check valid length in text field */
             val textField = text_threshold.text.toString().toIntOrNull()
-            if (textField==null || textField<1){
-                colorToast(context = this,msg = getString(R.string.msg_threshold_number))
+            if (textField == null || textField < 1) {
+                colorToast(context = this, msg = getString(R.string.msg_threshold_number))
                 sw_hide_jumpers.isChecked = false
             } else {
-                queryManager.hideJumpers=true
+                hideJumpers = true
             }
+            /* ON --> OFF  */
         } else {
-            /* ON -> OFF  */
-            queryManager.hideJumpers=false
+            hideJumpers = false
         }
+        zorbaPreferences.edit().putBoolean("hidejumpers", hideJumpers).apply()
     }
 
-    private fun onThresholdChange(numberAsString: CharSequence) {
-        val targetHeight = numberAsString.toString().toIntOrNull()
+    private fun onThresholdChange(numberAsText: CharSequence) {
+        val targetHeight = numberAsText.toString().toIntOrNull()
         when (targetHeight) {
             null -> {
                 colorToast(context = this, msg = getString(R.string.msg_threshold_number))
-                queryManager.hideJumpers = false
+                hideJumpers = false
                 sw_hide_jumpers.isChecked = false
             }
             0 -> {
-                queryManager.jumpThreshold = targetHeight
-                queryManager.hideJumpers = false
+                jumpThreshold = 0
+                hideJumpers = false
                 sw_hide_jumpers.isChecked = false
             }
-            else -> queryManager.jumpThreshold = targetHeight - 1
+            else -> jumpThreshold = targetHeight - 1
         }
+        zorbaPreferences.edit()
+              .putInt("jumpthreshold", jumpThreshold)
+              .putBoolean("hidejumpers", hideJumpers)
+              .apply()
     }
 
     private fun cancelChanges() {
         /* restore initial values */
-        queryManager.apply{
-            levelBasic = oldLevel1
-            levelAdvanced = oldLevel2
-            levelBallast = oldLevel3
-            useLength = oldUseLength
-            pureLemmaLength = oldPureLength
-            initial = oldInitiaalGrieks
-            useBlocks = oldUseBlocks
-            blockSize = oldBlockSize
-            orderbyTag = oldSortTag
-            orderDecending = oldDecending
-            hideJumpers = oldHideJumpers
-            jumpThreshold = oldThreshold
-        }
+        useBlocks = oldUseBlocks
+        blockSize = oldBlockSize
+        levelBasic = oldLevel1
+        levelAdvanced = oldLevel2
+        levelBallast = oldLevel3
+        useLength = oldUseLength
+        pureLemmaLength = oldPureLength
+        initial = oldInitiaalGrieks
+        orderbyTag = oldSortTag
+        orderDescending = oldDescending
+        hideJumpers = oldHideJumpers
+        jumpThreshold = oldThreshold
+
+        zorbaPreferences.edit()
+              .putBoolean("useblocks", useBlocks)
+              .putInt("blocksize", blockSize)
+              .putBoolean("levelbasic", levelBasic)
+              .putBoolean("leveladvanced", levelAdvanced)
+              .putBoolean("levelballast", levelBallast)
+              .putBoolean("uselength", useLength)
+              .putInt("purelemmalength", pureLemmaLength)
+              .putString("initial", initial)
+              .putString("orderbytag", orderbyTag)
+              .putBoolean("orderdescending", orderDescending)
+              .putInt("jumpthreshold", jumpThreshold)
+              .putBoolean("hidejumpers", hideJumpers)
+              .apply()
+
         /* go back to calling activity */
         val myIntent = Intent()
         myIntent.putExtra("result", "cancel")
@@ -350,7 +389,7 @@ class FilterAndSort : AppCompatActivity() {
     }
 
     private fun defaultSelects() {
-        queryManager.clearDetails()
-        setLikeQueryManager()
+        resetDetails()
+        loadControlsWithGlobals()
     }
 }

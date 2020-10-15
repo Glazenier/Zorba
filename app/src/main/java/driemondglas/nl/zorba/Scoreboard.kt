@@ -12,10 +12,8 @@ import kotlin.math.absoluteValue
 
 object ScoreBoard {
 
-    private val queryManager: QueryManager = QueryManager.getInstance()
-
     @SuppressLint("UseSparseArrays")  // there may be a performance gain using sparseArray instead of HashMap
-    /* scoremap holds ids and correct(pos) or incorrect(neg) count per lemma in a block */
+    /* scoremap holds ids and correct(positive) or incorrect(negative) count per lemma in a block */
     private var scoreMap = HashMap<Int, Int>()
     private var correctCount = 0
     private var incorrectCount = 0
@@ -29,17 +27,13 @@ object ScoreBoard {
          * The total count, incorrect count and percentage correct get a larger font size.
          * For that purpose the string is divided into partitions using SpannableString */
         val totaalCount = correctCount + incorrectCount
-        val totaalCountString = totaalCount.toString()
-        val correctCountString = correctCount.toString()
-
         val pctCorrect = if (totaalCount == 0) 100 else (100 * correctCount / totaalCount)
-        val pctCorrectString = pctCorrect.toString()
-        val textScore = SpannableString("goed: $correctCountString totaal: $totaalCountString  =  $pctCorrectString %")
+        val textScore = SpannableString("goed: $correctCount totaal: $totaalCount  =  $pctCorrect %")
         /*                                     |span1 |     span2        |  span3 |      span4      |  5  |    span6      |sp7|  */
         val span1Length = "goed: ".length
-        val span2Length = correctCountString.length
+        val span2Length = correctCount.toString().length
         val span3Length = " totaal: ".length
-        val span4Length = totaalCountString.length
+        val span4Length = totaalCount.toString().length
 
         var spanStart = span1Length
         var spanEnd = spanStart + span2Length
@@ -51,7 +45,7 @@ object ScoreBoard {
         textScore.setSpan(RelativeSizeSpan(3f), spanStart, spanEnd, 0)
         textScore.setSpan(StyleSpan(Typeface.BOLD), spanStart, spanEnd, 0)
 
-        spanStart = textScore.length - pctCorrectString.length - 2
+        spanStart = textScore.length - pctCorrect.toString().length - 2
         spanEnd = textScore.length - 2
         textScore.setSpan(RelativeSizeSpan(2f), spanStart, spanEnd, 0)
         textScore.setSpan(StyleSpan(Typeface.BOLD), spanStart, spanEnd, 0)
@@ -97,7 +91,6 @@ object ScoreBoard {
 
     fun resetScores() {
         resetScoreMap()
-
         correctCount = 0
         incorrectCount = 0
         previousCorrectCount = 0
@@ -109,12 +102,12 @@ object ScoreBoard {
 
     /* retrieve the minimum value in the score list */
     fun allAreCorrect(): Boolean {
-        val lowestValue = scoreMap.values.min()
-        return if (lowestValue != null) (lowestValue > queryManager.jumpThreshold) else false
+        val lowestValue = scoreMap.values.minOrNull()
+        return if (lowestValue != null) (lowestValue > jumpThreshold) else false
     }
 
     fun scoreMapToString(): String = scoreMap.toList().toString().removeSurrounding("[", "]")
 
-    fun noJumper(theIdx: Int): Boolean = (scoreMap.getOrDefault(theIdx, 0) <= queryManager.jumpThreshold)
+    fun noJumper(theIdx: Int): Boolean = (scoreMap.getOrDefault(theIdx, 0) <= jumpThreshold)
 }
 

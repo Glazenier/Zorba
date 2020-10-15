@@ -92,6 +92,8 @@ class ZorbaDBHelper(zorbaContext: Context) : SQLiteOpenHelper(zorbaContext, DATA
          * return result ?: ""   //Elvis: return result, if null return empty string "" */
 
         // return "^[^,\r(*;!.\u2194]*".toRegex().find(greekText)?.value ?: ""
-        return "^[^,.\r(*\u2194]*".toRegex().find(greekText)?.value ?: ""    //leave exclamation and questionmark
+
+        //keep exclamation or questionmark with pure lemma
+        return "^[^,.\r(*\u2194]*".toRegex().find(greekText)?.value ?: ""
     }
 }

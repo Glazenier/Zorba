@@ -3,7 +3,6 @@ package driemondglas.nl.zorba
 import android.content.Context
 import android.graphics.Color
 import android.speech.tts.TextToSpeech
-import android.util.Log
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
@@ -27,13 +26,54 @@ val articleRegex = """(.*?),\s(τ?[ηοα]ι?)""".toRegex()
 val adjectiveRegex = """(.*?)([οηόύή][ςιί]),\s?-(ε?[αάεέηήιί][αάς]?),\s?-([άαεέίοόύ]ς?)""".toRegex()   //βαρύς, -εία, -ύ
 val inBracketsRegex = """\(.*?\)""".toRegex()
 val firstWordRegex = """^[\p{InGreek}]*""".toRegex()
-val ieklankRegex="""\b[οε]?[ιηυίήύ]""".toRegex()
+val eeStartSound = """\b[οε]?[ιηυίήύ]""".toRegex()
+
+/* function is called from the menu item 'Clear All' to reset all selections made by user. */
+fun clearAll() {
+    wordGroup = ""
+    wordType = ""
+    search = ""
+    zorbaPreferences.edit()
+          .putString("wordgroup", "")
+          .putString("wordtype", "")
+          .apply()
+    resetDetails()
+}
+
+fun resetDetails() {
+    useBlocks = true
+    blockSize = 20
+    levelBasic = true
+    levelAdvanced = true
+    levelBallast = true
+    useLength = false
+    pureLemmaLength = 0
+    initial = ""
+    orderbyTag = "index"
+    orderDescending = true
+    jumpThreshold = 2
+    hideJumpers = false
+    zorbaPreferences.edit()
+          .putBoolean("useblocks", useBlocks)
+          .putInt("blocksize", blockSize)
+          .putBoolean("levelbasic", levelBasic)
+          .putBoolean("leveladvanced", levelAdvanced)
+          .putBoolean("levelballast", levelBallast)
+          .putBoolean("uselength", useLength)
+          .putInt("purelemmalength", pureLemmaLength)
+          .putString("initial", initial)
+          .putString("orderbytag", orderbyTag)
+          .putBoolean("orderdecending", orderDescending)
+          .putInt("jumpthreshold", jumpThreshold)
+          .putBoolean("hidejumpers", hideJumpers)
+          .apply()
+}
 
 fun cleanSpeech(rawText: String, wordType: String) {
     var result = ""
     when (wordType) {
         "bijvoeglijk nw", "voornaamwoord", "telwoord" -> {
-            /* uses adjectiveRegex to match most endings of greek adjectives
+            /* uses adjectiveRegex to match most endings of greek adjectives, etc
              * contains capturing groups:
              *   matchResult.groups[0]: whole match
              *   matchResult.groups[1]: stem
@@ -69,7 +109,7 @@ fun cleanSpeech(rawText: String, wordType: String) {
                     /* put article before noun */
                     val noun = matchResult.groups[1]?.value
 
-                    var article  = matchResult.groups[2]?.value
+                    var article = matchResult.groups[2]?.value
                     if (noun != null && article != null) {
                         /* if article ends with 'o' and noun begins with 'o', the speech engine combines to one 'o'
                         *  This is not what we want in this case
@@ -78,7 +118,7 @@ fun cleanSpeech(rawText: String, wordType: String) {
                         *  Same thing for ee-sound (ie-klank)
                         */
                         if (unStressOneChar(noun.first()) == 'ο' && article.last() == 'ο') article += ','
-                        if (ieklankRegex.find(noun) != null && (article == "η" || article == "οι")) article += ','
+                        if (eeStartSound.find(noun) != null && (article == "η" || article == "οι")) article += ','
                     }
                     result += "$article $noun,"
                 } else {
@@ -108,12 +148,8 @@ fun cleanSpeech(rawText: String, wordType: String) {
             result = result.replace("=", ",")
         }
     }
-    Log.d("hvr", result)
+    //    Log.d(TAG, "clean speech result: $result")
     zorbaSpeaks.speak(result, TextToSpeech.QUEUE_FLUSH, null, "")
-}
-
-fun logThis (logWhat: String){
-    Log.d("hvr", logWhat)
 }
 
 /* This function returns all the greek characters from top line of the text until non greek is found */
@@ -225,7 +261,7 @@ fun conjugateEnestotas(textGreek: String): String {
             "Γ3" -> "${stem}ιέμαι, ${stem}ιέσαι, ${stem}ιέται, ${stem}ιόμαστε, ${stem}ιέστε, ${stem}ιούνται"
             "Γ4" -> "${stem}ούμαι, ${stem}είσαι, ${stem}είται, ${stem}ούμαστε, ${stem}είστε, ${stem}ούνται"
             "Γ5" -> "${stem}είμαι, ${stem}είσαι, ${stem}είναι, ${stem}είμαστε, ${stem}είστε, ${stem}είναι"
-            else -> UNKNOWN_VERB
+            else -> "Werkwoordvorm onbekend"
         }
     }
     return "Tegenwoordige tijd ontbreekt op regel 1"
@@ -254,7 +290,7 @@ fun conjugateMellontas(textGreek: String): String {
                 verbType = when {
                     mellontas.endsWith("ω") -> "regular"
                     mellontas.endsWith("ώ") -> "irregular1"
-                    else -> UNKNOWN_VERB
+                    else -> "Werkwoordvorm onbekend"
                 }
                 stem = mellontas.dropLast(1)
             }
@@ -265,7 +301,7 @@ fun conjugateMellontas(textGreek: String): String {
             "irregular2" -> "θα ${stem}ω, θα ${stem.unStress()}ς, θα ${stem}ει, θα ${stem}με, θα ${stem}τε, θα ${stem}νε"
             "irregular3" -> "θα ${stem}ω, θα ${stem}εις, θα ${stem}ει, θα ${stem}ουμε, θα ${stem}είτε, θα ${stem}ουν"
             "irregular4" -> "θα ${stem}μαι, θα ${stem}σαι, θα ${stem}ναι, θα ${stem}μαστε, θα ${stem}στε, θα ${stem}ναι"
-            else -> UNKNOWN_VERB
+            else -> "Werkwoordvorm onbekend"
         }
     }
     return "Toekomende tijd ontbreekt op regel 2"
@@ -328,13 +364,13 @@ fun conjugateAorist(textGreek: String): String {
                 }
 
                 // 5 - replace target character with accented one
-                stemPlural = stemPlural.replace(atPosition=newStressPos, replacement=stressOneChar(targetCharacter))
+                stemPlural = stemPlural.replace(atPosition = newStressPos, replacement = stressOneChar(targetCharacter))
 
                 // 6 - if needed, lose the extraneous ή or έ at the start
-                if (aorist[0]=='ή' || aorist[0]=='έ') {
+                if (aorist[0] == 'ή' || aorist[0] == 'έ') {
                     /* is the 1st character added as 3rd syllable or was it already part of the verb ??? */
                     if (unStressOneChar(enestotas[0]) != unStressOneChar(aorist[0])) {   // ελέγχω  ->  έλεγξα, ελέγχαμε, ελέγχατε So keep the ε in plural (it was not added)
-                                                                                         // ελπίζω  ->  έλπισα, ελπίσαμε ...
+                        // ελπίζω  ->  έλπισα, ελπίσαμε ...
                         stemPlural = stemPlural.drop(1)
                     }
                 }
@@ -365,66 +401,86 @@ fun conjugateAorist(textGreek: String): String {
     } else return "Verleden tijd ontbreekt op regel 3"
 }
 
-fun conjugateParatatikos(textGreek: String): String {
+fun conjugateParatatikos(textGreek: String): String {  //past continuous (imperfect)
     val stemSingle: String
     var stemPlural: String
+    val stem3pmv: String
     val enestotas = getEnestotas(textGreek)
-    val paratatikos = getParatatikos(textGreek)
     val mellontas = getMellontas(textGreek)
+    val paratatikos = getParatatikos(textGreek)
 
-    if (paratatikos.isNotEmpty()) {
 
-        when {
-            paratatikos.endsWith("ούσα") -> {  //werkwoorden op -άω en -ώ
-                stemSingle = paratatikos.dropLast(4)
-                return "${stemSingle}ούσα, ${stemSingle}ούσες, ${stemSingle}ούσε, ${stemSingle}ούσαμε, ${stemSingle}ούσατε, ${stemSingle}ούσαν"
-            }
-            enestotas.endsWith('ω') -> { //werkwoorden op -ω
+    return when {
+        paratatikos.isEmpty() -> "Onvoltooid Verleden Tijd ontbreekt op lijn 4"
 
-                stemSingle = paratatikos.dropLast(1)
-                //stem for 1st and 2nd person plural, having shifted accent and possible extraeneous prefix ή or έ:
-                val charTarget: Char
-                val newStressPos: Int
-
-                // 1 - find and remember the position of the stress:
-                val stressPos = stemSingle.indexOfAny(allStressedVowels)
-
-                // 2 - unstress to strStemPlural  (we need single stem later)
-                stemPlural = stemSingle.unStress()
-
-                // 3 - find target vowel after the original stress, first check for double vowels; search after original stress.
-                val doubleVowelPos = stemSingle.indexOfAny(allDoubleVowels, stressPos + 1)
-                val vowelPos: Int
-                if (doubleVowelPos > -1) {  // if double vowel, second one gets the accent, see wich character there is at that position
-                    charTarget = stemSingle[doubleVowelPos + 1]
-                    newStressPos = doubleVowelPos + 1
-                } else {
-                    // 4 - no doubles found so first single vowel gets the accent
-                    vowelPos = stemSingle.indexOfAny(allUnstressedVowels, stressPos + 1)
-                    charTarget = stemSingle[vowelPos]
-                    newStressPos = vowelPos
-                }
-
-                // 5 - replace target character with accented one
-                stemPlural = stemPlural.replace(atPosition = newStressPos, replacement = stressOneChar(charTarget))
-
-                // 6 - if needed, lose the extraneous ή or έ at the start
-                if (unStressOneChar(enestotas[0]) != unStressOneChar(paratatikos[0])) stemPlural = stemPlural.drop(1)
-
-                /* step 7 can only be done if mellontas is available for comparison */
-                if (mellontas.isNotEmpty()) {
-                    // 7 - Special case: replace alternate έ after prefix with original vowel like: αναπνέω -> αναπνεύσω -> ανέπνευσα maar: αναπνεύσαμε en αναπνεύσατε
-                    //  Find stressed epsilon (έ) but not on position 0, save position
-                    //  put back original vowel (α) from same position in present tense
-                    val positionOfStressedE = stemSingle.indexOf('έ', 1)
-                    if (positionOfStressedE > -1) stemPlural = stemPlural.replace(atPosition = positionOfStressedE, replacement = mellontas[positionOfStressedE])
-                }
-                return "${stemSingle}α, ${stemSingle}ες, ${stemSingle}ε, ${stemPlural}αμε, ${stemPlural}ατε, ${stemSingle}αν"
-            }
-            else -> return "Geen vervoeging gevonden voor $paratatikos"
+        paratatikos.endsWith("ούσα") -> {  //werkwoorden op -άω en -ώ
+            stemSingle = paratatikos.dropLast(4)
+            "${stemSingle}ούσα, ${stemSingle}ούσες, ${stemSingle}ούσε, ${stemSingle}ούσαμε, ${stemSingle}ούσατε, ${stemSingle}ούσαν"
         }
+
+        paratatikos.endsWith("όμουν") -> {  //werkwoorden op -όμαι of -έμαι
+            stemSingle = paratatikos.dropLast(5)
+            stem3pmv = when {
+                enestotas.endsWith("ομαι") -> enestotas.dropLast(4)
+                enestotas.endsWith("άμαι") -> enestotas.dropLast(4)
+                enestotas.endsWith("ιέμαι") -> enestotas.dropLast(5)
+                enestotas.endsWith("ούμαι") -> enestotas.dropLast(5)
+                enestotas.endsWith("είμαι") -> enestotas.dropLast(5)
+                else -> "?-"
+            }
+            "$paratatikos, ${stemSingle}όσουν, ${stemSingle}όταν, ${stemSingle}όμαστε, ${stemSingle}όσαστε, ${stem3pmv}ονταν"
+        }
+
+        enestotas.endsWith('ω') -> {             //werkwoorden op -ω bijvoorbeeld μαγειρεύω
+            // stem for the single form is easy from the given paratatikos: μαγείρευα -> μαγείρευ
+            stemSingle = paratatikos.dropLast(1)
+
+            //stem for 1st and 2nd person plural, having shifted accent and possible extraeneous prefix ή or έ:
+            val charTarget: Char
+            val newStressPos: Int
+            val vowelPos: Int
+            // 1 - find and remember the position of the stress:
+            // μαγείρευ -> 4
+            val stressPos = stemSingle.indexOfAny(allStressedVowels)
+
+            // 2 - unstress to stemPlural  (we need single stem later)
+            // μαγείρευ -> μαγειρευ
+            stemPlural = stemSingle.unStress()
+
+            // 3 - find target vowel after the original stress, first check for double vowels; search after original stress.
+
+            val doubleVowelPos = stemSingle.indexOfAny(allDoubleVowels, stressPos + 1)
+            // in example μαγείρευ  find position of ευ -> 7
+
+            if (doubleVowelPos > -1) {  // if double vowel, second one gets the accent, see wich character there is at that position
+                charTarget = stemSingle[doubleVowelPos + 1] // υ in position 7+1
+                newStressPos = doubleVowelPos + 1           // position 8 gets new stress
+            } else {
+                // 4 - no doubles found so first single vowel gets the accent
+                vowelPos = stemSingle.indexOfAny(allUnstressedVowels, stressPos + 1)
+                charTarget = stemSingle[vowelPos]
+                newStressPos = vowelPos
+            }
+
+            // 5 - replace target character with accented one
+            // in example, replace  υ with ύ on pos 8
+            stemPlural = stemPlural.replace(atPosition = newStressPos, replacement = stressOneChar(charTarget))
+
+            // 6 - if needed, lose the extraneous ή or έ at the start
+            if (unStressOneChar(enestotas[0]) != unStressOneChar(paratatikos[0])) stemPlural = stemPlural.drop(1)
+
+            /* step 7 can only be done if mellontas is available for comparison */
+            if (mellontas.isNotEmpty()) {
+                // 7 - Special case: replace alternate έ after prefix with original vowel like: αναπνέω -> αναπνεύσω -> ανέπνευσα maar: αναπνεύσαμε en αναπνεύσατε
+                //  Find stressed epsilon (έ) but not on position 0, save position
+                //  put back original vowel (α) from same position in present tense
+                val positionOfStressedE = stemSingle.indexOf('έ', 1)
+                if (positionOfStressedE > -1) stemPlural = stemPlural.replace(atPosition = positionOfStressedE, replacement = mellontas[positionOfStressedE])
+            }
+            "${stemSingle}α, ${stemSingle}ες, ${stemSingle}ε, ${stemPlural}αμε, ${stemPlural}ατε, ${stemSingle}αν"
+        }
+        else -> "Geen vervoeging gevonden voor $paratatikos"
     }
-    return "Onvoltooid Verleden Tijd ontbreekt op lijn 4"
 }
 
 fun createProstaktiki(textGreek: String): String {
@@ -435,6 +491,7 @@ fun createProstaktiki(textGreek: String): String {
     val prostaktiki: String
     val prostaktikiSingle: String
     val prostaktikiPlural: String
+
     if (mellontas.isEmpty()) return "Geen mellontas in GR."
 
     /***** EXCEPTIONS *****/
@@ -445,7 +502,7 @@ fun createProstaktiki(textGreek: String): String {
         "βλέπω" -> "δες – δείτε"
         "βρίσκω" -> "βρες – βρείτε"
         "γίνομαι" -> "γίνε – γίνετε"
-        "είμαι" -> "είμαι heeft geen gebiedende wijs"
+        "είμαι" -> "να είσαι – να είστε"
         "επιτρέπομαι" -> "επιτρέψου - επιτραπείτε"
         "έρχομαι" -> "έλα – ελάτε"
         "κάθομαι" -> "κάθισε/κάτσε – καθίστε"
@@ -512,7 +569,7 @@ fun createProstaktiki(textGreek: String): String {
 
 fun colorToast(context: Context, msg: String, bgColor: Int = Color.DKGRAY, fgColor: Int = Color.WHITE, duration: Int = 0) {
     /* create the normal Toast message */
-    val myToast = Toast.makeText(context, msg, if (duration==0) Toast.LENGTH_SHORT else Toast.LENGTH_LONG)
+    val myToast = Toast.makeText(context, msg, if (duration == 0) Toast.LENGTH_SHORT else Toast.LENGTH_LONG)
 
     /* create a reference to the view that holds this Toast */
     val myView = myToast.view
@@ -532,16 +589,16 @@ fun colorToast(context: Context, msg: String, bgColor: Int = Color.DKGRAY, fgCol
 
 object Utils {
 
-    /* function stressOneChar
-    * input: exactly one(1) unstressed greek character.
-    * output: same character with stress (tonos / accent).
-    * if input not part of unstressed vowels it returns original input character. */
+    /* Extension function stressOneChar
+     * input: exactly one(1) unstressed greek character.
+     * output: same character with stress (tonos / accent).
+     * if input not part of unstressed vowels it returns original input character. */
     fun stressOneChar(unStressed: Char): Char {
         val stressIndex = allUnstressedVowels.indexOf(unStressed)
         return if (stressIndex >= 0) allStressedVowels[stressIndex] else unStressed
     }
 
-    /* function unStressOneChar
+    /* Extension function unStressOneChar
      * input: exactly one(1) stressed greek character.
      * output: same character without stress (tonos / accent).
      * if input not part of stressed vowels it returns original input character. */
@@ -553,7 +610,7 @@ object Utils {
     /* Extension function unStress
      * input: string containing one stressed greek character.
      * output: same string without stress (tonos / accent).
-     * if input not containing stressed vowel it returns original input string. */
+     * if input does not contain a stressed vowel it returns original input string. */
     fun String.unStress(): String {
         val stressPos = this.indexOfAny(allStressedVowels)
         return if (stressPos > -1) this.replace(atPosition = stressPos, replacement = unStressOneChar(target = this[stressPos])) else this
@@ -564,6 +621,10 @@ object Utils {
         return if (atPosition < length) take(atPosition) + replacement + drop(atPosition + 1) else this
     }
 
+    /* Extension function normalize
+     * input: string containing any diacritic or accented vowel.
+     * output: same string without diacritic or ather marks.
+     */
     fun String.normalize(): String {
         val original = allDiacriticVowels + 'ς'     //  ς normalized to σ just for hangman purpose !!!
         val normalized = allNormalizedVowels + 'σ'
@@ -579,15 +640,15 @@ object Utils {
         isClickable = isEnabled
     }
 
-    fun View.visible(isVisible: Boolean = true){
+    fun View.visible(isVisible: Boolean = true) {
         visibility = if (isVisible) View.VISIBLE else View.INVISIBLE
     }
 
     /* extension function for Views: toggles visibility on/off */
     fun View.toggleVisibility() {
         /*  android ui View visibility is NOT a boolean!
-         *  It can be one of 3 values: View.VISIBLE, View.INVISIBLE,  View.GONE */
-        val viewIsVisible = visibility == View.VISIBLE
-        visibility = if (viewIsVisible) View.INVISIBLE else View.VISIBLE
+         *  It can be one of 3 values: View.VISIBLE, View.INVISIBLE,  View.GONE
+         *  this extension function  toggles between visible and invisible */
+        visibility = if (visibility == View.VISIBLE) View.INVISIBLE else View.VISIBLE
     }
 }

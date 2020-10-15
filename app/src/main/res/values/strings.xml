@@ -1,13 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <resources>
     <string name="activity_title_main">Lemma\'s</string>
-
     <string name="advanced">Gevorderd</string>
-
     <string name="again">Opnieuw</string>
-
     <string name="alphabetical">alfabetisch</string>
-
     <string name="app_name">Zorba</string>
 
     <string name="apply">aan/uit</string>
@@ -28,7 +24,7 @@
 
     <string name="caption_search">Zoek:</string>
 
-    <string name="clear">Wis</string>
+    <string name="clear">Reset</string>
 
     <string name="contact_email">herman@driemondglas.nl</string>
 
@@ -64,15 +60,16 @@
 
     <string name="menu_caption_about">ⓘ Over Zorba…</string>
     <string name="menu_caption_detail_selections">&#128736; Detail selecties</string>
-    <string name="menu_caption_email">\u2709 Email this lemma</string>
+    <string name="menu_caption_email">&#128239; Email this lemma</string>
     <string name="menu_caption_group_type">&#128218; Kies woordgroep of woordsoort </string>
     <string name="menu_caption_import_database">&#128451; Vernieuw database</string>
     <string name="menu_caption_neurolingo">&#127760; Lookup - NeuroLingo</string>
     <string name="menu_caption_reset_score">\u24ff-\u24ff Reset scores</string>
     <string name="menu_caption_reset_hiscore">\u23f1 Reset high score</string>
-    <string name="menu_caption_reset_selects">&#128465; Wis alle selecties</string>
+    <string name="menu_caption_reset_selects">&#128465; Reset alle selecties</string>
     <string name="menu_caption_use_speech">&#128264; Gebruik spraak</string>
     <string name="menu_caption_wordreference">&#127760; Lookup - WordReference</string>
+    <string name="menu_caption_base_record">&#128179;View Base Record</string>
 
     <string name="msg_blocksize_number">Vul positief getal in voor de blokgrootte.</string>
     <string name="msg_lemmalength_number">Vul positief getal in voor de woordlengte.</string>
@@ -107,7 +104,7 @@
     <string name="threshold_post"> x goed.</string>
     <string name="threshold_pre">Geslaagd bij </string>
 
-    <string name="version_info">Last change: Luisterlijst. Luisteren per blok</string>
+    <string name="version_info">Luisterlijst. Luisteren per blok</string>
 
     <string name="wordgroup">Groep</string>
 
@@ -117,7 +114,7 @@
     <string name="word_group_type_subtitle">Selecteer woordsoort en/of woordgroep</string>
     <string name="werkwoordjes_oefenen">Werkwoordjes oefenen</string>
     <string name="luister_oefening">Luister oefening</string>
-    <string name="positie">blok %1$d - %2$d</string>
+    <string name="positie">blok %1$d - lemma %2$d</string>
     <string name="thatsall">ThatsAll</string>
     <string name="pct100">100%</string>
     <string name="tempo">tempo</string>

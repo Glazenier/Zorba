@@ -39,7 +39,7 @@ const val STEPS = 20                        // number of STEPS between start end
 
 /* constants determining Greek flag size */
 /* Thickness of the lines that make (the blue part of) the greek flag
- * All other dimensions are in relation to this value (
+ * All other dimensions are relative to this value (
  */
 const val THICKNESS = 20f
 const val FLAG_WIDTH_FACTOR = 18   // flag is wide 18 x THICKNESS
@@ -92,27 +92,28 @@ class SplashView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         /* empty lines-list */
         with(lineList) {
             clear()
-
-            // Z
-            add(BlueLine(0f, THICKNESS / 2, 2 * THICKNESS, THICKNESS / 2, 0f, 0f, 10f, 1f))
-            add(BlueLine(3 * THICKNESS, THICKNESS / 2, 5 * THICKNESS, THICKNESS / 2, 0f, 12f, 10f, 0f))
-            add(BlueLine(5 * THICKNESS, THICKNESS / 2, FLAG_WIDTH_FACTOR * THICKNESS, THICKNESS / 2, 0f, 10f, 10f, 12f))
-            // O
-            add(BlueLine(0f, 3 * THICKNESS / 2, 2 * THICKNESS, 3 * THICKNESS / 2, 11f, 10f, 16f, 5f))
-            add(BlueLine(3 * THICKNESS, 3 * THICKNESS / 2, 5 * THICKNESS, 3 * THICKNESS / 2, 11f, 9f, 16f, 13f))
-            add(BlueLine(5 * THICKNESS, 5 * THICKNESS / 2, FLAG_WIDTH_FACTOR * THICKNESS, 5 * THICKNESS / 2, 15f, 5f, 19f, 9f))
-            add(BlueLine(0f, 7 * THICKNESS / 2, 2 * THICKNESS, 7 * THICKNESS / 2, 15f, 13f, 19f, 7f))
-            // R
-            add(BlueLine(3 * THICKNESS, 7 * THICKNESS / 2, 5 * THICKNESS, 7 * THICKNESS / 2, 21f, 12f, 22f, 6f))
-            add(BlueLine(0f, 9 * THICKNESS / 2, 2 * THICKNESS, 9 * THICKNESS / 2, 21f, 7f, 27f, 6f))
-            // B
-            add(BlueLine(3 * THICKNESS, 4 * THICKNESS + THICKNESS / 2, 5 * THICKNESS, 4 * THICKNESS + THICKNESS / 2, 28f, 13f, 30f, 0f))
-            add(BlueLine(5 * THICKNESS, 4 * THICKNESS + THICKNESS / 2, FLAG_WIDTH_FACTOR * THICKNESS, 4 * THICKNESS + THICKNESS / 2, 28f, 6f, 35f, 10f))
-            add(BlueLine(0f, 6 * THICKNESS + THICKNESS / 2, 5 * THICKNESS, 6 * THICKNESS + THICKNESS / 2, 28f, 12f, 35f, 9f))
+            // 27-29-2020::reversed sequence and end points to drop flag strokes from the bottom, instead of from the top
             // A
-            add(BlueLine(5 * THICKNESS, 6 * THICKNESS + THICKNESS / 2, FLAG_WIDTH_FACTOR * THICKNESS, 6 * THICKNESS + THICKNESS / 2, 37f, 13f, 38f, 6f))
-            add(BlueLine(0f, 8 * THICKNESS + THICKNESS / 2, 5 * THICKNESS, 8 * THICKNESS + THICKNESS / 2, 36f, 12f, 44f, 8f))
-            add(BlueLine(5 * THICKNESS, 8 * THICKNESS + THICKNESS / 2, FLAG_WIDTH_FACTOR * THICKNESS, 8 * THICKNESS + THICKNESS / 2, 38f, 6f, 43f, 12f))
+            add(BlueLine(5 * THICKNESS, 8 * THICKNESS + THICKNESS / 2, FLAG_WIDTH_FACTOR * THICKNESS, 8 * THICKNESS + THICKNESS / 2,0f, 0f, 10f, 1f))
+            add(BlueLine(0f, 8 * THICKNESS + THICKNESS / 2, 5 * THICKNESS, 8 * THICKNESS + THICKNESS / 2,0f, 12f, 10f, 0f))
+            add(BlueLine(5 * THICKNESS, 6 * THICKNESS + THICKNESS / 2, FLAG_WIDTH_FACTOR * THICKNESS, 6 * THICKNESS + THICKNESS / 2, 0f, 10f, 10f, 12f))
+            // B
+            add(BlueLine(0f, 6 * THICKNESS + THICKNESS / 2, 5 * THICKNESS, 6 * THICKNESS + THICKNESS / 2, 11f, 10f, 16f, 5f))
+            add(BlueLine(5 * THICKNESS, 4 * THICKNESS + THICKNESS / 2, FLAG_WIDTH_FACTOR * THICKNESS, 4 * THICKNESS + THICKNESS / 2, 11f, 9f, 16f, 13f ))
+            add(BlueLine(3 * THICKNESS, 4 * THICKNESS + THICKNESS / 2, 5 * THICKNESS, 4 * THICKNESS + THICKNESS / 2, 15f, 5f, 19f, 9f))
+            // R
+            add(BlueLine(0f, 9 * THICKNESS / 2, 2 * THICKNESS, 9 * THICKNESS / 2,15f, 13f, 19f, 7f ))
+            add(BlueLine(3 * THICKNESS, 7 * THICKNESS / 2, 5 * THICKNESS, 7 * THICKNESS / 2, 21f, 12f, 22f, 6f))
+            add(BlueLine(0f, 7 * THICKNESS / 2, 2 * THICKNESS, 7 * THICKNESS / 2,21f, 7f, 27f, 6f  ))
+            // O
+            add(BlueLine(5 * THICKNESS, 5 * THICKNESS / 2, FLAG_WIDTH_FACTOR * THICKNESS, 5 * THICKNESS / 2, 28f, 13f, 30f, 0f))
+            add(BlueLine(3 * THICKNESS, 3 * THICKNESS / 2, 5 * THICKNESS, 3 * THICKNESS / 2, 28f, 6f, 35f, 10f))
+            add(BlueLine(0f, 3 * THICKNESS / 2, 2 * THICKNESS, 3 * THICKNESS / 2, 28f, 12f, 35f, 9f))
+            // Z
+            add(BlueLine(5 * THICKNESS, THICKNESS / 2, FLAG_WIDTH_FACTOR * THICKNESS, THICKNESS / 2, 37f, 13f, 38f, 6f))
+            add(BlueLine(3 * THICKNESS, THICKNESS / 2, 5 * THICKNESS, THICKNESS / 2, 36f, 12f, 44f, 8f ))
+            add(BlueLine(0f, THICKNESS / 2, 2 * THICKNESS, THICKNESS / 2,  38f, 6f, 43f, 12f))
+
         }
     }
 
@@ -126,7 +127,6 @@ class SplashView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
         /* on each iteration the lines are displayed with their current x and y coordinates */
         for (line in lineList) line.show(canvas)
-//        lineList.forEach() {it.show(canvas)}
     }
 
     fun move() {

@@ -1,23 +1,22 @@
 package driemondglas.nl.zorba
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.MenuItem
 import android.widget.ArrayAdapter
+import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.wordgroup_wordtype.*
-import java.util.ArrayList
+import java.util.*
 
 class WordTypeAndGroup : AppCompatActivity() {
     private val zorbaDBHelper: ZorbaDBHelper = ZorbaDBHelper(this)
-    private val queryManager: QueryManager = QueryManager.getInstance()
 
     private val allGroups = ArrayList<String>()
     private val allTypes = ArrayList<String>()
 
     /* save initial values to restore when cancel is pressed */
-    private val origGroup = queryManager.wordGroup
-    private val origType = queryManager.wordType
+    private val origGroup = wordGroup
+    private val origType = wordType
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,12 +43,14 @@ class WordTypeAndGroup : AppCompatActivity() {
 
         lst_wordgroup.setOnItemClickListener { _, _, position, _ ->
             val selGroep = allGroups[position]
-            queryManager.wordGroup = if (selGroep == "*") "" else selGroep.substringBeforeLast(" (")
+            wordGroup = if (selGroep == "*") "" else selGroep.substringBefore(" (")
+            zorbaPreferences.edit().putString("wordgroup", wordGroup).apply()
         }
 
         lst_wordtype.setOnItemClickListener { _, _, position, _ ->
             val selWoordsoort = allTypes[position]
-            queryManager.wordType = if (selWoordsoort == "*") "" else selWoordsoort.substringBeforeLast(" (")
+            wordType = if (selWoordsoort == "*") "" else selWoordsoort.substringBefore(" (")
+            zorbaPreferences.edit().putString("wordtype", wordType).apply()
         }
     }
 
@@ -71,16 +72,22 @@ class WordTypeAndGroup : AppCompatActivity() {
     }
 
     private fun clearSelections() {
-        queryManager.wordGroup = ""
-        queryManager.wordType = ""
+        wordGroup = ""
+        wordType = ""
         lst_wordgroup.setItemChecked(0, true)
         lst_wordtype.setItemChecked(0, true)
+        zorbaPreferences.edit().putString("wordgroup", "").apply()
+        zorbaPreferences.edit().putString("wordtype", "").apply()
     }
 
     private fun cancelChanges() {
         /* restore initial values */
-        queryManager.wordType = origType
-        queryManager.wordGroup = origGroup
+        wordType = origType
+        wordGroup = origGroup
+        zorbaPreferences.edit()
+              .putString("wordgroup", wordGroup)
+              .putString("wordtype", wordType)
+              .apply()
         // go back to calling activity
         val myIntent = Intent()
         myIntent.putExtra("result", "cancel")
@@ -96,7 +103,7 @@ class WordTypeAndGroup : AppCompatActivity() {
 
         // this query returns all distinct wordgroups (column "groep") and
         // the number of records per wordgroup (column "groeptotaal")
-        val query = queryManager.queryAlleGroepen
+        val query = QueryManager.queryAlleGroepen
         val db = zorbaDBHelper.readableDatabase
         val myCursor = db.rawQuery(query, null)
 
@@ -125,7 +132,7 @@ class WordTypeAndGroup : AppCompatActivity() {
 
         // this query returns all distinct wordtypes (column "woordsoort") and
         // the number of records per wordtype (column "soorttotaal")
-        val query = queryManager.queryAlleWoordSoorten
+        val query = QueryManager.queryAlleWoordSoorten
         val db = zorbaDBHelper.readableDatabase
         val myCursor = db.rawQuery(query, null)
 

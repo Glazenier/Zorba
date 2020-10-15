@@ -17,7 +17,7 @@ class LemmaRecyclerAdapter(private val lemmaArrayList: ArrayList<LemmaItem>) : R
     var showDutch = true
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
-        val itemView = LayoutInflater.from(parent.context).inflate(R.layout.item_layout, parent, false)
+        val itemView = LayoutInflater.from(parent.context).inflate(R.layout.lemma_recycler_item, parent, false)
         return MyViewHolder(itemView)
     }
 

@@ -5,7 +5,7 @@
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/main_background"
+        android:background="@color/activity_bgcolor"
         tools:context=".MainActivity"
         tools:ignore="ContentDescription, Autofill"
         >
@@ -32,7 +32,7 @@
             android:contentDescription="@string/flag_greek"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:srcCompat="@drawable/flaggrsmall"
+            app:srcCompat="@drawable/flag_gr_small"
             />
     <ImageView
             android:id="@+id/ibtn_flag_nl"
@@ -43,7 +43,7 @@
             android:contentDescription="@string/flag_dutch"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:srcCompat="@drawable/flagnlsmall"
+            app:srcCompat="@drawable/flag_nl_small"
             />
     <View
             android:id="@+id/divider"
@@ -120,7 +120,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toTopOf="@+id/text_search"
-            tools:listitem="@layout/item_layout"
+            tools:listitem="@layout/lemma_recycler_item"
             />
     <ProgressBar
             android:id="@+id/progress_bar"
