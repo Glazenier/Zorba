@@ -8,26 +8,25 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.SpannableString
-import android.text.style.RelativeSizeSpan
 import android.text.style.StyleSpan
 import android.util.AttributeSet
 import android.view.MenuItem
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import driemondglas.nl.zorba.Utils.normalize
 import kotlinx.android.synthetic.main.hangman.*
 
 
 /* This file contains 2 classes related to the hangman game activity:
-*   Hangman        Activity that gets called from main activity.
-*   HangmanCanvas  Custom view to draw graphic to form the gallow and the increasing number of body parts
-*                  Note: this custom view is used in the hangman.xmlile as
-*                  type: driemondglas.nl.zorba.HangmanCanvas and
-*                  id: "@+id/gallow"
-*/
+ *   Hangman        Activity that gets called from main activity.
+ *   HangmanCanvas  Custom view to draw graphics for the gallow and the increasing number of body parts
+ *                  Note: this custom view is used in the hangman.xml flile as
+ *                  type: driemondglas.nl.zorba.HangmanCanvas and
+ *                  id: "@+id/gallow"
+ */
 class Hangman : AppCompatActivity() {
     private lateinit var mainCursor: Cursor
     private lateinit var db: SQLiteDatabase
@@ -35,7 +34,7 @@ class Hangman : AppCompatActivity() {
     private var theSecretWord = ""            // random lemma from database
     private var theTranslation = ""           // to be shown at the end of the turn
     private var normalizedSecret = ""         // normalized secret word (the accented characters) and the final sigma(ς) replaced by sigma(σ))
-    private var guessed: String = ""          // guessed character
+    private var guessed = ""                  // guessed character
     private var reveal = ""                   // displays guessed (accented) characters (and correct final sigma)
     private var alreadyGuessedButWrong = ""  // string holding the faulty guesses
     private var aantalFout = 0                // error counter
@@ -44,10 +43,9 @@ class Hangman : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.hangman)
 
-        val ztitle= SpannableString("Δήμιος - Galgje")
-        ztitle.setSpan(StyleSpan(Typeface.BOLD_ITALIC), 0, 5, 0)
-        ztitle.setSpan(StyleSpan(Typeface.BOLD), 5, 15, 0)
-        ztitle.setSpan(RelativeSizeSpan(1.2f), 0, 15, 0)
+        val subTitle= SpannableString("Δήμιος - Galgje")
+        subTitle.setSpan(StyleSpan(Typeface.BOLD_ITALIC), 0, 5, 0)
+        subTitle.setSpan(StyleSpan(Typeface.BOLD), 5, 15, 0)
 
         val myBar = supportActionBar
         if (myBar != null) {
@@ -57,7 +55,7 @@ class Hangman : AppCompatActivity() {
              */
             myBar.setDisplayHomeAsUpEnabled(true)
             myBar.title = "ZORBA"
-            myBar.subtitle = ztitle
+            myBar.subtitle = subTitle
         }
 
         /* get a reference to the database */
@@ -68,16 +66,15 @@ class Hangman : AppCompatActivity() {
         */
         mainCursor = db.rawQuery(QueryManager.hangmanQuery(), null)
 
+        btn_again.setOnClickListener {
+            /* if any more secret words are available, setup the next turn */
+            if (mainCursor.moveToNext()) setupSecret() else colorToast(context = this, msg = "Thats all")
+        }
+
         /* if there is indeed a record returned...
          * ... setup the game
          */
         if (mainCursor.moveToNext()) setupSecret()
-    }
-
-
-    fun again(@Suppress("UNUSED_PARAMETER") v: View) {
-        /* if any more secret words are available, setup the next turn */
-        if (mainCursor.moveToNext()) setupSecret() else colorToast(context = this, msg = "Thats all")
     }
 
     @SuppressLint("DefaultLocale")
@@ -216,7 +213,7 @@ class HangmanCanvas(context: Context, attrs: AttributeSet) : View(context, attrs
         super.onDraw(canvas)
         if (canvas == null) return
 
-        myPaint.setColor(ContextCompat.getColor(context, R.color.gallow_color))
+        myPaint.color = ContextCompat.getColor(context, R.color.gallow_color)
         myPaint.strokeWidth = STROKEWIDTH * 1.5f
         myPaint.style = Paint.Style.STROKE  // unfilled shapes (the head)
 
@@ -224,7 +221,7 @@ class HangmanCanvas(context: Context, attrs: AttributeSet) : View(context, attrs
         canvas.drawLines(gallowParts, myPaint)
 
         /* change the line color */
-        myPaint.setColor(ContextCompat.getColor(context, R.color.body_color))
+        myPaint.color = ContextCompat.getColor(context, R.color.body_color)
         myPaint.strokeWidth = STROKEWIDTH
         /* draw the head if error count is 1 or more */
         if (fout > 0) canvas.drawOval(headCoords[0], headCoords[1], headCoords[2], headCoords[3], myPaint)

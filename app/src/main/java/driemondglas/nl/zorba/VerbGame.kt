@@ -19,34 +19,39 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
+import android.widget.CheckBox
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import driemondglas.nl.zorba.Utils.enabled
+import driemondglas.nl.zorba.Utils.toggleVisibility
 import kotlinx.android.synthetic.main.verb_game.*
-
 
 @SuppressLint("SetTextI18n")
 class VerbGame : AppCompatActivity() {
-    private lateinit var gameCursor: Cursor
-    private lateinit var db: SQLiteDatabase
 
-    private var mode = "conjugate"
+    private lateinit var db: SQLiteDatabase // shall be reference to the local sqlite database
+    private lateinit var gameCursor: Cursor // shall contain the records selected by the "verbgamequery" in the QueryManager
 
-    private var theIdx = 0
+    private var theIdx = 0           // indexnumber of current lemma
     private var theGreek = ""        // the entire greek field in the db table
     private var theVerb = ""         // holds the un-conjugated Enestotas (present)
     private var theMeaning = ""      // holds the NL translation of the verb
     private var theTense = ""        // holds the randomly choosen tense
     private var theConjugation = ""  // holds the randomly selected conjugation in the choosen tense
     private var thePersonGR = ""     // keeps greek personal pronoun in sync with choosen conjugation
-    private var dashes = ""          // creates baseline of dashes
+    private var theDashes = ""       // creates baseline of dashes
+    // short description of the possible person & number combinations
+    private val personAbbr = listOf("1ste pers. enkelv.", "2-de pers. enkelv.", "3de pers. enkelv.", "1ste pers. meerv.", "2de pers. meerv.", "3de pers. meerv.")
+    // actually picked(randomly) person & number
+    private var theAbbr = ""
 
+    private val selectedPersons = mutableSetOf<Int>()  // holds preselected possible persons
     private var savedLevelBasic = true
     private var savedLevelAdvanced = true
     private var savedLevelBallast = true
     private var seconds = 0
     private var scores = mutableListOf<Int>()
-    private var fastest = 3000
+    private var fastest = 3000  // keeps track of fastest score
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,42 +76,60 @@ class VerbGame : AppCompatActivity() {
             touche(v, m)
             v.performClick()
             true }
-        btn_show_ladder.setOnClickListener { txt_conjugations.visibility = if (txt_conjugations.visibility == View.VISIBLE) View.INVISIBLE else View.VISIBLE }
+
         sw_mode.setOnClickListener { switchGameMode() }
-        btn_fout.setOnClickListener { startOver() }
+
         lbl_herken.setOnClickListener {
             sw_mode.isChecked = !sw_mode.isChecked
             switchGameMode()
         }
+
         sw_level_basis.setOnClickListener { onLevelChange() }
         sw_level_gevorderd.setOnClickListener { onLevelChange() }
         sw_level_ballast.setOnClickListener { onLevelChange() }
+        chk_type1.setOnClickListener { onEndingChange() }
+        chk_type2.setOnClickListener { onEndingChange() }
+        chk_type3.setOnClickListener { onEndingChange() }
+        btn_fout.setOnClickListener { startOver() }
         btn_previous.setOnClickListener { backwardToPreviousMatch() }
         btn_verbal.setOnClickListener { cleanSpeech("$thePersonGR  $theConjugation", "anders") }
+        btn_show_ladder.setOnClickListener {
+            txt_reveal.visibility = if (txt_conjugations.visibility == View.VISIBLE) View.VISIBLE else View.GONE
+            txt_conjugations.toggleVisibility()
+        }
 
-        /* save original level values mand set initial values for the game*/
+        /* save original level values and set initial values for the game */
         savedLevelBasic = levelBasic
         savedLevelAdvanced = levelAdvanced
         savedLevelBallast = levelBallast
 
         /* for the game start with basic level only */
         sw_level_basis.isChecked = true
-        sw_level_gevorderd.isChecked = false
-        sw_level_ballast.isChecked = false
+        sw_level_gevorderd.isChecked = true
+        sw_level_ballast.isChecked = true
 
         levelBasic = true
-        levelAdvanced = false
-        levelBallast = false
+        levelAdvanced = true
+        levelBallast = true
 
-        /* get the specific selection query from the Query manager  */
+        /* init selected person list based on default switch settings */
+        if (chk_1.isChecked) selectedPersons.add(0)
+        if (chk_2.isChecked) selectedPersons.add(1)
+        if (chk_3.isChecked) selectedPersons.add(2)
+        if (chk_4.isChecked) selectedPersons.add(3)
+        if (chk_5.isChecked) selectedPersons.add(4)
+        if (chk_6.isChecked) selectedPersons.add(5)
+
+
+        /* get the specific selection query from the Query Manager */
         gameCursor = db.rawQuery(QueryManager.verbGameQuery(), null)
 
-        /* ... and setup the game */
+        /* ... and setup the game ... */
         forwardUntilMatch()
     }
 
     override fun onStop() {
-        /* restore original level values as before the game started */
+        /* restore original level values as before the game was started */
         levelBasic = savedLevelBasic
         levelAdvanced = savedLevelAdvanced
         levelBallast = savedLevelBallast
@@ -116,16 +139,14 @@ class VerbGame : AppCompatActivity() {
     /*  Switch between recognising (determinate) a conjugation and conjugating a given verb */
     private fun switchGameMode() {
         if (sw_mode.isChecked) {
-            mode = "determinate"
-            sw_mode.setTextColor(ContextCompat.getColor(this, R.color.normal_text_color))
+            sw_mode.setTextColor(ContextCompat.getColor(applicationContext, R.color.normal_text_color))
             sw_mode.setTypeface(null, Typeface.NORMAL)
-            lbl_herken.setTextColor(ContextCompat.getColor(this, R.color.colorAccent))
+            lbl_herken.setTextColor(ContextCompat.getColor(applicationContext, R.color.colorAccent))
             lbl_herken.setTypeface(null, Typeface.BOLD)
         } else {
-            mode = "conjugate"
-            sw_mode.setTextColor(ContextCompat.getColor(this, R.color.colorAccent))
+            sw_mode.setTextColor(ContextCompat.getColor(applicationContext, R.color.colorAccent))
             sw_mode.setTypeface(null, Typeface.BOLD)
-            lbl_herken.setTextColor(ContextCompat.getColor(this, R.color.normal_text_color))
+            lbl_herken.setTextColor(ContextCompat.getColor(applicationContext, R.color.normal_text_color))
             lbl_herken.setTypeface(null, Typeface.NORMAL)
         }
         showByMode()
@@ -134,21 +155,25 @@ class VerbGame : AppCompatActivity() {
     /* move forward in cursor until a verb is found that contains selected conjugation (ex: Not all have Paratatikos!) */
     private fun forwardUntilMatch() {
         txt_conjugations.visibility = View.INVISIBLE
-        text_ask.setTextColor(ContextCompat.getColor(this, R.color.normal_text_color))
+        text_ask.setTextColor(ContextCompat.getColor(applicationContext, R.color.normal_text_color))
+
+        /* this loops until a matching record is found */
         while (gameCursor.moveToNext()) {
             if (setupVerb()) break
         }
-        if (gameCursor.isAfterLast) colorToast(context = this, msg = "Thats all", bgColor = Color.BLUE) else showByMode()
+        /*     .    .    .    .    .    .    .    .    */
+
+        if (gameCursor.isAfterLast) colorToast(context = applicationContext, msg = "Thats all", bgColor = Color.BLUE) else showByMode()
     }
 
-    /* move backwards in cursor until a verb is found that contains selected conjugation (ex: Not all have Paratatikos!) */
+    /* move backwards in cursor until a verb is found that contains selected conjugation */
     private fun backwardToPreviousMatch() {
         txt_conjugations.visibility = View.INVISIBLE
-        text_ask.setTextColor(ContextCompat.getColor(this, R.color.normal_text_color))
+        text_ask.setTextColor(ContextCompat.getColor(applicationContext, R.color.normal_text_color))
         while (gameCursor.moveToPrevious()) {
             if (setupVerb()) break
         }
-        if (gameCursor.isBeforeFirst) colorToast(context = this, msg = "Thats all", bgColor = Color.BLUE) else showByMode()
+        if (gameCursor.isBeforeFirst) colorToast(context = applicationContext, msg = "Thats all", bgColor = Color.BLUE) else showByMode()
     }
 
     private fun setupVerb(): Boolean {
@@ -159,51 +184,44 @@ class VerbGame : AppCompatActivity() {
         theMeaning = gameCursor.getString(gameCursor.getColumnIndex("NL"))
         theGreek = gameCursor.getString(gameCursor.getColumnIndex("GR"))
 
-        /* check which tenses are available in the Greek text field */
-        var tenseIsAvailable = if (chk_enestotas.isChecked) "e" else ""
-        if (hasMellontas(theGreek) && chk_mellontas.isChecked) tenseIsAvailable += "m"
-        if (hasAorist(theGreek) && chk_aoristos.isChecked) tenseIsAvailable += "a"
-        if (hasParatatikos(theGreek) && chk_paratatikos.isChecked) tenseIsAvailable += "p"
-        if (hasMellontas(theGreek) && chk_prostaktiki.isChecked) tenseIsAvailable += "g"  // need mellondas to build gebiedende wijs
+        /* check which tenses are available in the Greek text field  AND selected in the UI */
+        val availableTenses = mutableSetOf<String>()  // holds each tense available in the Greek text
 
-        if (tenseIsAvailable.isNotEmpty()) {
-            /* pick a random position in the string with available tenses */
-            val sixConjugations = when (tenseIsAvailable.random()) {
-                'e' -> {
-                    theTense = "Tegenwoordige tijd"
-                    conjugateEnestotas(theGreek)
-                }
-                'm' -> {
-                    theTense = "Toekomende tijd"
-                    conjugateMellontas(theGreek)
-                }
-                'a' -> {
-                    theTense = "Verleden tijd"
-                    conjugateAorist(theGreek)
-                }
-                'p' -> {
-                    theTense = "Onvoltooid verleden tijd"
-                    conjugateParatatikos(theGreek)
-                }
-                'g' -> {
-                    theTense = "Gebiedende wijs"
-                    createProstaktiki(theGreek)
-                }
+        if (chk_enestotas.isChecked) availableTenses.add("Tegenwoordige tijd")
+        if (hasMellontas(theGreek) && chk_mellontas.isChecked) availableTenses.add("Toekomende tijd")
+        if (hasAorist(theGreek) && chk_aoristos.isChecked) availableTenses.add("Verleden tijd")
+        if (hasParatatikos(theGreek) && chk_paratatikos.isChecked) availableTenses.add("Onvoltooid verleden tijd")
+        if (hasMellontas(theGreek) && chk_prostaktiki.isChecked) availableTenses.add("Gebiedende wijs")  // need mellontas to build gebiedende wijs
+
+        if (availableTenses.size > 0)      {
+            /* pick a random tense in the set of available tenses */
+            theTense = availableTenses.shuffled().first()
+
+            val sixConjugations = when (theTense) {
+                "Tegenwoordige tijd" -> { conjugateEnestotas(theGreek) }
+                "Toekomende tijd" -> { conjugateMellontas(theGreek) }
+                "Verleden tijd" -> { conjugateAorist(theGreek) }
+                "Onvoltooid verleden tijd" -> { conjugateParatatikos(theGreek) }
+                "Gebiedende wijs" -> { createProstaktiki(theGreek) }
                 else -> "Werkwoordvorm onbekend"
             }
 
-            /* Create set of selected persons: 0 = 1st person singular, 1 = 2nd person singular, ..., 3 = 1st person plural ... etc.
-             * questionned person is picked from this set */
-            val selectedPersons = mutableSetOf<Int>()
-            if (chk_1.isChecked) selectedPersons.add(0)
-            if (chk_2.isChecked) selectedPersons.add(1)
-            if (chk_3.isChecked) selectedPersons.add(2)
-            if (chk_4.isChecked) selectedPersons.add(3)
-            if (chk_5.isChecked) selectedPersons.add(4)
-            if (chk_6.isChecked) selectedPersons.add(5)
-
             if (selectedPersons.isNotEmpty()) {
-                txt_conjugations.text = sixConjugations.replace(", ".toRegex(), "\n")
+                // build the ladder (het rijtje)
+                val ladderlist: List<String> = sixConjugations.split(",").map { it.trim() }
+
+                if (ladderlist.size < 6) return false
+                val persoonList = listOf("εγώ", "εσύ", "αυτός,-ή,-ό", "εμείς", "εσείς", "αυτοί,-ές,-ά")
+                val textLadder = SpannableString("$theTense:\nεγώ ${ladderlist[0]}\nεσύ ${ladderlist[1]}\nαυτός,-ή,-ό ${ladderlist[2]}\nεμείς ${ladderlist[3]}\nεσείς ${ladderlist[4]}\nαυτοί,-ές,-ά ${ladderlist[5]}")
+                var spanStart = theTense.length + persoonList[0].length + 3 // +: +newline +space
+
+                for (i in 0..5) {
+                    val spanEnd = spanStart + ladderlist[i].length
+                    textLadder.setSpan(StyleSpan(Typeface.BOLD_ITALIC), spanStart, spanEnd, 0)
+                    if (i < 5) spanStart = spanEnd + persoonList[i + 1].length + 2 // +newline + space
+                }
+                txt_conjugations.text = textLadder
+
                 val conjugationParts = sixConjugations.split(",")
                 if (conjugationParts.size == 1) {
                     theConjugation = conjugationParts[0]
@@ -214,11 +232,11 @@ class VerbGame : AppCompatActivity() {
                     theConjugation = conjugationParts[pickOne].trim()
                     val persoonsvormGR = listOf("Εγώ", "Εσύ", listOf("Αυτός", "Αυτή", "Αυτό").random(), "Εμείς", "Εσείς", listOf("Αυτοί", "Αυτές", "Αυτά").random())
                     thePersonGR = persoonsvormGR[pickOne]
+                    theAbbr = personAbbr[pickOne]
                 }
-                dashes = "⎽ ".repeat(theConjugation.length)
+                theDashes = "⎽ ".repeat(theConjugation.length)
                 chronometer.base = SystemClock.elapsedRealtime()
                 chronometer.start()
-
 
                 return true
             } else return false
@@ -226,35 +244,36 @@ class VerbGame : AppCompatActivity() {
     }
 
     private fun showByMode() {
-        if (mode == "conjugate") {
-            text_ask.text = "$thePersonGR $dashes ($theVerb)"
-            text_reveal.text = " ".repeat(10) + theTense
-            text_reveal.visibility = View.VISIBLE // initially part of the question
+        if (!sw_mode.isChecked) {
+            text_ask.text = "$thePersonGR $theDashes ($theVerb)"
+            txt_reveal.text = " ".repeat(10) + theTense
+            txt_reveal.visibility = View.VISIBLE // initially part of the question
         } else {
             text_ask.text = theConjugation
-            text_reveal.text = "$theTense van $theVerb ($theMeaning)"
-            text_reveal.visibility = View.INVISIBLE
+            txt_reveal.text = "$theTense van $theVerb ($theMeaning)"
+            txt_reveal.visibility = View.INVISIBLE
         }
     }
 
     private fun reveal() {
-        text_reveal.visibility = View.VISIBLE
-        text_ask.setTextColor(ContextCompat.getColor(this, R.color.blue_text_color))
+        txt_conjugations.visibility = View.INVISIBLE
+        txt_reveal.visibility = View.VISIBLE
+        text_ask.setTextColor(ContextCompat.getColor(applicationContext, R.color.blue_text_color))
         text_ask.text = "$thePersonGR $theConjugation"
 
-        val textReveal = SpannableString("$theTense van $theVerb ($theMeaning).")
-        val spanStart = "$theTense van ".length
+        val textReveal = SpannableString("$theTense, $theAbbr van $theVerb ($theMeaning).")
+        val spanStart = "$theTense, $theAbbr van ".length
         val spanEnd = spanStart + theVerb.length
 
         textReveal.setSpan(StyleSpan(Typeface.BOLD_ITALIC), spanStart, spanEnd, 0)
-        textReveal.setSpan(ForegroundColorSpan(ContextCompat.getColor(this, R.color.blue_text_color)), spanStart, spanEnd, 0)
-        text_reveal.text = textReveal
+        textReveal.setSpan(ForegroundColorSpan(ContextCompat.getColor(applicationContext, R.color.blue_text_color)), spanStart, spanEnd, 0)
+        txt_reveal.text = textReveal
 
         chronometer.stop()
         seconds = chronometer.text.take(2).toString().toInt() * 60 + chronometer.text.takeLast(2).toString().toInt()
         scores.add(seconds)
 
-        lbl_total.text = "Totaaltijd:  ${intToTime(scores.sum())}"
+        lbl_total.text = "Totaal:  ${intToTime(scores.sum())}"
         lbl_count.text = "Aantal:  ${scores.size}"
     }
 
@@ -282,9 +301,13 @@ class VerbGame : AppCompatActivity() {
 
     @Suppress("UNUSED_PARAMETER")
     fun onPersonClick(view: View) {
+        val thisCheck=view as CheckBox
         if (!(chk_1.isChecked || chk_2.isChecked || chk_3.isChecked || chk_4.isChecked || chk_5.isChecked || chk_6.isChecked)) {
             colorToast(context = this, msg = "Need at least one person selected.", bgColor = Color.RED)
-            chk_1.isChecked = true
+            thisCheck.isChecked = true
+        } else {
+            val tagInt = thisCheck.tag.toString().toInt()
+            if (thisCheck.isChecked) selectedPersons.add(tagInt) else selectedPersons.remove(tagInt)
         }
     }
 
@@ -303,6 +326,17 @@ class VerbGame : AppCompatActivity() {
         forwardUntilMatch()
     }
 
+    private fun onEndingChange() {
+        /* if no ending is selected, select all */
+        if (!(chk_type1.isChecked || chk_type2.isChecked || chk_type3.isChecked)) {
+            chk_type1.isChecked = true
+            chk_type2.isChecked = true
+            chk_type3.isChecked = true
+        }
+        /* forward to query manager */
+        gameCursor = db.rawQuery(QueryManager.verbGameQuery(chk_type1.isChecked,chk_type2.isChecked,chk_type3.isChecked), null)
+        forwardUntilMatch()
+    }
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         /* Inflate the menu; this adds menu items to the zorba action bar. */
         menuInflater.inflate(R.menu.menu_verbgame, menu)
@@ -400,6 +434,9 @@ class VerbGame : AppCompatActivity() {
         val alertDialog = bob.create()
         alertDialog.show()
         alertDialog.getButton(DialogInterface.BUTTON_POSITIVE).textSize = 28f
+        scores.clear()
+        lbl_total.text = ""
+        lbl_count.text = ""
     }
 
     private fun startOver() {

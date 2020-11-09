@@ -50,6 +50,12 @@ class ZorbaDBHelper(zorbaContext: Context) : SQLiteOpenHelper(zorbaContext, DATA
         db.close()
     }
 
+    fun assessFlashTable() {
+        val db = writableDatabase
+        db.execSQL("CREATE TABLE IF NOT EXISTS flashedlocal (idx INT UNIQUE PRIMARY KEY, flashvalue INT)")
+        db.close()
+    }
+
     fun jsonToSqlite(ionResult: String) {
         val json = JSONArray(ionResult)
 

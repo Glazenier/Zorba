@@ -27,6 +27,10 @@
             android:title="@string/menu_caption_email"
             />
     <item
+            android:id="@+id/menu_copy"
+            android:title="@string/menu_caption_copy"
+            />
+    <item
             android:id="@+id/menu_raw_view"
             android:title="@string/menu_caption_base_record"
             />

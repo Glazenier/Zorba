@@ -4,16 +4,24 @@
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
-
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-
         tools:context=".FilterAndSort"
-        tools:ignore="Autofill,UseSwitchCompatOrMaterialXml"
+        tools:ignore="Autofill"
         >
-
+    <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/sw_flashed"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="8dp"
+            android:tag="random"
+            android:text="@string/caption_flashed"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/view2"
+            />
     <TextView
             android:id="@+id/lbl_level"
             android:layout_width="wrap_content"
@@ -29,7 +37,7 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             />
-    <Switch
+    <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/sw_level1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -39,7 +47,7 @@
             app:layout_constraintTop_toBottomOf="@+id/lbl_level"
             app:layout_constraintStart_toStartOf="parent"
             />
-    <Switch
+    <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/sw_level2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -49,7 +57,7 @@
             app:layout_constraintStart_toEndOf="@+id/sw_level1"
             app:layout_constraintEnd_toStartOf="@+id/sw_level3"
             />
-    <Switch
+    <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/sw_level3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -107,10 +115,10 @@
             android:text="@string/lemma_length_post"
             android:textColor="@color/border_color"
             android:textStyle="bold"
-            app:layout_constraintTop_toBottomOf="@+id/divider01"
             app:layout_constraintStart_toEndOf="@+id/text_length"
+            app:layout_constraintTop_toBottomOf="@+id/divider01"
             />
-    <Switch
+    <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/sw_use_length"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -168,7 +176,7 @@
             app:layout_constraintTop_toBottomOf="@+id/key_scroller"
             app:layout_constraintEnd_toStartOf="@+id/sw_initial"
             />
-    <Switch
+    <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/sw_initial"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -231,7 +239,7 @@
             app:layout_constraintTop_toBottomOf="@+id/divider03"
             app:layout_constraintStart_toEndOf="@+id/text_blocksize"
             />
-    <Switch
+    <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/sw_use_blocks"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -251,6 +259,7 @@
             app:layout_constraintStart_toStartOf="parent"
             />
     <TextView
+            android:id="@+id/lbl_volgorde"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -261,10 +270,25 @@
             android:text="@string/sort"
             android:textColor="@color/border_color"
             android:textStyle="bold"
-            app:layout_constraintTop_toBottomOf="@+id/divider04"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/divider04"
             />
-    <Switch
+    <TextView
+            android:id="@+id/lbl_flash"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="16dp"
+            android:background="@color/label_bgcolor"
+            android:paddingStart="3dp"
+            android:paddingEnd="3dp"
+            android:text="@string/lbl_flash"
+            android:textColor="@color/border_color"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/view2"
+            />
+    <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/sw_index"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -275,7 +299,7 @@
             app:layout_constraintTop_toBottomOf="@+id/divider04"
             app:layout_constraintEnd_toEndOf="parent"
             />
-    <Switch
+    <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/sw_alfa"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -286,7 +310,7 @@
             app:layout_constraintTop_toBottomOf="@+id/sw_index"
             app:layout_constraintEnd_toEndOf="parent"
             />
-    <Switch
+    <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/sw_random"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -297,7 +321,7 @@
             app:layout_constraintTop_toBottomOf="@+id/sw_alfa"
             app:layout_constraintEnd_toEndOf="parent"
             />
-    <Switch
+    <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/sw_desc"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -357,7 +381,7 @@
             app:layout_constraintTop_toBottomOf="@+id/divider05"
             app:layout_constraintStart_toEndOf="@+id/text_threshold"
             />
-    <Switch
+    <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/sw_hide_jumpers"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -367,7 +391,6 @@
             android:text="@string/hide_jumpers"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/divider05"
-
             />
     <Button
             android:id="@+id/btn_select"
@@ -400,11 +423,21 @@
             app:layout_constraintBottom_toBottomOf="parent"
             />
     <View
+            android:id="@+id/view2"
             android:layout_width="match_parent"
             android:layout_height="2dp"
             android:layout_marginTop="8dp"
             android:background="?android:attr/listDivider"
             app:layout_constraintTop_toBottomOf="@+id/sw_hide_jumpers"
+            tools:layout_editor_absoluteX="-158dp"
+            />
+    <View
+            android:id="@+id/view"
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:layout_marginTop="8dp"
+            android:background="?android:attr/listDivider"
+            app:layout_constraintTop_toBottomOf="@+id/sw_flashed"
             />
 </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -69,6 +69,12 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.luisterlijst)
 
+        /* initialise the ZORBA Action Bar */
+        val zorbaActionBar = supportActionBar
+        zorbaActionBar?.setDisplayHomeAsUpEnabled(true)
+        zorbaActionBar?.title = "ZORBA"
+        zorbaActionBar?.subtitle = "Luisteroefening"
+
         /* make text field scrollable */
         farfarAway.movementMethod = ScrollingMovementMethod()
         /* Init tts object  */
@@ -129,6 +135,7 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
         btn_rewind.setOnClickListener {
             positionInBlock = 0
             stopTalking = true
+            img_thatsall.visibility = View.INVISIBLE
             startStop()
         }
     }
@@ -282,17 +289,18 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
 
                     val numLines = history.lines().count()
                     val factor = 0.9F
+                    val typeface: Typeface? = ResourcesCompat.getFont(applicationContext, R.font.tinos_italic)
+
                     history.lines().forEachIndexed { idx, line ->
-                        val runningSize = factor.pow(numLines - idx - 1)
+                        val shrinkingFontSize = factor.pow(numLines - idx - 1)
                         val delimiterStart = line.indexOf(" ~ ")
                         val meaningStart = delimiterStart + 3
-                        val colorSpan = ForegroundColorSpan(ContextCompat.getColor(this, R.color.sky_text_greek))
-                        val typeface: Typeface? = ResourcesCompat.getFont(this, R.font.tinos_italic)
-                        val fontSpan = TypefaceSpan(typeface!!)
+                        val colorSpan = ForegroundColorSpan(ContextCompat.getColor(applicationContext, R.color.sky_text_greek))
+
                         with(spannable) {
-                            setSpan(RelativeSizeSpan(runningSize), runningStart, runningStart + line.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                            setSpan(RelativeSizeSpan(shrinkingFontSize), runningStart, runningStart + line.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
                             setSpan(colorSpan, runningStart, runningStart + delimiterStart, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-                            setSpan(fontSpan, runningStart, runningStart + delimiterStart, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                            setSpan(TypefaceSpan(typeface!!), runningStart, runningStart + delimiterStart, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
                             setSpan(ForegroundColorSpan(Color.BLACK), runningStart + delimiterStart, runningStart + meaningStart, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
                         }
                         runningStart += line.length + 1

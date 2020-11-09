@@ -1,6 +1,6 @@
 package driemondglas.nl.zorba
 
-object QueryManager{
+object QueryManager {
 
     const val queryAlleWoordSoorten = "SELECT Woordsoort AS woordsoort, Count(*) AS soorttotaal FROM woorden GROUP BY Woordsoort ORDER BY Woordsoort;"
     const val queryAlleGroepen = "SELECT Groep AS groep, Count(*) AS groeptotaal FROM woorden WHERE woordsoort != 'liedtekst' GROUP BY Groep ORDER BY Groep;"
@@ -63,47 +63,83 @@ object QueryManager{
         }
     }
 
-    /*  MAIN selection QUERY
+    /* MAIN selection QUERY
      * this function builds the main query that implements the various selections made by the user
      */
     fun mainQuery(): String {
-        var sqlMain = "SELECT * FROM woorden" + wordgroupClause() + wordtypeClause() +
-              levelClause() + lengthClause() + initialClause() + searchClause() + thresholdClause() + orderbyClause() + ";"
+        var sqlMain =
+            if (flashed) {
+                "SELECT * FROM flashedlocal LEFT JOIN woorden ON woorden.idx = flashedlocal.idx "
+            } else {
+                "SELECT * FROM woorden "
+            }
+        sqlMain += wordgroupClause() + wordtypeClause() + levelClause() + lengthClause() + initialClause() + searchClause() + thresholdClause() + orderbyClause() + ";"
 
         /* replace first 'AND' with 'WHERE' */
         if (sqlMain.contains(" AND ")) sqlMain = sqlMain.replaceFirst(" AND ", " WHERE ")
         return sqlMain
     }
 
-
-    /*  MAIN clause ONLY
-     * This function returns the selection clause only (without WHERE).
-     * It is used to retrieve the record count of the selected records using DatabaseUtils.queryNumEntries
-     * Obviously, clauses with no impact on count are not used here
-     */
-    fun selectionClauseOnly(): String? {
-        var selection = wordgroupClause() + wordtypeClause() +
-              levelClause() + lengthClause() + initialClause() + searchClause() + thresholdClause() + ";"
-
-        if (selection.contains(" AND ")) selection = selection.replaceFirst(" AND ", "")
-
-        /* return null if no selection is made, is required by DatabaseUtils.queryNumEntries. It will count all records in the table if selection is null */
-        return if (selection == ";") null else selection
-    }
-
     /*  H A N G M A N  query */
     fun hangmanQuery(): String {
         /* length and order are not determined by the general configuration but specific to the hangman game */
         val lengthClause = if (useLength && pureLemmaLength in 1..15) " AND PureLength = $pureLemmaLength" else " AND PureLength <= 16"
-        val orderbyClause = " ORDER BY RANDOM() LIMIT 10"
 
-        var sqlHangman = "SELECT PureLemma , NL FROM woorden" + wordgroupClause() + wordtypeClause() +
-              levelClause() + lengthClause + orderbyClause + ";"
+        var sqlHangman = "SELECT PureLemma , NL FROM woorden" +
+              wordgroupClause() + wordtypeClause() + levelClause() + lengthClause + " ORDER BY RANDOM() LIMIT 10;"
 
         if (sqlHangman.contains(" AND ")) sqlHangman = sqlHangman.replaceFirst(" AND ", " WHERE ")
         return sqlHangman
     }
 
     /*  V E R B   G A M E  query */
-    fun verbGameQuery() = "SELECT idx, PureLemma, GR, NL FROM woorden WHERE woordsoort = 'werkwoord' " + levelClause() + " ORDER BY RANDOM();"
+    fun verbGameQuery(type1: Boolean = true, type2: Boolean = true, type3: Boolean = true): String {
+        var typeClause: String
+        if (type1 && type2 && type3) {
+            typeClause = ""
+        } else {
+            val type1Clause = if (type1) """ OR (purelemma LIKE '%ω' AND purelemma NOT LIKE '%άω') """ else ""
+            val type2Clause = if (type2) """ OR substr(purelemma,-2)='άω' OR substr(purelemma,-1)='ώ' """ else ""
+            val type3Clause = if (type3) """ OR substr(purelemma,-3)='μαι' """ else ""
+
+            typeClause = type1Clause + type2Clause + type3Clause
+            if (typeClause.contains(" OR ")) typeClause = typeClause.replaceFirst(" OR ", "")
+            typeClause = " AND ($typeClause)"
+        }
+
+        val sqlVerbs = if (flashed) {
+            "SELECT woorden.idx, PureLemma, GR, NL FROM flashedlocal LEFT JOIN woorden ON woorden.idx = flashedlocal.idx WHERE woordsoort = 'werkwoord' " + levelClause()
+        } else {
+            "SELECT idx, PureLemma, GR, NL FROM woorden WHERE woordsoort = 'werkwoord' " + levelClause() + typeClause + orderbyClause()
+        }
+        return sqlVerbs
+    }
+
+    /* function counts how many lemma's are available to verb game using current selections */
+    fun verbGameCount(): Int {
+        val countSQL = if (flashed) {
+            "SELECT COUNT(*) AS verbCount FROM flashedlocal LEFT JOIN woorden ON woorden.idx = flashedlocal.idx WHERE woordsoort = 'werkwoord' " + levelClause()
+        } else {
+            "SELECT COUNT(*) AS verbCount FROM woorden WHERE woordsoort = 'werkwoord' " + levelClause()
+        }
+        val countCursor = zorbaDBHelper.readableDatabase.rawQuery(countSQL, null)
+        val cnt= if (countCursor.moveToFirst())  countCursor.getInt(countCursor.getColumnIndex("verbCount")) else 0
+        countCursor.close()
+        return cnt
+    }
+
+    /* function counts how many lemma's are selected including locally flashed is so configured */
+    fun selectedCount(): Int {
+        var countSQL = if (flashed) {
+            "SELECT COUNT(*) AS selCount FROM flashedlocal LEFT JOIN woorden ON woorden.idx = flashedlocal.idx "
+        } else {
+            "SELECT COUNT(*) AS selCount FROM woorden "
+        }
+        countSQL += wordgroupClause() + wordtypeClause() + levelClause() + lengthClause() + initialClause() + searchClause() + thresholdClause() + ";"
+        if (countSQL.contains(" AND ")) countSQL = countSQL.replaceFirst(" AND ", " WHERE ")
+        val countCursor = zorbaDBHelper.readableDatabase.rawQuery(countSQL, null)
+        val cnt= if (countCursor.moveToFirst())  countCursor.getInt(countCursor.getColumnIndex("selCount")) else 0
+        countCursor.close()
+        return cnt
+    }
 }

@@ -1,11 +1,8 @@
 package driemondglas.nl.zorba
 
 import android.app.AlertDialog
-import android.content.Context
-import android.content.DialogInterface
-import android.content.Intent
-import android.content.SharedPreferences
-import android.database.DatabaseUtils
+import android.content.*
+import android.database.DatabaseUtils.*
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
@@ -24,10 +21,11 @@ import android.webkit.WebView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import driemondglas.nl.zorba.QueryManager.selectedCount
+import driemondglas.nl.zorba.QueryManager.verbGameCount
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 
@@ -56,9 +54,10 @@ var initial = ""
 var orderbyTag = "index"
 var orderDescending = true
 var search = ""
+var flashed = false
 
 /* Jumpers:
- * Jumpers are lemmas with number of correct answers above the set threshold. "They jumped the threshold"
+ * Jumpers are lemmas with count of correct answers above the set threshold. "They jumped the threshold"
  * The idea is to hide those lemmas in further selections to focus on remaining lemmas
  */
 var jumpThreshold = 2
@@ -75,6 +74,8 @@ var useSpeech = true
 
 /* shared preferences to keep configuration as well as certain progress ans score values */
 lateinit var zorbaPreferences: SharedPreferences
+
+lateinit var clipboardManager :ClipboardManager
 
 /* main activity class implements TextToSpeech.OnInitListener */
 class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
@@ -100,7 +101,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         val myIntent = Intent(this, FlashCard::class.java)
         myIntent.putExtra("idx", thisIdx)
-        startActivity(myIntent)
+        startActivityForResult(myIntent, SHOW_CARDS_CODE)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -117,6 +118,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         zorbaPreferences = applicationContext.getSharedPreferences("zorbaPrefKey", Context.MODE_PRIVATE)
 
+        clipboardManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+
         /* retrieve config from shared preferences  */
         useBlocks = zorbaPreferences.getBoolean("useblocks", true)
         blockSize = zorbaPreferences.getInt("blocksize", 5)
@@ -129,10 +132,10 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         pureLemmaLength = zorbaPreferences.getInt("purelemmalenght", 6)
         initial = zorbaPreferences.getString("initial", "") ?: ""
         orderbyTag = zorbaPreferences.getString("orderbytag", "index") ?: "index"
-        orderDescending = zorbaPreferences.getBoolean("orderdecending", true)
+        orderDescending = zorbaPreferences.getBoolean("orderdescending", true)
         jumpThreshold = zorbaPreferences.getInt("jumpthreshold", 2)
         hideJumpers = zorbaPreferences.getBoolean("hidejumpers", false)
-
+        flashed = zorbaPreferences.getBoolean("flashed", false)
 
         val zTitle = SpannableString("ZORBA by Herman")
         with(zTitle) {
@@ -164,6 +167,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         /* create jumpers table if it does not exist yet */
         zorbaDBHelper.assessJumperTable()
 
+        /* create local flashed table if it does not exist yet */
+        zorbaDBHelper.assessFlashTable()
+
         /* initialise the recyclerView for the lemma's on the front page */
         val recyclerView = findViewById<RecyclerView>(R.id.recycler_view)
 
@@ -179,15 +185,56 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         recyclerViewAdapter.setOnItemClickListener(onItemClickListener)
 
         /* attach listeners to the front page buttons */
-        btn_OpenDeck.setOnClickListener {
+        /*** open FLASHCARDS ***/
+        btn_open_deck.setOnClickListener {
             /* launch the FlashCard Activity */
-            val myIntent = Intent(this, FlashCard::class.java)
-            startActivityForResult(myIntent, SHOW_CARDS_CODE)
+
+            if (selectedCount() > 0 ) {
+                val myIntent = Intent(this, FlashCard::class.java)
+                startActivityForResult(myIntent, SHOW_CARDS_CODE)
+            } else {
+                colorToast(applicationContext, "Current selection does not contain any lemma !")
+            }
+        }
+
+        /*** open LUISTERLIJST ***/
+        btn_luister.setOnClickListener {
+            /* launch the luisterlijst Activity only if selection contains lemma's */
+            if (selectedCount() > 0 ) {
+                val myIntent = Intent(this, Luisterlijst::class.java)
+                startActivity(myIntent)
+            } else {
+                colorToast(applicationContext, "Current selection does not contain any lemma !")
+            }
+        }
+
+        /*** open WERKWOORD SPEL ***/
+        btn_verb_game.setOnClickListener {
+            /* launch the verb game activity if selection contains any verbs */
+            if (verbGameCount() > 0 ) {
+                val myIntent = Intent(this, VerbGame::class.java)
+                startActivity(myIntent)
+            } else {
+                colorToast(applicationContext, "Current selection does not contain any verbs !")
+            }
+        }
+
+        /*** open GALGJE ***/
+        btn_hangman.setOnClickListener {
+            /* launch the Hangman Activity */
+            val myIntent = Intent(this, Hangman::class.java)
+            startActivity(myIntent)
         }
 
         /*  pressing the Greek flag toggles the Greek text on/off */
         img_flag_greek.setOnClickListener {
             if (recyclerViewAdapter.showDutch) recyclerViewAdapter.showGreek = !recyclerViewAdapter.showGreek
+            recyclerViewAdapter.notifyDataSetChanged()
+        }
+
+        /*  pressing the Dutch flag toggles the Dutch text on/off */
+        ibtn_flag_nl.setOnClickListener {
+            if (recyclerViewAdapter.showGreek) recyclerViewAdapter.showDutch = !recyclerViewAdapter.showDutch
             recyclerViewAdapter.notifyDataSetChanged()
         }
 
@@ -198,29 +245,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             inputManager.hideSoftInputFromWindow(currentFocus?.windowToken, InputMethodManager.SHOW_FORCED)
         }
 
-        /*  pressing the Dutch flag toggles the Dutch text on/off */
-        ibtn_flag_nl.setOnClickListener {
-            if (recyclerViewAdapter.showGreek) recyclerViewAdapter.showDutch = !recyclerViewAdapter.showDutch
-            recyclerViewAdapter.notifyDataSetChanged()
-        }
-
-        btn_hangman.setOnClickListener {
-            /* launch the Hangman Activity */
-            val myIntent = Intent(this, Hangman::class.java)
-            startActivity(myIntent)
-        }
-
-        btn_verb_game.setOnClickListener {
-            /* launch the Hangman Activity */
-            val myIntent = Intent(this, VerbGame::class.java)
-            startActivity(myIntent)
-        }
-
-        btn_luister.setOnClickListener {
-            /* launch the Hangman Activity */
-            val myIntent = Intent(this, Luisterlijst::class.java)
-            startActivity(myIntent)
-        }
     }
 
     /* overriding onInit() is needed for the TextToSpeech.OnInitListener */
@@ -236,6 +260,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     override fun onResume() {
         super.onResume()
+        if (search.isNotEmpty()) text_search.setText (search)
         zorbaSpeaks.language = Locale("el_GR")
     }
 
@@ -330,28 +355,32 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
          * This is the place where the activities/intents return after finishing
          * you can pick up the result from each intent by looking at the request code used */
         if (myIntent != null) {                      // to get rid of the Intent? null safety/* refresh data in the 'lemmaArrayList' using the changed selections */
-
             /* refresh data in the 'lemmaArrayList' using the changed selections */
-            when (requestCode) {
-                SHOW_CARDS_CODE -> {
-                    refreshData()
-                    recyclerViewAdapter.notifyDataSetChanged()
-                }
-                GROEP_SOORT_CODE -> {
-                    if (myIntent.getStringExtra("result") == "selected") {
-                        /* refresh data in the 'lemmaArrayList' using the changed selections */
-                        refreshData()
-                        recyclerViewAdapter.notifyDataSetChanged()
-                    }
-                }
-                SELECTIES_CODE -> {
-                    if (myIntent.getStringExtra("result") == "selected") {
-                        /* refresh data in the 'lemmaArrayList' using the changed selections */
-                        refreshData()
-                        recyclerViewAdapter.notifyDataSetChanged()
-                    }
-                }
+            if (requestCode in listOf<Int>(SHOW_CARDS_CODE,GROEP_SOORT_CODE,SELECTIES_CODE)){
+                /* refresh data in the 'lemmaArrayList' using the changed selections */
+                refreshData()
+                recyclerViewAdapter.notifyDataSetChanged()
             }
+//            when (requestCode) {
+//                SHOW_CARDS_CODE -> {
+//                    refreshData()
+//                    recyclerViewAdapt+er.notifyDataSetChanged()
+//                }
+//                GROEP_SOORT_CODE -> {
+//                    if (myIntent.getStringExtra("result") == "selected") {
+//                        /* refresh data in the 'lemmaArrayList' using the changed selections */
+//                        refreshData()
+//                        recyclerViewAdapter.notifyDataSetChanged()
+//                    }
+//                }
+//                SELECTIES_CODE -> {
+//                    if (myIntent.getStringExtra("result") == "selected") {
+//                        /* refresh data in the 'lemmaArrayList' using the changed selections */
+//                        refreshData()
+//                        recyclerViewAdapter.notifyDataSetChanged()
+//                    }
+//                }
+//            }
         }
         super.onActivityResult(requestCode, resultCode, myIntent)
     }
@@ -371,7 +400,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
               "<tr><td>Build:</td><td>" + BuildConfig.VERSION_CODE + "</td></tr>" +
               "<tr><td>Change:</td><td>" + getString(R.string.version_info) + "</td></tr>" +
               "<tr><td>Lemmas:</td><td>" + lemmaCount() + "</td></tr>" +
-              "<tr><td>Selected:</td><td>" + selectionCount() + "</td></tr>" +
+              "<tr><td>Selected:</td><td>" + selectedCount() + "</td></tr>" +
+              "<tr><td>Flashed:</td><td>" + flashCount() + "</td></tr>" +
               "<tr><td>Jumpers:</td><td>" + countJumpers() + "</td></tr>" +
               "</table></body></html>"
         webView.loadData(about, "text/html", "UTF-8")
@@ -388,9 +418,10 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     /* count selected records */
-    private fun lemmaCount() = DatabaseUtils.queryNumEntries(zorbaDBHelper.readableDatabase, "woorden")
-    private fun selectionCount() = DatabaseUtils.queryNumEntries(zorbaDBHelper.readableDatabase, "woorden", QueryManager.selectionClauseOnly())
-    private fun countJumpers() = DatabaseUtils.queryNumEntries(zorbaDBHelper.readableDatabase, "jumpers")
+    private fun lemmaCount() = queryNumEntries(zorbaDBHelper.readableDatabase, "woorden")
+    private fun flashCount() = queryNumEntries(zorbaDBHelper.readableDatabase, "flashedlocal")
+//    private fun selectionCount() = queryNumEntries(zorbaDBHelper.readableDatabase, "woorden", QueryManager.selectionClauseOnly())
+    private fun countJumpers() = queryNumEntries(zorbaDBHelper.readableDatabase, "jumpers")
 
     /* create attention before importing new woorden table */
     private fun importTable() {

@@ -31,6 +31,7 @@ class FilterAndSort : AppCompatActivity() {
     private val oldThreshold = jumpThreshold
     private val oldSortTag = orderbyTag
     private val oldDescending = orderDescending
+    private val oldFlashed = flashed
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,6 +68,7 @@ class FilterAndSort : AppCompatActivity() {
         btn_select.setOnClickListener { goBack() }
         btn_cancel.setOnClickListener { cancelChanges() }
         btn_default.setOnClickListener { defaultSelects() }
+        sw_flashed.setOnClickListener { onFlash() }
 
         /* set listener for changes in text field for block size  */
         text_blocksize.addTextChangedListener(object : TextWatcher {
@@ -135,6 +137,7 @@ class FilterAndSort : AppCompatActivity() {
         /* set to hide the lemmas that jumped the threshold */
         text_threshold.setText((jumpThreshold + 1).toString())
         sw_hide_jumpers.isChecked = hideJumpers
+        sw_flashed.isChecked = flashed
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -292,7 +295,11 @@ class FilterAndSort : AppCompatActivity() {
         /* set the appropriate flag with selected sort order */
         when (tag) {
             "index" -> sw_index.isChecked = true
-            "alfa" -> sw_alfa.isChecked = true
+            "alfa" -> {
+                sw_alfa.isChecked = true
+                sw_desc.isChecked = false
+                onDescending()
+            }
             "random" -> sw_random.isChecked = true
         }
         orderbyTag = tag
@@ -302,6 +309,11 @@ class FilterAndSort : AppCompatActivity() {
     private fun onDescending() {
         orderDescending = sw_desc.isChecked
         zorbaPreferences.edit().putBoolean("orderdescending", orderDescending).apply()
+    }
+
+    private fun onFlash() {
+        flashed = sw_flashed.isChecked
+        zorbaPreferences.edit().putBoolean("flashed", flashed).apply()
     }
 
     private fun onHideJumpersSwitch() {
@@ -357,6 +369,7 @@ class FilterAndSort : AppCompatActivity() {
         orderDescending = oldDescending
         hideJumpers = oldHideJumpers
         jumpThreshold = oldThreshold
+        flashed = oldFlashed
 
         zorbaPreferences.edit()
               .putBoolean("useblocks", useBlocks)
@@ -371,6 +384,7 @@ class FilterAndSort : AppCompatActivity() {
               .putBoolean("orderdescending", orderDescending)
               .putInt("jumpthreshold", jumpThreshold)
               .putBoolean("hidejumpers", hideJumpers)
+              .putBoolean("flashed", flashed)
               .apply()
 
         /* go back to calling activity */
