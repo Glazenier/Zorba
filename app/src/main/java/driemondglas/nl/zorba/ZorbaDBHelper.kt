@@ -1,6 +1,7 @@
 package driemondglas.nl.zorba
 
 import android.content.Context
+import android.database.DatabaseUtils
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import org.json.JSONArray
@@ -36,7 +37,7 @@ class ZorbaDBHelper(zorbaContext: Context) : SQLiteOpenHelper(zorbaContext, DATA
               "GR TEXT," +
               "NL TEXT," +
               "Opm TEXT," +
-              "Groep TEXT," +
+              "Thema TEXT," +
               "Flash INT," +
               "Level INT," +
               "Woordsoort TEXT," +
@@ -56,15 +57,17 @@ class ZorbaDBHelper(zorbaContext: Context) : SQLiteOpenHelper(zorbaContext, DATA
         db.close()
     }
 
-    fun jsonToSqlite(ionResult: String) {
-        val json = JSONArray(ionResult)
+    fun jsonToSqlite(volleyResponse: String) {
+        val json = JSONArray(volleyResponse)
 
         /*remove existing table*/
         val db = writableDatabase
         db.execSQL("DROP TABLE IF EXISTS woorden")
+
         /*create new table structure*/
         onCreate(db)
-
+        // From stackoverflow:
+        // Unfortunately, JsonArray does not expose an iterator. So you will have to iterate through it using an index range:
         for (i in 0 until (json.length())) {
             val jsonRecord = json.getJSONObject(i)
             val thisId = jsonRecord.getString("id").toInt()
@@ -72,7 +75,7 @@ class ZorbaDBHelper(zorbaContext: Context) : SQLiteOpenHelper(zorbaContext, DATA
             val thisGR = jsonRecord.getString("GR")
             val thisNL = jsonRecord.getString("NL")
             val thisOpm = jsonRecord.getString("Opm")
-            val thisGroep = jsonRecord.getString("Groep")
+            val thisThema = jsonRecord.getString("Groep")
             val thisFlash = jsonRecord.getString("Flash").toInt()
             val thisLevel = jsonRecord.getString("Level").toInt()
             val thisWoordsoort = jsonRecord.getString("Woordsoort")
@@ -80,13 +83,23 @@ class ZorbaDBHelper(zorbaContext: Context) : SQLiteOpenHelper(zorbaContext, DATA
             val pureLength = pureLemma.length
 
             val query = "INSERT INTO woorden VALUES " +
-                  "($thisId, $thisIdx, '$thisGR', '$thisNL', '$thisOpm', '$thisGroep', $thisFlash," +
+                  "($thisId, $thisIdx, '$thisGR', '$thisNL', '$thisOpm', '$thisThema', $thisFlash," +
                   " $thisLevel, '$thisWoordsoort', '$pureLemma', $pureLength);"
             db.execSQL(query)
         }
 
         /* Remove records from jumpers if idx is no longer present in reloaded woorden table */
-        db.execSQL("DELETE  FROM jumpers WHERE jumpers.idx IN (SELECT jumpers.idx FROM jumpers LEFT JOIN woorden ON jumpers.idx=woorden.idx WHERE woorden.idx IS NULL);")
+        val deletedJumpSQL =
+            "DELETE  FROM jumpers  WHERE jumpers.idx IN " +
+            "( SELECT jumpers.idx FROM jumpers LEFT JOIN woorden ON jumpers.idx=woorden.idx WHERE woorden.idx IS NULL );"
+        db.execSQL(deletedJumpSQL)
+
+        /* Remove records from flashedlocal if idx is no longer present in reloaded woorden table */
+        val deletedFlashSQL =
+            "DELETE  FROM flashedlocal  WHERE flashedlocal.idx IN " +
+            "( SELECT flashedlocal.idx FROM flashedlocal LEFT JOIN woorden ON flashedlocal.idx=woorden.idx WHERE woorden.idx IS NULL );"
+        db.execSQL(deletedFlashSQL)
+
         db.close()
     }
 
@@ -97,9 +110,12 @@ class ZorbaDBHelper(zorbaContext: Context) : SQLiteOpenHelper(zorbaContext, DATA
          * \u2194 = ↔ double headed arrow
          * return result ?: ""   //Elvis: return result, if null return empty string "" */
 
-        // return "^[^,\r(*;!.\u2194]*".toRegex().find(greekText)?.value ?: ""
-
         //keep exclamation or questionmark with pure lemma
-        return "^[^,.\r(*\u2194]*".toRegex().find(greekText)?.value ?: ""
+        return Regex("""^[^,.\r(*\u2194]*""").find(greekText)?.value ?: ""
     }
+
+    /* count selected records */
+    fun lemmaCount() = DatabaseUtils.queryNumEntries(readableDatabase, "woorden")
+    fun flashCount() = DatabaseUtils.queryNumEntries(readableDatabase, "flashedlocal")
+    fun countJumpers() = DatabaseUtils.queryNumEntries(readableDatabase, "jumpers")
 }

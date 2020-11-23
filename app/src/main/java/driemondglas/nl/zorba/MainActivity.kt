@@ -2,20 +2,16 @@ package driemondglas.nl.zorba
 
 import android.app.AlertDialog
 import android.content.*
-import android.database.DatabaseUtils.*
+import android.content.ClipboardManager
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
-import android.text.Editable
-import android.text.SpannableString
-import android.text.TextWatcher
+import android.text.*
 import android.text.style.RelativeSizeSpan
 import android.text.style.StyleSpan
 import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
+import android.view.*
 import android.view.inputmethod.InputMethodManager
 import android.webkit.WebView
 import androidx.appcompat.app.AppCompatActivity
@@ -34,34 +30,35 @@ import java.util.*
  * below are the self chosen 'unique' request codes used to start the various activities
  */
 const val SHOW_CARDS_CODE = 3108
-const val GROEP_SOORT_CODE = 3208
+const val THEME_WORDTYPE_CODE = 3208
 const val SELECTIES_CODE = 3308
 
 const val DATABASE_URI = "https://driemondglas.nl/RESTgrieks_v3.php"
 const val TAG = "hvr"
 
-/* 'global' variables holding configuration data */
-var blockSize = 20        // number of lemma's to speak in one turn.
+/* 'global' variables holding configuration data.
+ *  Initial values are retrieved from shared preferences, including the default values */
+var blockSize = 0         // lemma's can be grouped into a blocks to focus studying, nr of lemma's per block
 var useBlocks = true      // turn off usage of blocks entirely. Database is then in fact one giant block
-var wordGroup = ""
-var wordType = ""
-var levelBasic = true
-var levelAdvanced = true
-var levelBallast = true
-var useLength = false
-var pureLemmaLength = 0
-var initial = ""
-var orderbyTag = "index"
-var orderDescending = true
-var search = ""
-var flashed = false
+var thema = ""            // currently selected theme (lemmas with same subject)
+var wordType = ""         // currently selected word type (noun, verb, article, etc.)
+var levelBasic = true     // filter lemma's  by (difficulty/usage) level
+var levelAdvanced = true  // ...
+var levelBallast = true   // ...
+var useLength = false     // filter lemma's on length on/off
+var pureLemmaLength = 0   // set lemma length to filter
+var initial = ""          // set filter for lemma's to start with this character
+var orderbyTag = ""       // initial lemma order is by index in table
+var orderDescending = true// highes index on top (newest first)
+var search = ""           // search text can be lemma (Greek) or meaning (Dutch)
+var flashed = false       // flag to signal to show only flashed lemma's
 
 /* Jumpers:
  * Jumpers are lemmas with count of correct answers above the set threshold. "They jumped the threshold"
  * The idea is to hide those lemmas in further selections to focus on remaining lemmas
  */
 var jumpThreshold = 2
-var hideJumpers = false
+var hideJumpers = false  // do not move jumpers completely out of sight
 
 /*  Initialise the database helper class. */
 lateinit var zorbaDBHelper: ZorbaDBHelper
@@ -123,7 +120,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         /* retrieve config from shared preferences  */
         useBlocks = zorbaPreferences.getBoolean("useblocks", true)
         blockSize = zorbaPreferences.getInt("blocksize", 5)
-        wordGroup = zorbaPreferences.getString("wordgroup", "") ?: ""
+        thema = zorbaPreferences.getString("theme", "") ?: ""
         wordType = zorbaPreferences.getString("wordtype", "") ?: ""
         levelBasic = zorbaPreferences.getBoolean("levelbasic", true)
         levelAdvanced = zorbaPreferences.getBoolean("leveladvanced", true)
@@ -156,10 +153,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         /* set listener for changes in search field   */
         text_search.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable) {
-                onSearch(s)
-            }
-
+            override fun afterTextChanged(s: Editable) = onSearch(s)
             override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
         })
@@ -244,7 +238,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             @Suppress("RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
             inputManager.hideSoftInputFromWindow(currentFocus?.windowToken, InputMethodManager.SHOW_FORCED)
         }
-
     }
 
     /* overriding onInit() is needed for the TextToSpeech.OnInitListener */
@@ -268,9 +261,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         // Shutdown TTS
         zorbaSpeaks.stop()
         zorbaSpeaks.shutdown()
-
         zorbaPreferences.edit().putInt("last_viewed_block", 0).apply()
-
         super.onDestroy()
     }
 
@@ -287,11 +278,11 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         /* Handle action bar (menu) item clicks here. */
 
         when (item.itemId) {
-            /* menu set woordsoort/woordgroep */
-            R.id.menu_set_groep_soort -> {
-                /* launch the Groep/Woordsoort Selection Activity */
-                val myIntent = Intent(this, WordTypeAndGroup::class.java)
-                startActivityForResult(myIntent, GROEP_SOORT_CODE)
+            /* menu set theme/wordtype */
+            R.id.menu_set_theme_wordtype -> {
+                /* launch the Thema/Woordsoort Selection Activity */
+                val myIntent = Intent(this, ThemeAndWordType::class.java)
+                startActivityForResult(myIntent, THEME_WORDTYPE_CODE)
             }
 
             /*  menu detail selecties */
@@ -356,31 +347,11 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
          * you can pick up the result from each intent by looking at the request code used */
         if (myIntent != null) {                      // to get rid of the Intent? null safety/* refresh data in the 'lemmaArrayList' using the changed selections */
             /* refresh data in the 'lemmaArrayList' using the changed selections */
-            if (requestCode in listOf<Int>(SHOW_CARDS_CODE,GROEP_SOORT_CODE,SELECTIES_CODE)){
+            if (requestCode in listOf(SHOW_CARDS_CODE,THEME_WORDTYPE_CODE,SELECTIES_CODE)){
                 /* refresh data in the 'lemmaArrayList' using the changed selections */
                 refreshData()
                 recyclerViewAdapter.notifyDataSetChanged()
             }
-//            when (requestCode) {
-//                SHOW_CARDS_CODE -> {
-//                    refreshData()
-//                    recyclerViewAdapt+er.notifyDataSetChanged()
-//                }
-//                GROEP_SOORT_CODE -> {
-//                    if (myIntent.getStringExtra("result") == "selected") {
-//                        /* refresh data in the 'lemmaArrayList' using the changed selections */
-//                        refreshData()
-//                        recyclerViewAdapter.notifyDataSetChanged()
-//                    }
-//                }
-//                SELECTIES_CODE -> {
-//                    if (myIntent.getStringExtra("result") == "selected") {
-//                        /* refresh data in the 'lemmaArrayList' using the changed selections */
-//                        refreshData()
-//                        recyclerViewAdapter.notifyDataSetChanged()
-//                    }
-//                }
-//            }
         }
         super.onActivityResult(requestCode, resultCode, myIntent)
     }
@@ -399,10 +370,10 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
               "<tr><td>Version:</td><td>" + BuildConfig.VERSION_NAME + "</td></tr>" +
               "<tr><td>Build:</td><td>" + BuildConfig.VERSION_CODE + "</td></tr>" +
               "<tr><td>Change:</td><td>" + getString(R.string.version_info) + "</td></tr>" +
-              "<tr><td>Lemmas:</td><td>" + lemmaCount() + "</td></tr>" +
+              "<tr><td>Lemmas:</td><td>" + zorbaDBHelper.lemmaCount() + "</td></tr>" +
               "<tr><td>Selected:</td><td>" + selectedCount() + "</td></tr>" +
-              "<tr><td>Flashed:</td><td>" + flashCount() + "</td></tr>" +
-              "<tr><td>Jumpers:</td><td>" + countJumpers() + "</td></tr>" +
+              "<tr><td>Flashed:</td><td>" + zorbaDBHelper.flashCount() + "</td></tr>" +
+              "<tr><td>Jumpers:</td><td>" + zorbaDBHelper.countJumpers() + "</td></tr>" +
               "</table></body></html>"
         webView.loadData(about, "text/html", "UTF-8")
 
@@ -416,12 +387,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         alertDialog.show()
         alertDialog.getButton(DialogInterface.BUTTON_POSITIVE).textSize = 28f
     }
-
-    /* count selected records */
-    private fun lemmaCount() = queryNumEntries(zorbaDBHelper.readableDatabase, "woorden")
-    private fun flashCount() = queryNumEntries(zorbaDBHelper.readableDatabase, "flashedlocal")
-//    private fun selectionCount() = queryNumEntries(zorbaDBHelper.readableDatabase, "woorden", QueryManager.selectionClauseOnly())
-    private fun countJumpers() = queryNumEntries(zorbaDBHelper.readableDatabase, "jumpers")
 
     /* create attention before importing new woorden table */
     private fun importTable() {

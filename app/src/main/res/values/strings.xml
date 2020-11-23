@@ -47,7 +47,7 @@
     <string name="menu_caption_about">ⓘ Over Zorba…</string>
     <string name="menu_caption_detail_selections">&#128736; Detail selecties</string>
     <string name="menu_caption_email">📭 Email this lemma</string>
-    <string name="menu_caption_group_type">&#128218; Kies woordgroep of woordsoort </string>
+    <string name="menu_caption_theme_wordtype">&#128218; Kies thema en woordsoort </string>
     <string name="menu_caption_import_database">&#128451; Vernieuw database</string>
     <string name="menu_caption_neurolingo">&#127760; Lookup - NeuroLingo</string>
     <string name="menu_caption_reset_score">🅾🅾 Reset scores</string>
@@ -63,8 +63,6 @@
     <string name="msg_threshold_number">Vul positief getal in voor de drempelwaarde.</string>
 
     <string name="nice_to_know">Ballast</string>
-
-    <string name="question_mark">\?</string>
 
     <string name="random">door elkaar</string>
 
@@ -85,17 +83,16 @@
 
     <string name="version_info">Flash on device</string>
 
-    <string name="wordgroup">Groep</string>
+    <string name="theme">Thema</string>
 
     <string name="wordtype">Woordsoort</string>
     <string name="ask">Ask</string>
     <string name="reveal">Reveal</string>
-    <string name="word_group_type_subtitle">Selecteer woordsoort en/of woordgroep</string>
+    <string name="theme_wordtype_subtitle">Selecteer thema en/of woordsoort</string>
     <string name="positie">blok %1$d - lemma %2$d</string>
     <string name="thatsall">ThatsAll</string>
     <string name="pct100">100%</string>
     <string name="tempo">tempo</string>
-    <string name="menu_caption_flash">⚡ Flash locally</string>
     <string name="flash">⚡</string>
     <string name="caption_flashed">alleen flashed</string>
     <string name="lbl_flash">Flash ⚡</string>

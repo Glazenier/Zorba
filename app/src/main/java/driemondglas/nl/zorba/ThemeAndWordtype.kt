@@ -5,23 +5,23 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AppCompatActivity
-import kotlinx.android.synthetic.main.wordgroup_wordtype.*
+import kotlinx.android.synthetic.main.theme_wordtype.*
 import java.util.*
 
-class WordTypeAndGroup : AppCompatActivity() {
+class ThemeAndWordType : AppCompatActivity() {
     private val zorbaDBHelper: ZorbaDBHelper = ZorbaDBHelper(this)
 
-    private val allGroups = ArrayList<String>()
+    private val allThemes = ArrayList<String>()
     private val allTypes = ArrayList<String>()
 
     /* save initial values to restore when cancel is pressed */
-    private val origGroup = wordGroup
-    private val origType = wordType
+    private val originalTheme = thema
+    private val originalType = wordType
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.wordgroup_wordtype)
+        setContentView(R.layout.theme_wordtype)
 
         val myBar = supportActionBar
         if (myBar != null) {
@@ -31,25 +31,25 @@ class WordTypeAndGroup : AppCompatActivity() {
              */
             myBar.setDisplayHomeAsUpEnabled(true)
             myBar.title = "ZORBA"
-            myBar.subtitle = getString(R.string.word_group_type_subtitle)
+            myBar.subtitle = getString(R.string.theme_wordtype_subtitle)
         }
 
         btn_select.setOnClickListener { selectAndFinish() }
         btn_cancel.setOnClickListener { cancelChanges() }
         btn_default.setOnClickListener { clearSelections() }
 
-        populateWordGroups()
+        populateThemes()
         populateWordTypes()
 
-        lst_wordgroup.setOnItemClickListener { _, _, position, _ ->
-            val selGroep = allGroups[position]
-            wordGroup = if (selGroep == "*") "" else selGroep.substringBefore(" (")
-            zorbaPreferences.edit().putString("wordgroup", wordGroup).apply()
+        lst_theme.setOnItemClickListener { _, _, position, _ ->
+            val selectedTheme = allThemes[position]
+            thema = if (position==0) "" else selectedTheme.substringBefore(" (")
+            zorbaPreferences.edit().putString("theme", thema).apply()
         }
 
         lst_wordtype.setOnItemClickListener { _, _, position, _ ->
             val selWoordsoort = allTypes[position]
-            wordType = if (selWoordsoort == "*") "" else selWoordsoort.substringBefore(" (")
+            wordType = if (position==0) "" else selWoordsoort.substringBefore(" (")
             zorbaPreferences.edit().putString("wordtype", wordType).apply()
         }
     }
@@ -72,20 +72,22 @@ class WordTypeAndGroup : AppCompatActivity() {
     }
 
     private fun clearSelections() {
-        wordGroup = ""
+        thema = ""
         wordType = ""
-        lst_wordgroup.setItemChecked(0, true)
+        lst_theme.setItemChecked(0, true)
         lst_wordtype.setItemChecked(0, true)
-        zorbaPreferences.edit().putString("wordgroup", "").apply()
-        zorbaPreferences.edit().putString("wordtype", "").apply()
+        zorbaPreferences.edit()
+            .putString("theme", "")
+            .putString("wordtype", "")
+            .apply()
     }
 
     private fun cancelChanges() {
         /* restore initial values */
-        wordType = origType
-        wordGroup = origGroup
+        wordType = originalType
+        thema = originalTheme
         zorbaPreferences.edit()
-              .putString("wordgroup", wordGroup)
+              .putString("theme", thema)
               .putString("wordtype", wordType)
               .apply()
         // go back to calling activity
@@ -95,40 +97,40 @@ class WordTypeAndGroup : AppCompatActivity() {
         finish()
     }
 
-    private fun populateWordGroups() {
-        var oldPosition = 0
-        var thisPosition = 0
-        // prepopulate arrayList with '*' (all)
-        allGroups.add("*")
+    private fun populateThemes() {
+        var originalPosition = 0
+        var runningPosition = 0
 
-        // this query returns all distinct wordgroups (column "groep") and
-        // the number of records per wordgroup (column "groeptotaal")
-        val query = QueryManager.queryAlleGroepen
+        // prepopulate arrayList with '★' (all)
+        allThemes.add("★")
+
+        // this query returns all distinct themes (column "Thema") and
+        // the number of records per theme (column "thematotaal")
+        val query = QueryManager.queryAlleThemas
         val db = zorbaDBHelper.readableDatabase
         val myCursor = db.rawQuery(query, null)
 
-        // step through the records (wordgroups)
+        // step through the records (themes)
         while (myCursor.moveToNext()) {
-            val groep = myCursor.getString(myCursor.getColumnIndex("groep"))
-            val groeptotaal: Int = myCursor.getInt(myCursor.getColumnIndex("groeptotaal"))
-            allGroups.add("$groep ($groeptotaal)")
-            thisPosition++
-            if (groep == origGroup) oldPosition = thisPosition
+            val thema = myCursor.getString(myCursor.getColumnIndex("Thema"))
+            val themaTotaal: Int = myCursor.getInt(myCursor.getColumnIndex("thematotaal"))
+            allThemes.add("$thema ($themaTotaal)")
+            runningPosition++
+            if (thema == originalTheme) originalPosition = runningPosition
         }
         myCursor.close()
         db.close()
-
         // attach data to listbox via adapter
-        val myAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_checked, allGroups)
-        lst_wordgroup.adapter = myAdapter
-        lst_wordgroup.setItemChecked(oldPosition, true)
+        val myAdapter = ArrayAdapter(this, R.layout.simple_list_item_checked, allThemes)
+        lst_theme.adapter = myAdapter
+        lst_theme.setItemChecked(originalPosition, true)
     }
 
     private fun populateWordTypes() {
-        var oldPosition = 0
-        var thisPosition = 0
-        // prepopulate arrayList with '*' (all)
-        allTypes.add("*")
+        var originalPosition = 0
+        var runningPosition = 0
+        // prepopulate arrayList with '★' (all)
+        allTypes.add("★")
 
         // this query returns all distinct wordtypes (column "woordsoort") and
         // the number of records per wordtype (column "soorttotaal")
@@ -141,15 +143,15 @@ class WordTypeAndGroup : AppCompatActivity() {
             val woordsoort = myCursor.getString(myCursor.getColumnIndex("woordsoort"))
             val soorttotaal = myCursor.getInt(myCursor.getColumnIndex("soorttotaal"))
             allTypes.add("$woordsoort ($soorttotaal)")
-            thisPosition++
-            if (woordsoort == origType) oldPosition = thisPosition
+            runningPosition++
+            if (woordsoort == originalType) originalPosition = runningPosition
         }
 
         myCursor.close()
         db.close()
         // attach data to listbox via adapter
-        val myAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_checked, allTypes)
+        val myAdapter = ArrayAdapter(this, R.layout.simple_list_item_checked, allTypes)
         lst_wordtype.adapter = myAdapter
-        lst_wordtype.setItemChecked(oldPosition, true)
+        lst_wordtype.setItemChecked(originalPosition, true)
     }
 }

@@ -1,19 +1,16 @@
 package driemondglas.nl.zorba
 
-import android.content.Intent
-import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
-import android.view.MenuItem
-import android.view.View
-import androidx.appcompat.app.AppCompatActivity
+import android.content.*
+import android.os.*
+import android.text.*
+import android.view.*
+import androidx.appcompat.app.*
 import kotlinx.android.synthetic.main.filter_and_sort.*
 
-/*  This class represents the the activity "Selections" that holds
+/*  This class represents the the activity "Filter and Sort" that holds
  *  the selection controls to filter the greek words on length, first letter and/or difficulty level etc.
  *  Sorting or shuffling is also set here.
  *  The layout currently only has a portrait version
- *  The landscape layout is solved by putting it all in a vertical scroller
  */
 
 class FilterAndSort : AppCompatActivity() {
@@ -51,7 +48,7 @@ class FilterAndSort : AppCompatActivity() {
 
         /* First of all,
          *  grab the active settings from the global variables and set the respective controls.*/
-        loadControlsWithGlobals()
+        loadControlsFromVars()
 
         /* add listeners for switches and buttons */
         sw_level1.setOnClickListener { onLevelChange() }
@@ -103,7 +100,7 @@ class FilterAndSort : AppCompatActivity() {
     }
 
     /* this function sets all UI views to values found in the QueryManager */
-    private fun loadControlsWithGlobals() {
+    private fun loadControlsFromVars() {
         /* set level switches according to global values */
         sw_level1.isChecked = levelBasic
         sw_level2.isChecked = levelAdvanced
@@ -404,6 +401,6 @@ class FilterAndSort : AppCompatActivity() {
 
     private fun defaultSelects() {
         resetDetails()
-        loadControlsWithGlobals()
+        loadControlsFromVars()
     }
 }

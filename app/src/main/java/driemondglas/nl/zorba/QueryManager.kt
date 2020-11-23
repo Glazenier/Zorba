@@ -3,7 +3,7 @@ package driemondglas.nl.zorba
 object QueryManager {
 
     const val queryAlleWoordSoorten = "SELECT Woordsoort AS woordsoort, Count(*) AS soorttotaal FROM woorden GROUP BY Woordsoort ORDER BY Woordsoort;"
-    const val queryAlleGroepen = "SELECT Groep AS groep, Count(*) AS groeptotaal FROM woorden WHERE woordsoort != 'liedtekst' GROUP BY Groep ORDER BY Groep;"
+    const val queryAlleThemas = "SELECT Thema, Count(*) AS thematotaal FROM woorden WHERE woordsoort != 'liedtekst' GROUP BY Thema ORDER BY Thema;"
 
     /* translate lowercase greek letter to corresponding SQL WHERE clause that also contains accented variants of the same letter */
     private val initialToClause: Map<String, String> = mapOf(
@@ -33,7 +33,7 @@ object QueryManager {
         "ω" to "(GR LIKE 'ω%' OR GR LIKE 'ώ%')"
     )
 
-    private fun wordgroupClause() = if (wordGroup.isNotEmpty()) " AND groep = '$wordGroup'" else ""
+    private fun themaClause() = if (thema.isNotEmpty()) " AND thema = '$thema'" else ""
     private fun wordtypeClause() = if (wordType.isNotEmpty()) " AND woordsoort = '$wordType'" else ""
     private fun lengthClause() = if (pureLemmaLength != 0 && useLength) " AND PureLength = $pureLemmaLength" else ""
     private fun initialClause() = if (initial.isNotEmpty()) " AND " + initialToClause[initial].toString() else ""
@@ -73,7 +73,7 @@ object QueryManager {
             } else {
                 "SELECT * FROM woorden "
             }
-        sqlMain += wordgroupClause() + wordtypeClause() + levelClause() + lengthClause() + initialClause() + searchClause() + thresholdClause() + orderbyClause() + ";"
+        sqlMain += themaClause() + wordtypeClause() + levelClause() + lengthClause() + initialClause() + searchClause() + thresholdClause() + orderbyClause() + ";"
 
         /* replace first 'AND' with 'WHERE' */
         if (sqlMain.contains(" AND ")) sqlMain = sqlMain.replaceFirst(" AND ", " WHERE ")
@@ -86,7 +86,7 @@ object QueryManager {
         val lengthClause = if (useLength && pureLemmaLength in 1..15) " AND PureLength = $pureLemmaLength" else " AND PureLength <= 16"
 
         var sqlHangman = "SELECT PureLemma , NL FROM woorden" +
-              wordgroupClause() + wordtypeClause() + levelClause() + lengthClause + " ORDER BY RANDOM() LIMIT 10;"
+              themaClause() + wordtypeClause() + levelClause() + lengthClause + " ORDER BY RANDOM() LIMIT 10;"
 
         if (sqlHangman.contains(" AND ")) sqlHangman = sqlHangman.replaceFirst(" AND ", " WHERE ")
         return sqlHangman
@@ -107,12 +107,11 @@ object QueryManager {
             typeClause = " AND ($typeClause)"
         }
 
-        val sqlVerbs = if (flashed) {
+        return if (flashed) {
             "SELECT woorden.idx, PureLemma, GR, NL FROM flashedlocal LEFT JOIN woorden ON woorden.idx = flashedlocal.idx WHERE woordsoort = 'werkwoord' " + levelClause()
         } else {
-            "SELECT idx, PureLemma, GR, NL FROM woorden WHERE woordsoort = 'werkwoord' " + levelClause() + typeClause + orderbyClause()
+            "SELECT idx, PureLemma, GR, NL FROM woorden WHERE woordsoort = 'werkwoord' " + levelClause() + typeClause + " ORDER BY RANDOM()"
         }
-        return sqlVerbs
     }
 
     /* function counts how many lemma's are available to verb game using current selections */
@@ -135,7 +134,7 @@ object QueryManager {
         } else {
             "SELECT COUNT(*) AS selCount FROM woorden "
         }
-        countSQL += wordgroupClause() + wordtypeClause() + levelClause() + lengthClause() + initialClause() + searchClause() + thresholdClause() + ";"
+        countSQL += themaClause() + wordtypeClause() + levelClause() + lengthClause() + initialClause() + searchClause() + thresholdClause() + ";"
         if (countSQL.contains(" AND ")) countSQL = countSQL.replaceFirst(" AND ", " WHERE ")
         val countCursor = zorbaDBHelper.readableDatabase.rawQuery(countSQL, null)
         val cnt= if (countCursor.moveToFirst())  countCursor.getInt(countCursor.getColumnIndex("selCount")) else 0

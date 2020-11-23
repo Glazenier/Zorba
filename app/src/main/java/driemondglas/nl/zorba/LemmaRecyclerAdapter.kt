@@ -1,14 +1,12 @@
 package driemondglas.nl.zorba
 
 import android.database.DatabaseUtils
-import android.speech.tts.TextToSpeech
 import androidx.recyclerview.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import java.util.*
-import driemondglas.nl.zorba.Utils.enabled
 import driemondglas.nl.zorba.Utils.visible
 
 class LemmaRecyclerAdapter(private val lemmaArrayList: ArrayList<LemmaItem>) : RecyclerView.Adapter<LemmaRecyclerAdapter.MyViewHolder>() {
@@ -26,6 +24,7 @@ class LemmaRecyclerAdapter(private val lemmaArrayList: ArrayList<LemmaItem>) : R
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
         with(holder) {
             meaningNl.text = lemmaArrayList[position].meaningNL
+
             meaningNl.visibility = if (showDutch) View.VISIBLE else View.GONE
             val thisidx = lemmaArrayList[position].idx
             lemmaGr.text = lemmaArrayList[position].pureLemma

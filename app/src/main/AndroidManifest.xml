@@ -44,7 +44,7 @@
                 android:windowSoftInputMode="stateHidden"
                 />
         <activity
-                android:name=".WordTypeAndGroup"
+                android:name=".ThemeAndWordType"
                 android:configChanges="orientation"
                 android:screenOrientation="portrait"
                 />

@@ -41,9 +41,9 @@ class VerbGame : AppCompatActivity() {
     private var thePersonGR = ""     // keeps greek personal pronoun in sync with choosen conjugation
     private var theDashes = ""       // creates baseline of dashes
     // short description of the possible person & number combinations
-    private val personAbbr = listOf("1ste pers. enkelv.", "2-de pers. enkelv.", "3de pers. enkelv.", "1ste pers. meerv.", "2de pers. meerv.", "3de pers. meerv.")
+    private val shortPerson = listOf("1ste pers. enkelv.", "2-de pers. enkelv.", "3de pers. enkelv.", "1ste pers. meerv.", "2de pers. meerv.", "3de pers. meerv.")
     // actually picked(randomly) person & number
-    private var theAbbr = ""
+    private var theShort = ""
 
     private val selectedPersons = mutableSetOf<Int>()  // holds preselected possible persons
     private var savedLevelBasic = true
@@ -96,6 +96,7 @@ class VerbGame : AppCompatActivity() {
         btn_show_ladder.setOnClickListener {
             txt_reveal.visibility = if (txt_conjugations.visibility == View.VISIBLE) View.VISIBLE else View.GONE
             txt_conjugations.toggleVisibility()
+            txt_persons.toggleVisibility()
         }
 
         /* save original level values and set initial values for the game */
@@ -155,6 +156,7 @@ class VerbGame : AppCompatActivity() {
     /* move forward in cursor until a verb is found that contains selected conjugation (ex: Not all have Paratatikos!) */
     private fun forwardUntilMatch() {
         txt_conjugations.visibility = View.INVISIBLE
+        txt_persons.visibility = View.INVISIBLE
         text_ask.setTextColor(ContextCompat.getColor(applicationContext, R.color.normal_text_color))
 
         /* this loops until a matching record is found */
@@ -169,6 +171,7 @@ class VerbGame : AppCompatActivity() {
     /* move backwards in cursor until a verb is found that contains selected conjugation */
     private fun backwardToPreviousMatch() {
         txt_conjugations.visibility = View.INVISIBLE
+        txt_persons.visibility = View.INVISIBLE
         text_ask.setTextColor(ContextCompat.getColor(applicationContext, R.color.normal_text_color))
         while (gameCursor.moveToPrevious()) {
             if (setupVerb()) break
@@ -176,13 +179,12 @@ class VerbGame : AppCompatActivity() {
         if (gameCursor.isBeforeFirst) colorToast(context = applicationContext, msg = "Thats all", bgColor = Color.BLUE) else showByMode()
     }
 
+    /* Setup the textstrings for ask and reveal. retruns false if no conjugation matches */
     private fun setupVerb(): Boolean {
-        /* Setup the textstrings for ask and reveal. retruns false if no conjugation matches */
-
         theIdx = gameCursor.getInt(gameCursor.getColumnIndex("idx"))
-        theVerb = gameCursor.getString(gameCursor.getColumnIndex("PureLemma"))
-        theMeaning = gameCursor.getString(gameCursor.getColumnIndex("NL"))
         theGreek = gameCursor.getString(gameCursor.getColumnIndex("GR"))
+        theMeaning = gameCursor.getString(gameCursor.getColumnIndex("NL"))
+        theVerb = gameCursor.getString(gameCursor.getColumnIndex("PureLemma"))
 
         /* check which tenses are available in the Greek text field  AND selected in the UI */
         val availableTenses = mutableSetOf<String>()  // holds each tense available in the Greek text
@@ -197,42 +199,56 @@ class VerbGame : AppCompatActivity() {
             /* pick a random tense in the set of available tenses */
             theTense = availableTenses.shuffled().first()
 
-            val sixConjugations = when (theTense) {
-                "Tegenwoordige tijd" -> { conjugateEnestotas(theGreek) }
+            val conjugations = when (theTense) {
+                "Tegenwoordige tijd" -> { conjugateEnestotas(theGreek)  }
                 "Toekomende tijd" -> { conjugateMellontas(theGreek) }
-                "Verleden tijd" -> { conjugateAorist(theGreek) }
+                "Verleden tijd" -> { conjugateAoristos(theGreek) }
                 "Onvoltooid verleden tijd" -> { conjugateParatatikos(theGreek) }
                 "Gebiedende wijs" -> { createProstaktiki(theGreek) }
-                else -> "Werkwoordvorm onbekend"
+                else -> listOf("Werkwoordvorm onbekend")
             }
 
             if (selectedPersons.isNotEmpty()) {
-                // build the ladder (het rijtje)
-                val ladderlist: List<String> = sixConjugations.split(",").map { it.trim() }
-
-                if (ladderlist.size < 6) return false
                 val persoonList = listOf("εγώ", "εσύ", "αυτός,-ή,-ό", "εμείς", "εσείς", "αυτοί,-ές,-ά")
-                val textLadder = SpannableString("$theTense:\nεγώ ${ladderlist[0]}\nεσύ ${ladderlist[1]}\nαυτός,-ή,-ό ${ladderlist[2]}\nεμείς ${ladderlist[3]}\nεσείς ${ladderlist[4]}\nαυτοί,-ές,-ά ${ladderlist[5]}")
-                var spanStart = theTense.length + persoonList[0].length + 3 // +: +newline +space
 
-                for (i in 0..5) {
-                    val spanEnd = spanStart + ladderlist[i].length
-                    textLadder.setSpan(StyleSpan(Typeface.BOLD_ITALIC), spanStart, spanEnd, 0)
-                    if (i < 5) spanStart = spanEnd + persoonList[i + 1].length + 2 // +newline + space
+                when (conjugations.size) {
+                    6 -> {
+                        txt_conjugations.text = "$theTense:\n" + conjugations.joinToString("\n")
+                        txt_persons.text = "\n" + persoonList.joinToString("\n")
+                    }
+                    2 -> {
+                        txt_conjugations.text = "$theTense:\n" + conjugations[0] + "\n" + conjugations[1]
+                        txt_persons.text = "\nenkelvoud:\nmeervoud:"
+                    }
+                    1 -> {
+                        txt_conjugations.text = "$theTense:\n" + conjugations[0]
+                        txt_persons.text =""
+                    }
+                  else -> {
+                      txt_conjugations.text = "$theTense:\nunexpected!"
+                      txt_persons.text =""
+                  }
                 }
-                txt_conjugations.text = textLadder
 
-                val conjugationParts = sixConjugations.split(",")
-                if (conjugationParts.size == 1) {
-                    theConjugation = conjugationParts[0]
-                    thePersonGR = ""
-                } else {
-                    /* pick one of the choosen conjugations */
-                    val pickOne = selectedPersons.shuffled().last()
-                    theConjugation = conjugationParts[pickOne].trim()
-                    val persoonsvormGR = listOf("Εγώ", "Εσύ", listOf("Αυτός", "Αυτή", "Αυτό").random(), "Εμείς", "Εσείς", listOf("Αυτοί", "Αυτές", "Αυτά").random())
-                    thePersonGR = persoonsvormGR[pickOne]
-                    theAbbr = personAbbr[pickOne]
+                when(conjugations.size) {
+                    6 -> {
+                        /* pick one of the choosen conjugations */
+                        val pickOne = selectedPersons.shuffled().last()
+                        theConjugation = conjugations[pickOne]
+                        val persoonsvormGR = listOf("Εγώ", "Εσύ", setOf("Αυτός", "Αυτή", "Αυτό").random(), "Εμείς", "Εσείς", setOf("Αυτοί", "Αυτές", "Αυτά").random())
+                        thePersonGR = persoonsvormGR[pickOne]
+                        theShort = shortPerson[pickOne]
+                    }
+                    2 -> {
+                        /* gebiedende wijs */
+                        theConjugation = conjugations[0] + " - " + conjugations[1]
+                        thePersonGR = ""
+                    }
+                    1 -> {
+                        /* warnings mostly */
+                        theConjugation = conjugations[0]
+                        thePersonGR = ""
+                    }
                 }
                 theDashes = "⎽ ".repeat(theConjugation.length)
                 chronometer.base = SystemClock.elapsedRealtime()
@@ -257,12 +273,13 @@ class VerbGame : AppCompatActivity() {
 
     private fun reveal() {
         txt_conjugations.visibility = View.INVISIBLE
+        txt_persons.visibility = View.INVISIBLE
         txt_reveal.visibility = View.VISIBLE
         text_ask.setTextColor(ContextCompat.getColor(applicationContext, R.color.blue_text_color))
         text_ask.text = "$thePersonGR $theConjugation"
 
-        val textReveal = SpannableString("$theTense, $theAbbr van $theVerb ($theMeaning).")
-        val spanStart = "$theTense, $theAbbr van ".length
+        val textReveal = SpannableString("$theTense, $theShort van $theVerb ($theMeaning).")
+        val spanStart = "$theTense, $theShort van ".length
         val spanEnd = spanStart + theVerb.length
 
         textReveal.setSpan(StyleSpan(Typeface.BOLD_ITALIC), spanStart, spanEnd, 0)
@@ -308,6 +325,15 @@ class VerbGame : AppCompatActivity() {
         } else {
             val tagInt = thisCheck.tag.toString().toInt()
             if (thisCheck.isChecked) selectedPersons.add(tagInt) else selectedPersons.remove(tagInt)
+        }
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    fun onTenseClick(view: View) {
+        val thisCheck=view as CheckBox
+        if (!(chk_enestotas.isChecked || chk_mellontas.isChecked || chk_aoristos.isChecked || chk_paratatikos.isChecked || chk_prostaktiki.isChecked )) {
+            colorToast(context = this, msg = "Need at least one tense selected.", bgColor = Color.RED)
+            thisCheck.isChecked = true
         }
     }
 

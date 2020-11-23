@@ -2,13 +2,10 @@ package driemondglas.nl.zorba
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog
-import android.content.ClipData
-import android.content.DialogInterface
-import android.content.Intent
+import android.content.*
 import android.database.Cursor
 import android.database.DatabaseUtils
 import android.database.sqlite.SQLiteDatabase
-import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.Typeface
 import android.net.Uri
@@ -16,20 +13,13 @@ import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.method.ScrollingMovementMethod
-import android.text.style.ForegroundColorSpan
-import android.text.style.RelativeSizeSpan
-import android.text.style.StyleSpan
+import android.text.style.*
 import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
-import android.view.MotionEvent
-import android.view.View
+import android.view.*
 import android.webkit.WebView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import com.google.android.material.R.id
-import com.google.android.material.snackbar.Snackbar
 import driemondglas.nl.zorba.ScoreBoard.resetScoreMap
 import driemondglas.nl.zorba.ScoreBoard.undoLastScore
 import driemondglas.nl.zorba.Utils.enabled
@@ -52,7 +42,7 @@ class FlashCard : AppCompatActivity() {
     private var thisRemark = ""
     private var thisPureLemma = ""
     private var thisWordType = ""
-    private var thisWordGroup = ""
+    private var thisThema = ""
     private var thisLevel = 1
 
     private var blockOffset = 0
@@ -107,18 +97,19 @@ class FlashCard : AppCompatActivity() {
          */
         btn_reveal.setOnClickListener {
             text_grieks.toggleVisibility()
-            text_note.toggleVisibility() }
+            text_note.toggleVisibility()
+        }
         btn_next_block.setOnClickListener { nextBlock() }
         btn_prev_block.setOnClickListener { prevBlock() }
         text_nederlands.setOnClickListener { if (!singleLemma) previous() }
-        btn_OTT.setOnClickListener { showVerb(conjugateEnestotas(thisGreekText), "Tegenwoordige tijd van $thisPureLemma") }
-        btn_OTTT.setOnClickListener { showVerb(conjugateMellontas(thisGreekText), "Toekomende tijd van $thisPureLemma") }
-        btn_VVT.setOnClickListener { showVerb(conjugateAorist(thisGreekText), "Verleden tijd van $thisPureLemma") }
-        btn_OVT.setOnClickListener { showVerb(conjugateParatatikos(thisGreekText), "Paratatikos van $thisPureLemma") }
-        btn_GW.setOnClickListener { showVerb(createProstaktiki(thisGreekText), "Gebiedende wijs (ev, mv) van $thisPureLemma") }
+        btn_OTT.setOnClickListener { showVerb(conjugateEnestotas(thisGreekText).joinToString("\n"), "Tegenwoordige tijd van $thisPureLemma:") }
+        btn_OTTT.setOnClickListener { showVerb(conjugateMellontas(thisGreekText).joinToString("\n"), "Toekomende tijd van $thisPureLemma:") }
+        btn_VVT.setOnClickListener { showVerb(conjugateAoristos(thisGreekText).joinToString("\n"), "Verleden tijd van $thisPureLemma:") }
+        btn_OVT.setOnClickListener { showVerb(conjugateParatatikos(thisGreekText).joinToString("\n"), "Paratatikos van $thisPureLemma:") }
+        btn_GW.setOnClickListener { showVerb(createProstaktiki(thisGreekText).joinToString(" - "), "Gebiedende wijs (ev, mv) van $thisPureLemma:") }
         btn_speak.setOnClickListener { cleanSpeech(thisGreekText, thisWordType) }
         lbl_jumper.setOnClickListener { unJump() }
-        btn_show_all.setOnClickListener{ alleRijtjes()}
+        btn_show_all.setOnClickListener { alleRijtjes() }
         flash_chk.setOnClickListener { onFlashChange() }
 
         /* init database */
@@ -139,7 +130,6 @@ class FlashCard : AppCompatActivity() {
         lbl_correct.visible(!singleLemma)
         lbl_wrong.visible(!singleLemma)
         lbl_prev.visible(!singleLemma)
-
 
 
         /* fetch the data */
@@ -207,7 +197,7 @@ class FlashCard : AppCompatActivity() {
         menuInflater.inflate(R.menu.menu_flashcard, menu)
         menu.findItem(R.id.menu_card_speech).isChecked = useSpeech
 
-        menu.findItem(R.id.menu_set_groep_soort).isVisible = !singleLemma
+        menu.findItem(R.id.menu_set_theme_wordtype).isVisible = !singleLemma
         menu.findItem(R.id.menu_set_block_sort).isVisible = !singleLemma
         menu.findItem(R.id.menu_clear_selects).isVisible = !singleLemma
         menu.findItem(R.id.menu_reset_score).isVisible = !singleLemma
@@ -218,10 +208,10 @@ class FlashCard : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         /* Handle action bar item clicks here. */
         when (item.itemId) {
-            R.id.menu_set_groep_soort -> {
+            R.id.menu_set_theme_wordtype -> {
                 // launch the wordgroup/wordtype selection activity
-                val myIntent = Intent(this, WordTypeAndGroup::class.java)
-                startActivityForResult(myIntent, GROEP_SOORT_CODE)
+                val myIntent = Intent(this, ThemeAndWordType::class.java)
+                startActivityForResult(myIntent, THEME_WORDTYPE_CODE)
             }
             R.id.menu_set_block_sort -> {
                 // launch the detail selections and order-by activity
@@ -244,18 +234,15 @@ class FlashCard : AppCompatActivity() {
                 btn_speak.enabled(useSpeech)
             }
 
-            R.id.menu_mail_lemma -> {
-                mailLemma()
-            }
+            R.id.menu_mail_lemma -> mailLemma()
 
             R.id.menu_copy -> {
                 val clipData = ClipData.newPlainText("text", thisPureLemma)
                 clipboardManager.setPrimaryClip(clipData)
             }
 
-            R.id.menu_raw_view -> {
-                buidHTMLbox()
-            }
+            R.id.menu_raw_view ->  buidHTMLbox()
+
             R.id.menu_wordreference -> {
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse("""https://www.wordreference.com/gren/""" + thisPureLemma))
                 startActivity(intent)
@@ -266,9 +253,8 @@ class FlashCard : AppCompatActivity() {
             }
 
             /* home button (left arrow in app bar) pressed */
-            android.R.id.home -> {
-                finishIntent()
-            }
+            android.R.id.home -> finishIntent()
+
             else -> super.onOptionsItemSelected(item)
         }
         return true
@@ -278,7 +264,7 @@ class FlashCard : AppCompatActivity() {
         /* when configuration changing activities are finished, they return here.
          * if result is a possible selection change, requery the data
          */
-        if (requestCode == GROEP_SOORT_CODE || requestCode == SELECTIES_CODE) {
+        if (requestCode == THEME_WORDTYPE_CODE || requestCode == SELECTIES_CODE) {
             if (myIntent?.getStringExtra("result") == "selected") {
                 reQuery()
                 populateFields()
@@ -340,29 +326,22 @@ class FlashCard : AppCompatActivity() {
     /* see if record is a jumper? (record has been moved to the table of jumpers) */
     private fun isJumper() = DatabaseUtils.queryNumEntries(db, "jumpers", "idx=$thisIdx") != 0L
 
-    private fun onFlashChange() {
-        if (flash_chk.isChecked) flashLocally() else unFlash()
-    }
+    private fun onFlashChange() = if (flash_chk.isChecked) flashLocally() else unFlash()
 
     /* see if record is flashed (record idx present in the flashed table) */
     private fun isFlashed() = DatabaseUtils.queryNumEntries(db, "flashedlocal", "idx=$thisIdx") != 0L
 
-    private fun flashLocally(){
-        if (thisIdx> 0) db.execSQL("INSERT INTO flashedlocal (idx,flashvalue) VALUES($thisIdx,1);")
-    }
-    private fun unFlash(){
-        db.execSQL("DELETE FROM flashedlocal WHERE idx=$thisIdx;")
+    private fun flashLocally() { if (thisIdx > 0) db.execSQL("INSERT INTO flashedlocal (idx,flashvalue) VALUES($thisIdx,1);") }
 
-    }
+    private fun unFlash() = db.execSQL("DELETE FROM flashedlocal WHERE idx=$thisIdx;")
+
     /************ NEXT LEMMA **************/
     private fun next() {
         if (idxRequested == 0L) {
             if (ScoreBoard.allAreCorrect()) {
-                snack("Alle lemma's in dit blok ${jumpThreshold + 1} keer correct beantwoord.")
-
+                beforeNext()
                 /* add all jumpers( correct > threshold ) to jumper table EXCEPT when only 1 lemma was loaded */
                 db.execSQL("INSERT OR REPLACE INTO jumpers VALUES ${ScoreBoard.scoreMapToString()};")
-
             } else {
                 while (true) {
                     /* move to next record or recycle to first record */
@@ -412,7 +391,7 @@ class FlashCard : AppCompatActivity() {
         thisDutchText = mainCursor.getString(mainCursor.getColumnIndex("NL"))
         thisRemark = mainCursor.getString(mainCursor.getColumnIndex("Opm"))
         thisWordType = mainCursor.getString(mainCursor.getColumnIndex("Woordsoort"))
-        thisWordGroup = mainCursor.getString(mainCursor.getColumnIndex("Groep"))
+        thisThema = mainCursor.getString(mainCursor.getColumnIndex("Thema"))
         thisPureLemma = mainCursor.getString(mainCursor.getColumnIndex("PureLemma"))
         thisLevel = mainCursor.getInt(mainCursor.getColumnIndex("Level"))
         text_grieks.text = thisGreekText
@@ -423,9 +402,8 @@ class FlashCard : AppCompatActivity() {
         /* enable/disable buttons when applicable */
         val isVerb = (thisWordType == "werkwoord")
 
-//        btn_OTT.enabled(isVerb)
-        btn_OTT.visibility = if (isVerb)  View.VISIBLE else View.GONE
-        btn_show_all.visibility  = if (isVerb)  View.VISIBLE else View.GONE
+        btn_OTT.visibility = if (isVerb) View.VISIBLE else View.GONE
+        btn_show_all.visibility = if (isVerb) View.VISIBLE else View.GONE
         btn_OTTT.visibility = if (isVerb && hasMellontas(thisGreekText)) View.VISIBLE else View.GONE
         btn_VVT.visibility = if (isVerb && hasAorist(thisGreekText)) View.VISIBLE else View.GONE
         btn_OVT.visibility = if (isVerb && hasParatatikos(thisGreekText)) View.VISIBLE else View.GONE
@@ -459,7 +437,6 @@ class FlashCard : AppCompatActivity() {
         showProgress()
     }
 
-
     /* move one block (set of lemmas) back */
     private fun prevBlock() {
         /* reset correct-incorrect counter */
@@ -487,28 +464,21 @@ class FlashCard : AppCompatActivity() {
         block_progress_bar.progress = ScoreBoard.getBlockScore()
     }
 
-    /* build and show custom snackbar */
-    private fun snack(snackText: String, ms: Int = 5000) {
-        val snackbar = Snackbar.make(getWindow().getDecorView().getRootView(), snackText, ms)
-        val textView = snackbar.view.findViewById(id.snackbar_text) as TextView
-        val actionView = snackbar.view.findViewById(id.snackbar_action) as TextView
-        snackbar.view.setBackgroundColor(Color.LTGRAY)
-
-        textView.setTextColor(Color.BLUE)
-        textView.textSize = 18f
-        actionView.setTextColor(Color.BLACK)
-        actionView.textSize = 24f
-
-        snackbar.setAction(getText(R.string.btn_caption_next_block), View.OnClickListener { nextBlock() })
-        snackbar.show()
+    /* create attention after all correct, before moving to next block */
+    private fun beforeNext() {
+        val bob = AlertDialog.Builder(this)
+            .setTitle("Block finished")
+            .setMessage("Alle lemma's in dit blok ${jumpThreshold + 1} keer correct beantwoord.")
+            .setPositiveButton(R.string.btn_caption_next_block) { _, _ -> nextBlock() }
+        val alert = bob.show()
+        alert.show()
+        alert.getButton(DialogInterface.BUTTON_POSITIVE).textSize = 28f
     }
 
     /* show verb conjugations */
     private fun showVerb(conjugations: String, title: String) {
 
-        /* make a column by adding newline to each delimiter */
-        var ladder = conjugations.replace(", ".toRegex(), "\n")
-        ladder = ladder.replace(" - ".toRegex(), ", ")
+        var ladder = conjugations
         var verbPos = title.lastIndexOf(' ')
         val titleSpan = SpannableString(title)
         val greekTextColor = ContextCompat.getColor(applicationContext, R.color.κυανός)
@@ -537,7 +507,7 @@ class FlashCard : AppCompatActivity() {
 
         with(alertDialog.getButton(AlertDialog.BUTTON_NEUTRAL)) {
             textSize = 28f
-            setOnClickListener { cleanSpeech(conjugations, "standaard") }
+            setOnClickListener { cleanSpeech(conjugations.replace("\n", ","), "standaard") }
             enabled(useSpeech)
         }
 
@@ -551,7 +521,7 @@ class FlashCard : AppCompatActivity() {
               "Nederlands: $thisDutchText\n\n" +
               "Note: $thisRemark\n\n" +
               "Woordsoort: $thisWordType\n\n" +
-              "Woordgroep: $thisWordGroup\n\n" +
+              "Thema: $thisThema\n\n" +
               "Level: $thisLevel"
 
         val emailIntent = Intent(Intent.ACTION_SENDTO, Uri.fromParts("mailto", getString(R.string.contact_email), null))
@@ -578,7 +548,7 @@ class FlashCard : AppCompatActivity() {
               "  <tr><td>nederlands:</td><td>" + thisDutchText.replace("\n", "<br>") + "</td></tr>" +
               "  <tr><td>noot:</td><td>" + thisRemark.replace("\n", "<br>") + "</td></tr>" +
               "  <tr><td>woordsoort:</td><td>$thisWordType</td></tr>" +
-              "  <tr><td>woordgroep:</td><td>$thisWordGroup</td></tr>" +
+              "  <tr><td>thema:</td><td>$thisThema</td></tr>" +
               "  <tr><td>niveau:</td><td>$thisLevel</td></tr>" +
               "</table></body></html>"
         webView.loadData(record, "text/html", "UTF-8")
@@ -592,11 +562,11 @@ class FlashCard : AppCompatActivity() {
         alertDialog.getButton(DialogInterface.BUTTON_POSITIVE).textSize = 28f
     }
 
-    /* build the box with alle rijtjes */
+    /* build the box with all conjugations */
     fun alleRijtjes() {
         val webView = WebView(applicationContext)
-        val record = buildHTMLtable(thisGreekText)
-        webView.loadData(record, "text/html", "UTF-8")
+        val table = buildHTMLtable(thisGreekText)
+        webView.loadData(table, "text/html", "UTF-8")
         val bob = AlertDialog.Builder(this)
         bob.setTitle(thisPureLemma)
         bob.setView(webView)

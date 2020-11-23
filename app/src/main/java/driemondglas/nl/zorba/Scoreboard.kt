@@ -100,12 +100,12 @@ object ScoreBoard {
     /* the progress bar shows the total correct count for the current block */
     fun getBlockScore(): Int = scoreMap.values.sum()
 
-    /* retrieve the minimum value in the score list */
-    fun allAreCorrect(): Boolean {
-        val lowestValue = scoreMap.values.minOrNull()
-        return if (lowestValue != null) (lowestValue > jumpThreshold) else false
-    }
+    /*  Retrieve the lowest value in the score list
+     *  If lowest value is higher than threshold then all entries are higher so all are correct. */
+    fun allAreCorrect(): Boolean = (scoreMap.values.minOrNull() ?: 0 > jumpThreshold)
 
+    /*  Prepare list for sql expression to add jumpers
+     *  result is like  "(163, 1), (1816, 1), (1082, 1)" for 3 entries */
     fun scoreMapToString(): String = scoreMap.toList().toString().removeSurrounding("[", "]")
 
     fun noJumper(theIdx: Int): Boolean = (scoreMap.getOrDefault(theIdx, 0) <= jumpThreshold)

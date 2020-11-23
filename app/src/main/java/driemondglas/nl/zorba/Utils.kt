@@ -3,7 +3,6 @@ package driemondglas.nl.zorba
 import android.content.Context
 import android.graphics.Color
 import android.speech.tts.TextToSpeech
-import android.util.Log
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
@@ -17,27 +16,15 @@ const val allConsonants = "βγδζθκλμνξπρσςτφχψ"
 val allStressedVowels = "άέήίΐόύΰώ".toCharArray()
 val allUnstressedVowels = "αεηιϊουϋω".toCharArray()
 
-val allDiacriticVowels = "άέήίϊΐόύϋΰώ".toCharArray()
-val allNormalizedVowels = "αεηιιιουυυω".toCharArray()
-
-val allDoubleVowels = listOf("ευ", "αυ", "ου", "ει", "οι", "αι", "ια")
-val allTripleVowels = listOf("οια")
-
-
-val articleRegex = """(.*?),\s(τ?[ηοα]ι?)""".toRegex()
-val adjectiveRegex = """(.*?)([οηόύή][ςιί]),\s?-(ε?[αάεέηήιί][αάς]?),\s?-([άαεέίοόύ]ς?)""".toRegex()   //βαρύς, -εία, -ύ
-val inBracketsRegex = """\(.*?\)""".toRegex()
-val firstWordRegex = """^[\p{InGreek}]*""".toRegex()
-val eeStartSound = """\b[οε]?[ιηυίήύ]""".toRegex()
-//val passiefStam = """[ιοε]?[οάέύί]μαι""".toRegex()
+val inBracketsRegex = Regex( """\(.*?\)""")
 
 /* function is called from the menu item 'Clear All' to reset all selections made by user. */
 fun clearAll() {
-    wordGroup = ""
+    thema = ""
     wordType = ""
     search = ""
     zorbaPreferences.edit()
-          .putString("wordgroup", "")
+          .putString("theme", "")
           .putString("wordtype", "")
           .apply()
     resetDetails()
@@ -74,6 +61,10 @@ fun resetDetails() {
           .apply()
 }
 
+val articleRegex = Regex("""(.*?),\s(τ?[ηοα]ι?)""")             //match greek articles after a komma: , ο, η, το, οι, τα
+val adjectiveRegex = Regex("""(.*?)([οηόύή][ςιί]),\s?-(ε?[αάεέηήιί][αάς]?),\s?-([άαεέίοόύ]ς?)""")   //βαρύς, -εία, -ύ
+val eeStartSound = Regex("""\b[οε]?[ιηυίήύ]""")
+
 fun cleanSpeech(rawText: String, wordType: String) {
     var result = ""
     when (wordType) {
@@ -101,7 +92,7 @@ fun cleanSpeech(rawText: String, wordType: String) {
             result = result.dropLast(1)  // undo last added comma
         }
         "zelfstandig nw" -> {
-            /* uses articleRegex to match greek articles , ο, η, το, οι, τα
+            /* uses articleRegex to match greek articles: ο, η, το, οι, τα
                returns capturing groups:
                     * matchResult.groups[0]: whole match
                     * matchResult.groups[1]: noun
@@ -143,13 +134,10 @@ fun cleanSpeech(rawText: String, wordType: String) {
             /* 1: In speech output we don't want text in brackets */
             result = rawText.replace(inBracketsRegex, "")
 
-            /* 2: change greek questionmark ";" to normal "?" for speech */
-            //result = result.replaceFirst(";", "?")
-
-            /* 3: Change space dash space to comma and newline for speech to force pause (gebiedende wijs) */
+            /* 2: Change space dash space to comma for speech to force pause (gebiedende wijs) */
             result = result.replace(" - ", ", ")
 
-            /* 4: Change equeals sign (=) to comma for speech to force pause */
+            /* 3: Change equeals sign (=) to comma for speech to force pause */
             result = result.replace("=", ",")
         }
     }
@@ -158,412 +146,283 @@ fun cleanSpeech(rawText: String, wordType: String) {
 }
 
 /* This function returns all the greek characters from top line of the text until non greek is found */
-fun getEnestotas(textGreek: String): String {
-    return firstWordRegex.find(input = textGreek)?.value ?: ""
-}
+val firstWordRegex = Regex("""^[\p{InGreek}]*""")
+fun getEnestotas(textGreek: String): String = firstWordRegex.find(textGreek)?.value ?: ""
 
 /* This function returns all the greek characters from the second line of the text until non greek is found */
-fun getMellontas(textGreek: String): String {
-    val splitLines = textGreek.lines()
-    return if (splitLines.size > 1) firstWordRegex.find(splitLines[1])?.value ?: "" else ""
-}
+val mellontasRegex = Regex("""^(?:.*\R)(\p{InGREEK}+)""")
+fun getMellontas(textGreek: String): String = mellontasRegex.find(textGreek)?.groups?.get(1)?.value ?: ""
 
 /* This function returns all the greek characters from the third line of the text until non greek is found */
-fun getAorist(textGreek: String): String {
-    val splitLines = textGreek.lines()
-    return if (splitLines.size > 2) firstWordRegex.find(splitLines[2])?.value ?: "" else ""
-}
+val aoristosRegex = Regex("""^(?:.*\R){2}(\p{InGREEK}+)""")
+fun getAorist(textGreek: String): String = aoristosRegex.find(textGreek)?.groups?.get(1)?.value ?: ""
 
 /* This function returns all the greek characters from the fourth line of the text until non greek is found */
-fun getParatatikos(textGreek: String): String {
-    val splitLines = textGreek.lines()
-    return if (splitLines.size > 3) firstWordRegex.find(splitLines[3])?.value ?: "" else ""
-}
+val paratatikosRegex = Regex("""^(?:.*\R){3}(\p{InGREEK}+)""")
+fun getParatatikos(textGreek: String): String = paratatikosRegex.find(textGreek)?.groups?.get(1)?.value ?: ""
 
-fun hasMellontas(textGreek: String): Boolean {
-    return Regex("""(.*\R)\p{InGREEK}+(.*\R)*.*""").matches(textGreek)
-}
+//fun hasEnestotas(textGreek: String): Boolean = Regex("""^\p{InGREEK}+""").containsMatchIn(textGreek)
 
-fun hasAorist(textGreek: String): Boolean {
-    return Regex("""(.*\R){2}\p{InGREEK}+(.*\R)*.*""").matches(textGreek)
-}
+fun hasMellontas(textGreek: String): Boolean = Regex("""^(.*\R)\p{InGREEK}+""").containsMatchIn(textGreek)
 
-fun hasParatatikos(textGreek: String): Boolean {
-    return Regex("""(.*\R){3}\p{InGREEK}+(.*\R)*.*""").matches(textGreek)
-}
+fun hasAorist(textGreek: String): Boolean = Regex("""^(.*\R){2}\p{InGREEK}+""").containsMatchIn(textGreek)
+
+fun hasParatatikos(textGreek: String): Boolean = Regex("""^(.*\R){3}\p{InGREEK}+""").containsMatchIn(textGreek)
 
 fun buildHTMLtable(textGreek: String): String{
-    val ene: List<String> = conjugateEnestotas(textGreek).split(",").map { it.trim() }
-    if (ene.size < 5) return "<p> geen werkwoordsvervoegingen beschikbaar.</p>"
-    var mel: List<String> = conjugateMellontas(textGreek).split(",").map { it.trim() }
-    var par: List<String> = conjugateParatatikos(textGreek).split(",").map { it.trim() }
-    var aor: List<String> = conjugateAorist(textGreek).split(",").map { it.trim() }
+    val ene: List<String> = conjugateEnestotas(textGreek)
+    if (ene.size < 5) return "<p> geen vervoegingen beschikbaar.</p>"
+
+    var mel: List<String> = conjugateMellontas(textGreek)
+    var par: List<String> = conjugateParatatikos(textGreek)
+    var aor: List<String> = conjugateAoristos(textGreek)
+    var pro: List<String> = createProstaktiki(textGreek)
     if (mel.size < 5) mel = listOf("", "", "", "", "", "")
     if (par.size < 5) par = listOf("", "", "", "", "", "")
     if (aor.size < 5) aor = listOf("", "", "", "", "", "")
+    if (pro.size < 2) pro = listOf("", "")
+
     var htmlText = "<table>"
+
     // top header row
     htmlText += "<tr><th style='border: 1px solid black; background-color:gold;' >ENESTOTAS</th><th style='border: 1px solid black; background-color:gold;'>MELLONTAS</th></tr>"
     // conjugations
     for (i in 0..5) {
         htmlText += "<tr><td>${ene[i]}</td><td>${mel[i]}</td></tr>"
     }
+
     // middle header row
     htmlText += "<tr><th style='border: 1px solid black; background-color:gold;'>PARATATIKOS</th><th style='border: 1px solid black; background-color:gold;'>AORISTOS</th></tr>"
     for (i in 0..5) {
         htmlText += "<tr><td>${par[i]}</td><td>${aor[i]}</td></tr>"
     }
-    // gebiedende wijs
-    htmlText += "<tr><th colspan=3 style='border: 1px solid black; background-color:gold;' >PROSTAKTIKI</th></tr>"
-    htmlText += "<tr><td colspan=3 >${createProstaktiki(textGreek)}</td></tr>"
+
+    // imperatief προστακτική
+    htmlText += "<tr><th colspan=2 style='border: 1px solid black; background-color:gold;' >PROSTAKTIKI</th></tr>"
+    htmlText += "<tr><td>${pro[0]}</td><td>${pro[1]}</td></tr>"
     htmlText += "</table>"
     return htmlText
 }
 
-fun conjugateEnestotas(textGreek: String): String {
+
+
+fun conjugateEnestotas(textGreek: String): List<String> {
     var stem = ""
     var verbType = ""
     var oneSyllable = false
     val enestotas = getEnestotas(textGreek)
-    if (enestotas.isNotEmpty()) {
-        when (enestotas) {
-            "λέω", "πάω", "φταίω", "τρώω" -> {
-                stem = enestotas.dropLast(1)
-                verbType = "A2"
-                oneSyllable = true //needed to remove stress from λές πάς, φταίς, τρώς, κτλ
-            }
-            "ζω" -> {
-                stem = "ζ"
-                verbType = "B4"
-            }
-            "εγκαθιστώ" -> {
-                stem = "εγκαθιστ"
-                verbType = "B3"
-            }
-            else -> {
-                when {
-                    enestotas.endsWith("άω") -> {
-                        stem = enestotas.dropLast(2)
-                        verbType = "B1"
+    if (enestotas.isEmpty()) return listOf()
+
+    when (enestotas) {
+        "λέω", "πάω", "φταίω", "τρώω" -> {
+            stem = enestotas.dropLast(1)
+            verbType = "A2"
+            oneSyllable = true //needed to remove stress from λές πάς, φταίς, τρώς, κτλ
+        }
+        "ζω" -> {
+            stem = "ζ"
+            verbType = "B4"
+        }
+        else -> {
+            when {
+                enestotas.endsWith("ιστώ") -> {
+                    stem = enestotas.dropLast(1)
+                    verbType = "B3"
+                }
+                enestotas.endsWith("άω") -> {
+                    stem = enestotas.dropLast(2)
+                    verbType = "B1"
+                }
+                enestotas.endsWith("ώ") -> {
+                    stem = enestotas.dropLast(1)
+                    verbType = "B2"
+                }
+                enestotas.endsWith("ω") -> {
+                    stem = enestotas.dropLast(1)
+                    verbType = when {
+                        stem.last() in allConsonants -> "A1"
+                        stem.endsWith("εύ") -> "A1"
+                        stem.endsWith("έ") -> "A1"
+                        else -> "A2"
                     }
-                    enestotas.endsWith("ώ") -> {
-                        stem = enestotas.dropLast(1)
-                        verbType = "B2"
-                    }
-                    enestotas.endsWith("ω") -> {
-                        stem = enestotas.dropLast(1)
-                        verbType = when {
-                            stem.last() in allConsonants -> "A1"
-                            stem.endsWith("εύ") -> "A1"
-                            stem.endsWith("έ") -> "A1"
-                            else -> "A2"
-                        }
-                    }
-                    enestotas.endsWith("ομαι") -> {
-                        stem = enestotas.dropLast(4)
-                        verbType = "Γ1"
-                    }
-                    enestotas.endsWith("άμαι") -> {
-                        stem = enestotas.dropLast(4)
-                        verbType = "Γ2"
-                    }
-                    enestotas.endsWith("ιέμαι") -> {
-                        stem = enestotas.dropLast(5)
-                        verbType = "Γ3"
-                    }
-                    enestotas.endsWith("ούμαι") -> {
-                        stem = enestotas.dropLast(5)
-                        verbType = "Γ4"
-                    }
-                    enestotas.endsWith("είμαι") -> {
-                        stem = enestotas.dropLast(5)
-                        verbType = "Γ5"
-                    }
+                }
+                enestotas.endsWith("ομαι") -> {
+                    stem = enestotas.dropLast(4)
+                    verbType = "Γ1"
+                }
+                enestotas.endsWith("άμαι") -> {
+                    stem = enestotas.dropLast(4)
+                    verbType = "Γ2"
+                }
+                enestotas.endsWith("ιέμαι") -> {
+                    stem = enestotas.dropLast(5)
+                    verbType = "Γ3"
+                }
+                enestotas.endsWith("ούμαι") -> {
+                    stem = enestotas.dropLast(5)
+                    verbType = "Γ4"
+                }
+                enestotas.endsWith("είμαι") -> {
+                    stem = enestotas.dropLast(5)
+                    verbType = "Γ5"
                 }
             }
         }
-        return when (verbType) {
-            "A1" -> "${stem}ω, ${stem}εις, ${stem}ει, ${stem}ουμε, ${stem}ετε, ${stem}ουν"
-            "A2" -> "${stem}ω, ${if (oneSyllable) stem.unStress() else stem}ς, ${stem}ει, ${stem}με, ${stem}τε, ${stem}νε"
-            "B1" -> "${stem}άω(ώ), ${stem}άς, ${stem}άει(ά), ${stem}άμε(ούμε), ${stem}άτε, ${stem}άνε(ούν)"
-            "B2" -> "${stem}ώ, ${stem}είς, ${stem}εί, ${stem}ούμε, ${stem}είτε, ${stem}ούν"
-            "B3" -> "${stem}ώ, ${stem}άς, ${stem}ά, ${stem}ούμε, ${stem}άτε, ${stem}ούν"
-            "B4" -> "${stem}ω, ${stem}εις, ${stem}ει, ${stem}ούμε, ${stem}είτε, ${stem}ουν"
-            "Γ1" -> "${stem}ομαι, ${stem}εσαι, ${stem}εται, ${stem.unStress()}όμαστε, ${stem}εστε, ${stem}ονται"
-            "Γ2" -> "${stem}άμαι, ${stem}άσαι, ${stem}άται, ${stem}όμαστε, ${stem}άστε, ${stem}ούνται"
-            "Γ3" -> "${stem}ιέμαι, ${stem}ιέσαι, ${stem}ιέται, ${stem}ιόμαστε, ${stem}ιέστε, ${stem}ιούνται"
-            "Γ4" -> "${stem}ούμαι, ${stem}είσαι, ${stem}είται, ${stem}ούμαστε, ${stem}είστε, ${stem}ούνται"
-            "Γ5" -> "${stem}είμαι, ${stem}είσαι, ${stem}είναι, ${stem}είμαστε, ${stem}είστε, ${stem}είναι"
-            else -> "Geen vervoeging gevonden voor $enestotas"
-        }
     }
-    return "Tegenwoordige tijd ontbreekt op regel 1"
+    return when (verbType) {
+        "A1" -> listOf("ω", "εις", "ει", "ουμε", "ετε", "ουν").map { stem + it }
+        "A2" -> listOf("ω", "ς", "ει", "με", "τε", "νε").mapIndexed { idx, it -> (if (oneSyllable && idx == 1) stem.unStress() else stem) + it }
+        "B1" -> listOf("άω(ώ)", "άς", "άει(ά)", "άμε(ούμε)", "άτε", "άνε(ούν)").map { stem + it }
+        "B2" -> listOf("ώ", "είς", "εί", "ούμε", "είτε", "ούν").map { stem + it }
+        "B3" -> listOf("ώ", "άς", "ά", "ούμε", "άτε", "ούν").map { stem + it }
+        "B4" -> listOf("ω", "εις", "ει", "ούμε", "είτε", "ουν").map { stem + it }
+        "Γ1" -> listOf("ομαι", "εσαι", "εται", "όμαστε", "εστε", "ονται").mapIndexed { idx, it -> (if (idx == 3) stem.unStress() else stem) + it }
+        "Γ2" -> listOf("άμαι", "άσαι", "άται", "όμαστε", "άστε", "ούνται").map { stem + it }
+        "Γ3" -> listOf("ιέμαι", "ιέσαι", "ιέται", "ιόμαστε", "ιέστε", "ιούνται").map { stem + it }
+        "Γ4" -> listOf("ούμαι", "είσαι", "είται", "ούμαστε", "είστε", "ούνται").map { stem + it }
+        "Γ5" -> listOf("είμαι", "είσαι", "είναι", "είμαστε", "είστε", "είναι").map { stem + it }
+        else -> listOf()
+    }
 }
 
-fun conjugateMellontas(textGreek: String): String {
+fun conjugateMellontas(textGreek: String): List<String> {
     val stem: String
     val verbType: String
     val mellontas = getMellontas(textGreek)
+    if (mellontas.isEmpty()) return listOf()
 
-    if (mellontas.isNotEmpty()) {
-        when (mellontas) {
-            "είμαι" -> { // είμαι is the only verb with mellontas not ending in ω or ώ
-                return "θα είμαι, Θα είσαι, θα είναι, θα είμαστε, θα είστε, θα είναι"
-            }
-            "φάω", "πάω" -> {
-                verbType = "irregular2"
-                stem = mellontas.dropLast(1)
-            }
-            "πιω", "δω", "βρω", "πω", "μπω", "βγω" -> {
-                verbType = "irregular3"
-                stem = mellontas.dropLast(1)
-            }
-            else -> {
-                verbType = when {
-                    mellontas.endsWith("ω") -> "regular"
-                    mellontas.endsWith("ώ") -> "irregular1"
-                    else -> "Werkwoordvorm onbekend"
-                }
-                stem = mellontas.dropLast(1)
-            }
+    when (mellontas) {
+        "είμαι" -> { // είμαι is the only(?) verb with mellontas not ending in ω or ώ
+            return listOf("είμαι", "είσαι", "είναι", "είμαστε", "είστε", "είναι").map { "θα $it" }
         }
-        return when (verbType) {
-            "regular" -> "θα ${stem}ω, θα ${stem}εις, θα ${stem}ει, θα ${stem}ουμε, θα ${stem}ετε, θα ${stem}ουν"
-            "irregular1" -> "θα ${stem}ώ, θα ${stem}είς, θα ${stem}εί, θα ${stem}ούμε, θα ${stem}είτε, θα ${stem}ούν"
-            "irregular2" -> "θα ${stem}ω, θα ${stem.unStress()}ς, θα ${stem}ει, θα ${stem}με, θα ${stem}τε, θα ${stem}νε"
-            "irregular3" -> "θα ${stem}ω, θα ${stem}εις, θα ${stem}ει, θα ${stem}ούμε, θα ${stem}είτε, θα ${stem}ουν"
-            else -> "Geen vervoeging gevonden voor $mellontas"
+        "φάω", "πάω" -> {
+            verbType = "irregular2"
+            stem = mellontas.dropLast(1)
+        }
+        "πιω", "δω", "βρω", "πω", "μπω", "βγω" -> {
+            verbType = "irregular3"
+            stem = mellontas.dropLast(1)
+        }
+        else -> {
+            verbType = when {
+                mellontas.endsWith("ω") -> "regular"
+                mellontas.endsWith("ώ") -> "irregular1"
+                else -> "Werkwoordvorm onbekend"
+            }
+            stem = mellontas.dropLast(1)
         }
     }
-    return "Toekomende tijd ontbreekt op regel 2"
+    return when (verbType) {
+        "regular" -> listOf("ω", "εις", "ει", "ουμε", "ετε", "ουν").map { "θα $stem$it" }
+        "irregular1" -> listOf("ώ", "είς", "εί", "ούμε", "είτε", "ούν").map { "θα $stem$it" }
+        "irregular2" -> listOf("ω", "ς", "ει", "με", "τε", "νε").mapIndexed { idx, it -> "θα " + (if (idx == 1) stem.unStress() else stem) + it }
+        "irregular3" -> listOf("ω", "εις", "ει", "ούμε", "είτε", "ουν").map { "θα $stem$it" }
+        else -> listOf()
+    }
 }
 
-fun conjugateAorist(textGreek: String): String {
-    val stemSingle: String
-    var stemPlural: String
-    val enestotas = getEnestotas(textGreek)
+fun conjugateAoristos(textGreek: String): List<String> {
     val mellontas = getMellontas(textGreek)
     val aorist = getAorist(textGreek)
+    var stemPlural:String
+    if (aorist.isEmpty())  return listOf()
 
-    if (aorist.isNotEmpty()) {
-        //irregular
-        if (aorist == "ήμουν") {
-            return "ήμουν, ήσουν, ήταν, ήμασταν, ήσασταν, ήταν"
+    //irregular
+    if (aorist.endsWith("ε"))  return listOf("not 1st person","","","","","")
+    if (aorist == "ήμουν")  return listOf("ήμουν", "ήσουν", "ήταν", "ήμασταν", "ήσασταν", "ήταν")
+
+    /* STEM for conjugations EXCEPT for 1st and 2nd person plural*/
+    val stemSingle = aorist.dropLast(1)
+
+    /* STEM for conjugations of 1st and 2nd person PLURAL */
+    stemPlural = when {
+        // exceptions go here:
+        aorist in listOf("βγήκα", "είδα", "βρήκα", "μπήκα", "ήρθα", "είπα", "πήγα", "ήπια", "υπήρξα") ->  stemSingle
+        aorist.endsWith("είχα") ->  stemSingle // werkwoorden afgeleid van έχω
+        aorist.endsWith("ήλθα") ->  stemSingle // werkwoorden afgeleid van έρχομαι
+        aorist.endsWith("πήρα") ->  stemSingle // werkwoorden afgeleid van παίρνω
+        else -> {
+            val stemFromFuture = mellontas.dropLast(1)
+            if (mellontas.last() == 'ώ') stemFromFuture + "ήκ" else stemFromFuture
         }
-        stemSingle = aorist.dropLast(1)
-        when {
-            // exceptions go here:
-            aorist in listOf("βγήκα", "είδα", "βρήκα", "μπήκα", "ήρθα", "είπα", "πήγα", "ήπια", "υπήρξα") -> stemPlural = stemSingle
-            aorist.endsWith("είχα") -> stemPlural = stemSingle // werkwoorden afgeleid van έχω
-            aorist.endsWith("ήλθα") -> stemPlural = stemSingle // werkwoorden afgeleid van έρχομαι
-            aorist.endsWith("πήρα") -> stemPlural = stemSingle // werkwoorden afgeleid van παίρνω
-            enestotas.endsWith("ταΐζω") -> stemPlural = "ταΐσ" // trema komt niet voor in aoristos dus afkijken bij enestotas
-
-            else -> {
-                /* The code below formats the stem for 1st and 2nd person plural,
-                 * having shifted accent and possible extra prefix ή or έ removed: */
-                val targetCharacter: Char
-                val newStressPos: Int
-
-                // 1 - find and remember the position of the stressed character in the normal stem:
-                val stressPos = stemSingle.indexOfAny(allStressedVowels)
-
-                // 2 - unstress the stem (to stemPlural, we still need single stem later)
-                stemPlural = stemSingle.unStress()
-
-                // 3 - find target vowel (receiving new stress) past the original stressed vowel
-                val vowelPos: Int
-                //     first check for triple vowels; search past original stress.
-                val tripleVowelPos = stemSingle.indexOfAny(allTripleVowels, stressPos + 1)
-                //     first check for double vowels; search past original stress.
-                val doubleVowelPos = stemSingle.indexOfAny(allDoubleVowels, stressPos + 1)
-                when {
-                    tripleVowelPos > -1 -> {  // if triple vowel, last one gets the accent, see wich character there is at that position
-                        targetCharacter = stemSingle[tripleVowelPos + 2]
-                        newStressPos = tripleVowelPos + 2
-                    }
-                    doubleVowelPos > -1 -> {  // if double vowel, second one gets the accent, see wich character there is at that position
-                        targetCharacter = stemSingle[doubleVowelPos + 1]
-                        newStressPos = doubleVowelPos + 1
-                    }
-                    else -> {
-                        // 4 - no doubles found, so first single vowel gets the accent
-                        vowelPos = stemSingle.indexOfAny(allUnstressedVowels, stressPos + 1)
-                        targetCharacter = stemSingle[vowelPos]
-                        newStressPos = vowelPos
-                    }
-                }
-
-                // 5 - replace target character with accented one
-                stemPlural = stemPlural.replace(atPosition = newStressPos, replacement = stressOneChar(targetCharacter))
-
-                // 6 - if needed, lose the extraneous ή or έ at the start
-                if (aorist[0] == 'ή' || aorist[0] == 'έ') {
-                    /* is the 1st character added as 3rd syllable or was it already part of the verb ??? */
-                    if (unStressOneChar(enestotas[0]) != unStressOneChar(aorist[0])) {   // ελέγχω  ->  έλεγξα, ελέγχαμε, ελέγχατε So keep the ε in plural (it was not added)
-                        // ελπίζω  ->  έλπισα, ελπίσαμε ...
-                        stemPlural = stemPlural.drop(1)
-                    }
-                }
-
-                /* step 7 can only be done if mellontas is available for comparison */
-                if (mellontas.isNotEmpty()) {
-                    // 7 - Special case:
-                    // Sometimes an έ is inserted not at the beginning af a composite verb like: αναπνέω
-                    // Replace alternate έ after prefix with original vowel like: αναπνέω -> αναπνεύσω -> ανέπνευσα maar: αναπνεύσαμε en αναπνεύσατε
-                    // Find stressed epsilon (έ) but not on position 1, save position
-                    // put back original vowel (α) from same position in present tense
-
-                    val positionOfStressedE = stemSingle.indexOf('έ', 1)
-
-                    if (positionOfStressedE > -1) {
-                        // If the original verb has a consonant on that position, then jou just remove the accented epsilon (replace by nothing)
-                        stemPlural = if (mellontas[positionOfStressedE] in allConsonants) {
-                            stemPlural.removeRange(positionOfStressedE, positionOfStressedE + 1)
-                        } else {
-                            // put back original vowel from same position in future tense
-                            stemPlural.replace(atPosition = positionOfStressedE, replacement = mellontas[positionOfStressedE])
-                        }
-                    }
-                }
-            }
-        }
-        return "${stemSingle}α, ${stemSingle}ες, ${stemSingle}ε, ${stemPlural}αμε, ${stemPlural}ατε, ${stemSingle}αν"
-    } else return "Verleden tijd ontbreekt op regel 3"
+    }
+    if (stemPlural.last() in("αά")) stemPlural += 'γ' // φά γ αμε
+    return listOf("α", "ες", "ε", "αμε", "ατε", "αν").mapIndexed { idx, it -> (if (idx in 3..4) stemPlural else stemSingle) + it }
 }
 
-fun conjugateParatatikos(textGreek: String): String {  //past continuous (imperfect)
+fun conjugateParatatikos(textGreek: String): List<String>{
     val stemSingle: String
     var stemPlural: String
     val enestotas = getEnestotas(textGreek)
     val paratatikos = getParatatikos(textGreek)
-
+    if (paratatikos.isEmpty()) return listOf()
 
     return when {
-        paratatikos.isEmpty() -> "Onvoltooid Verleden Tijd ontbreekt op lijn 4"
-
         //irregular
-        enestotas == "είμαι"-> "ήμουν, ήσουν, ήταν, ήμασταν, ήσασταν, ήταν"
+        enestotas == "είμαι"-> listOf("ήμουν","ήσουν","ήταν","ήμασταν","ήσασταν","ήταν")
+        enestotas=="πάω" -> listOf("πήγαινα", "πήγαινες", "πήγαινε", "πηγαίναμε", "πηγαίνατε", "πήγαιναν")
+        enestotas=="λέω" -> listOf("έλεγα", "έλεγες", "έλεγε", "λέγαμε", "λέγατε", "έλεγαν")
+        enestotas=="υπάρχω" -> listOf("υπήρχα", "υπήρχες", "υπήρχε", "υπήρχαμε", "υπήρχατε", "υπήρχαν")
 
-        paratatikos.endsWith("είχα") -> {
+        paratatikos.endsWith("είχα") ||
+        paratatikos.endsWith("ούσα") -> {
             stemSingle = paratatikos.dropLast(1)
-            "${stemSingle}α, ${stemSingle}ες, ${stemSingle}ε, ${stemSingle}αμε, ${stemSingle}ατε, ${stemSingle}αν"
-        }
-        paratatikos.endsWith("ούσα") -> {  //werkwoorden op -άω en -ώ
-            stemSingle = paratatikos.dropLast(4)
-            "${stemSingle}ούσα, ${stemSingle}ούσες, ${stemSingle}ούσε, ${stemSingle}ούσαμε, ${stemSingle}ούσατε, ${stemSingle}ούσαν"
+            listOf("α", "ες", "ε", "αμε", "ατε", "αν").map{stemSingle + it}
         }
 
-        paratatikos.endsWith("όμουν") -> {  //werkwoorden op -άμαι, -όμαι, -έμαι, ...
+        paratatikos.endsWith("όμουν") -> {  //werkwoorden met tegenwoordige tijd op -άμαι, -όμαι, -έμαι, ...
             stemSingle = paratatikos.dropLast(5)
-            "${stemSingle}όμουν, ${stemSingle}όσουν, ${stemSingle}όταν, ${stemSingle}όμασταν, ${stemSingle}όσασταν, ${stemSingle.stressLastVowel()}ονταν(ε)"
+            listOf("όμουν", "όσουν", "όταν", "όμασταν", "όσασταν", "ονταν(ε)").mapIndexed{idx, it -> (if (idx==5) stemSingle.stressLastVowel() else stemSingle) + it}
         }
 
         enestotas.endsWith('ω') -> {             //werkwoorden op -ω bijvoorbeeld μαγειρεύω
             // stem for the single form is easy from the given paratatikos: μαγείρευα -> μαγείρευ
             stemSingle = paratatikos.dropLast(1)
-
-            /*
-             * So the following steps are ONLY for the TWO conjugations: 1st person PLURAL and 2nd person PLURAL
-             */
-            //stem for 1st and 2nd person plural, having shifted accent and possible extraeneous prefix ή or έ:
-            val charTarget: Char
-            val newStressPos: Int
-            val vowelPos: Int
-
-            // 1 - find and remember the position of the stress:
-            val stressPos = stemSingle.indexOfAny(allStressedVowels)
-            // μαγείρευ -> stressposition = 4
-
-            // 2 - unstress to stemPlural  (we need single stem later)
-            stemPlural = stemSingle.unStress()
-            // μαγείρευ -> μαγειρευ
-
-            // 3 - find target vowel AFTER the original stress, first check for double vowels; search after original stress.
-
-            val doubleVowelPos = stemSingle.indexOfAny(allDoubleVowels, stressPos + 1)
-            // in example μαγείρευ  find position of ευ -> doubleVowelPos = 7
-
-            if (doubleVowelPos > -1) {  // if double vowel, second one gets the accent, see wich character there is at that position
-                charTarget = stemSingle[doubleVowelPos + 1] // υ in position 7+1
-                newStressPos = doubleVowelPos + 1           // position 8 gets new stress
-            } else {
-                // 4 - no doubles found so first single vowel gets the accent
-                vowelPos = stemSingle.indexOfAny(allUnstressedVowels, stressPos + 1)
-                if (vowelPos > -1){
-                    charTarget = stemSingle[vowelPos]
-                    newStressPos = vowelPos
-                } else {
-                    Log.e(TAG,"Error in conjugateParatatikos, stem $stemSingle $vowelPos, $stressPos")
-                    newStressPos = 0
-                    charTarget = 'a'
-                }
+            stemPlural = enestotas.dropLast(1)
+            if (stemPlural.takeLast(2) !in setOf("εύ", "αύ")) {    // no 'γ' after  εύ or αύ
+                if (stemPlural.last() in ("αάύώί")) stemPlural += 'γ' // φά-γ-αμε
             }
-
-            // 5 - replace target character with accented one
-            // in example, replace  υ with ύ on pos 8
-            stemPlural = stemPlural.replace(atPosition = newStressPos, replacement = stressOneChar(charTarget))
-
-            // 6 - if needed, lose the extraneous ή or έ at the start
-            // we know it is an added character if enestotas does not have that character in first psition
-            if (unStressOneChar(enestotas[0]) != unStressOneChar(paratatikos[0])) stemPlural = stemPlural.drop(1)
-
-            // 7 - Special case: replace alternate έ after prefix with original vowel like: ανα-πνέω -> ανα-πνεύσω -> αν-έπνευσα maar: ανα-πνεύσαμε en ανα-πνεύσατε
-            //  Find stressed epsilon (έ) but not on position 0, save position
-            //  put back original vowel (α) from same position in present tense
-            val positionOfStressedE = stemSingle.indexOf('έ', 1)
-
-            if (positionOfStressedE > -1) {
-                // If the original verb has a consonant on that position, then jou just remove the accented epsilon (replace by nothing)
-                stemPlural = if (enestotas[positionOfStressedE] in allConsonants) {
-                    stemPlural.removeRange(positionOfStressedE, positionOfStressedE + 1)
-                } else {
-                    // put back original vowel from same position in future tense
-                    stemPlural.replace(atPosition = positionOfStressedE, replacement = enestotas[positionOfStressedE])
-                }
-            }
-
-        "${stemSingle}α, ${stemSingle}ες, ${stemSingle}ε, ${stemPlural}αμε, ${stemPlural}ατε, ${stemSingle}αν"
+            listOf("α", "ες", "ε", "αμε", "ατε", "αν").mapIndexed { idx, it -> (if (idx in 3..4) stemPlural else stemSingle) + it }
         }
-        else -> "Geen vervoeging gevonden voor $paratatikos"
+        else -> listOf()
     }
 }
 
-fun createProstaktiki(textGreek: String): String {
+fun createProstaktiki(textGreek: String): List<String> {
     val enestotas = getEnestotas(textGreek)
     val mellontas = getMellontas(textGreek)
     val aoristos = getAorist(textGreek)
     val stemAorist: String
-    val prostaktiki: String
+    val prostaktiki: List<String>
     val prostaktikiSingle: String
     val prostaktikiPlural: String
 
     /***** EXCEPTIONS *****/
     prostaktiki = when (enestotas) {
-        "πηγαίνω" -> "πήγαινε - πηγαίνετε"
-        "αφήνω" -> "άσε/άφισε – άστε/αφήστε"
-        "είμαι" -> "να είσαι – να είστε"
-        "έρχομαι" -> "έλα – ελάτε"
-        "τρώω" -> "φάε - φάτε"
-        "ανεβαίνω" -> "ανέβα – ανεβείτε"
-        "κατεβαίνω" -> "κατέβα – κατεβείτε"
-        "μπαίνω" -> "μπες - μπείτε"
-        "βγαίνω" -> "βγες – βγείτε"
-        "βρίσκω" -> "βρες – βρείτε"
-        "λέω" -> "πες – πείτε"
-        "βλέπω" -> "δες – δείτε"
-        "πίνω" -> "πιες – πιείτε"
-        "γίνομαι" -> "γίνε – γίνετε"
-        "επιτρέπομαι" -> "επιτρέψου - επιτραπείτε"
-        "κάθομαι" -> "κάθισε/κάτσε – καθίστε"
-        "προέρχομαι" -> "πρόελθε - προέλθετε"
-        "συνέρχομαι" -> "σύνελθε - συνέλθετε"
-        "φαίνομαι" -> "alleen meervoud: φανείτε"
-        "χρωστάω" -> "alleen enkelvoud: χρωστά"
-        else -> ""
+        "πηγαίνω" -> listOf("πήγαινε","πηγαίνετε")
+        "αφήνω" -> listOf("άσε/άφισε","άστε/αφήστε")
+        "είμαι" -> listOf("να είσαι","να είστε")
+        "έρχομαι" -> listOf("έλα","ελάτε")
+        "τρώω" -> listOf("φάε","φάτε")
+        "ανεβαίνω" -> listOf("ανέβα","ανεβείτε")
+        "κατεβαίνω" -> listOf("κατέβα","κατεβείτε")
+        "μπαίνω" -> listOf("μπες","μπείτε")
+        "βγαίνω" -> listOf("βγες","βγείτε")
+        "βρίσκω" -> listOf("βρες","βρείτε")
+        "λέω" -> listOf("πες","πείτε")
+        "βλέπω" -> listOf("δες","δείτε")
+        "πίνω" -> listOf("πιες","πιείτε")
+        "γίνομαι" -> listOf("γίνε","γίνετε")
+        "επιτρέπομαι" -> listOf("επιτρέψου","επιτραπείτε")
+        "κάθομαι" -> listOf("κάθισε/κάτσε","καθίστε")
+        "προέρχομαι" -> listOf("πρόελθε","προέλθετε")
+        "συνέρχομαι" -> listOf("σύνελθε","συνέλθετε")
+        "φαίνομαι" -> listOf("alleen meervoud:","φανείτε")
+        "χρωστάω" -> listOf("χρωστά","alleen enkelvoud")
+        else -> emptyList()
     }
     if (prostaktiki.isNotEmpty()) return prostaktiki
-    if (mellontas.isEmpty() || aoristos.isEmpty()) return "Niet genoeg info voor vervoeging"
+    if (mellontas.isEmpty() || aoristos.isEmpty()) return listOf("Niet genoeg info voor vervoeging")
 
     /***** PASSIVE FORM *****/
     if (aoristos.endsWith("ηκα")) {
@@ -579,11 +438,10 @@ fun createProstaktiki(textGreek: String): String {
             stemAorist.endsWith("αύτ") -> stemAorist.dropLast(3) + "άψου"
             else -> "stemAorist niet op: θ,στ,χτ,φτ,υτ"
         }
-        return "$prostaktikiSingle - $prostaktikiPlural"
+        return listOf(prostaktikiSingle,prostaktikiPlural)
     }
 
     /***** ACTIVE FORM *****/
-
     /* remove final 'ω' from mellontas to create the 2nd stem */
     var stem = mellontas.dropLast(1)
 
@@ -600,7 +458,7 @@ fun createProstaktiki(textGreek: String): String {
     var single = stem + "ε"
 
     /* create plural Imperative from the stem, suffix depends on last character of the stem: '-ετε' or '-τε'  */
-    val plural = if (stem.takeLast(1) in listOf("ν", "γ", "β", "θ", "χ")) stem + "ετε" else stem + "τε"
+    val plural = if (stem.takeLast(1) in "νγβθχ") stem + "ετε" else stem + "τε"
 
     /* move stress 1 syllable to the left, if possible */
     if (stressPos > 0) {
@@ -608,7 +466,7 @@ fun createProstaktiki(textGreek: String): String {
         if (vowelPos > -1) single = single.unStress().replace(atPosition = vowelPos, replacement = stressOneChar(unStressed = single[vowelPos]))
     }
     /* return Imperative as: 2nd person single - 2nd person plural */
-    return "$single - $plural"
+    return listOf(single,plural)
 }
 
 
@@ -670,12 +528,15 @@ object Utils {
      * input: string containing any diacritic or accented vowel.
      * output: same string without diacritic or ather marks.
      */
+    private val allDiacriticVowels = "άέήίϊΐόύϋΰώ".toCharArray()
+    private val allNormalizedVowels = "αεηιιιουυυω".toCharArray()
+
     fun String.normalize(): String {
-        val original = allDiacriticVowels + 'ς'     //  ς normalized to σ just for hangman purpose !!!
-        val normalized = allNormalizedVowels + 'σ'
+        val diacritics = allDiacriticVowels + 'ς'     // ς normalized to
+        val normalized = allNormalizedVowels + 'σ'    // σ just for hangman purpose !!!
 
         return this.map {
-            val index = original.indexOf(it)
+            val index = diacritics.indexOf(it)
             if (index >= 0) normalized[index] else it
         }.joinToString("")
     }

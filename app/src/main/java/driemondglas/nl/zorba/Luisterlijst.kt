@@ -152,11 +152,11 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
         /* Handle action bar (menu) item clicks here. */
 
         when (item.itemId) {
-            /* menu set woordsoort/woordgroep */
-            R.id.menu_set_groep_soort -> {
-                /* launch the Groep/Woordsoort Selection Activity */
-                val myIntent = Intent(this, WordTypeAndGroup::class.java)
-                startActivityForResult(myIntent, GROEP_SOORT_CODE)
+            /* menu set woordsoort/thema */
+            R.id.menu_set_theme_wordtype -> {
+                /* launch the Thema/Woordsoort Selection Activity */
+                val myIntent = Intent(this, ThemeAndWordType::class.java)
+                startActivityForResult(myIntent, THEME_WORDTYPE_CODE)
             }
 
             /*  menu detail selecties */
@@ -200,7 +200,7 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
             /* refresh data in the 'lemmaArrayList' using the changed selections */
             when (requestCode) {
 
-                GROEP_SOORT_CODE -> {
+                THEME_WORDTYPE_CODE -> {
                     if (myIntent.getStringExtra("result") == "selected") {
                         /* refresh data in the mainCursor using the changed selections */
                         thisCursor = db.rawQuery(QueryManager.mainQuery(), null)
@@ -217,7 +217,6 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
         super.onActivityResult(requestCode, resultCode, myIntent)
     }
 
-
     private fun startStop() {
         if (stopTalking) {                 // talking was paused or ended,
             stopTalking = false            // remove this flag
@@ -231,7 +230,7 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
             speakWholeBlock()
 
         } else {                            // talking was active, pause it
-            stopTalking = true             // set the flag
+            stopTalking = true              // set the flag
 
             /* stop all ongoing speech */
             spreker.stop()
