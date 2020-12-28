@@ -11,13 +11,13 @@ package driemondglas.nl.zorba
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import androidx.core.content.ContextCompat
 import android.util.AttributeSet
 import android.view.View
-import kotlinx.android.synthetic.main.splash.*
-import java.util.ArrayList
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import driemondglas.nl.zorba.databinding.SplashBinding
+import java.util.*
 
 /* Top level properties can be used by all classes in the project */
 
@@ -55,20 +55,25 @@ private var lineList: ArrayList<BlueLine> = ArrayList()
 
 
 class Splash : AppCompatActivity() {
+    private lateinit var binding: SplashBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.splash)
-        sundown.init()
+        binding= SplashBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        binding.sundown.init()
         t.start()
     }
 
     private val t = Thread {
         Thread.sleep(SPLASH_START_DELAY)
         while (!done) {
-            sundown.move()
+            binding.sundown.move()
             Thread.sleep(ANIMATION_DELAY)
         }
         finish()
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
     }
 }
 

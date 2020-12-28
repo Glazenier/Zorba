@@ -6,7 +6,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context=".MainActivity"
-        tools:ignore="ContentDescription, Autofill"
+        tools:ignore="Autofill"
         >
 
     <TextView
@@ -14,7 +14,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:lines="2"
-            android:text="@string/activity_title_main"
+            android:text="@string/lbl_lemmalist"
             android:textAlignment="center"
             android:textSize="16sp"
             android:textStyle="bold"
@@ -31,6 +31,7 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:srcCompat="@drawable/flag_gr_small"
+            android:contentDescription="@string/img_content_flaggr"
             />
     <ImageView
             android:id="@+id/ibtn_flag_nl"
@@ -41,6 +42,7 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:srcCompat="@drawable/flag_nl_small"
+            android:contentDescription="@string/img_content_flagnl"
             />
     <View
             android:id="@+id/divider"
@@ -55,33 +57,36 @@
     <ImageButton
             android:id="@+id/btn_open_deck"
             style="@android:style/Widget.ImageButton"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
+            android:layout_width="@dimen/btn_main_width"
+            android:layout_height="@dimen/btn_main_height"
             android:layout_marginStart="8dp"
+            android:contentDescription="@string/img_content_flashcard"
             android:scaleType="centerCrop"
             android:src="@drawable/flash"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             />
     <ImageButton
             android:id="@+id/btn_luister"
             style="@android:style/Widget.ImageButton"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
+            android:layout_width="@dimen/btn_main_width"
+            android:layout_height="@dimen/btn_main_height"
+            android:contentDescription="@string/img_content_listener"
             android:scaleType="fitCenter"
             android:src="@drawable/listen"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.33"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             />
     <ImageButton
             android:id="@+id/btn_verb_game"
             style="@android:style/Widget.ImageButton"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
+            android:layout_width="@dimen/btn_main_width"
+            android:layout_height="@dimen/btn_main_height"
+            android:contentDescription="@string/img_content_verbgame"
             android:scaleType="centerCrop"
             android:src="@drawable/wiu"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -92,15 +97,16 @@
     <ImageButton
             android:id="@+id/btn_hangman"
             style="@android:style/Widget.ImageButton"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
+            android:layout_width="@dimen/btn_main_width"
+            android:layout_height="@dimen/btn_main_height"
             android:layout_marginEnd="8dp"
+            android:contentDescription="@string/img_content_hangman"
             android:scaleType="centerCrop"
             android:src="@drawable/galgje"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="1.0"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             />
     <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_view"
@@ -132,7 +138,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:labelFor="@id/text_search"
-            android:text="@string/caption_search"
+            android:text="@string/lbl_search"
             app:layout_constraintBottom_toTopOf="@+id/btn_open_deck"
             app:layout_constraintEnd_toStartOf="@+id/text_search"
             app:layout_constraintTop_toBottomOf="@+id/recycler_view"
@@ -160,5 +166,6 @@
             app:layout_constraintBottom_toBottomOf="@+id/text_search"
             app:layout_constraintStart_toEndOf="@+id/text_search"
             app:layout_constraintTop_toTopOf="@+id/text_search"
+            android:contentDescription="@string/img_content_x"
             />
 </androidx.constraintlayout.widget.ConstraintLayout>

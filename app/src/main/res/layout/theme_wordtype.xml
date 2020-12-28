@@ -10,7 +10,7 @@
             app:layout_constraintEnd_toEndOf="@id/lst_theme"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            android:text="@string/theme"
+            android:text="@string/lbl_themelist"
             android:textAlignment="center"
             />
     <TextView
@@ -20,7 +20,7 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="@id/lst_wordtype"
             app:layout_constraintEnd_toEndOf="parent"
-            android:text="@string/wordtype"
+            android:text="@string/lbl_wordtypelist"
             android:textAlignment="center"
             />
     <ListView
@@ -55,29 +55,29 @@
     <Button
             android:id="@+id/btn_select"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_height="@dimen/btn_nav_height"
             android:layout_marginStart="8dp"
-            android:text="@string/select"
+            android:text="@string/btn_caption_select"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             />
     <Button
             android:id="@+id/btn_default"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:layout_constraintStart_toEndOf="@id/btn_select"
-            app:layout_constraintEnd_toStartOf="@id/btn_cancel"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_height="@dimen/btn_nav_height"
             android:layout_weight="1"
-            android:text="@string/clear"
+            android:text="@string/btn_caption_clear"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/btn_cancel"
+            app:layout_constraintStart_toEndOf="@id/btn_select"
             />
     <Button
             android:id="@+id/btn_cancel"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_height="@dimen/btn_nav_height"
             android:layout_marginEnd="8dp"
-            android:text="@string/cancel"
+            android:text="@string/btn_caption_cancel"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             />
 </androidx.constraintlayout.widget.ConstraintLayout>

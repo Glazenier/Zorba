@@ -1,9 +1,11 @@
 package driemondglas.nl.zorba
 
+import android.util.Log
+
 object QueryManager {
 
-    const val queryAlleWoordSoorten = "SELECT Woordsoort AS woordsoort, Count(*) AS soorttotaal FROM woorden GROUP BY Woordsoort ORDER BY Woordsoort;"
-    const val queryAlleThemas = "SELECT Thema, Count(*) AS thematotaal FROM woorden WHERE woordsoort != 'liedtekst' GROUP BY Thema ORDER BY Thema;"
+    const val queryAllWordTypes = "SELECT Woordsoort AS woordsoort, Count(*) AS soorttotaal FROM woorden GROUP BY Woordsoort ORDER BY Woordsoort;"
+    const val queryAllThemes = "SELECT Thema, Count(*) AS thematotaal FROM woorden WHERE woordsoort != 'liedtekst' GROUP BY Thema ORDER BY Thema;"
 
     /* translate lowercase greek letter to corresponding SQL WHERE clause that also contains accented variants of the same letter */
     private val initialToClause: Map<String, String> = mapOf(
@@ -49,8 +51,7 @@ object QueryManager {
 
     /* The 3 boolean level-flags (Basic-Advanced-Ballast) are consolidated into an SQL clause
      * Note: when NO flags are set, or when ALL flags are set, the clause is empty (no filter on level)
-     * So we only have to consider a single flag or two flags set
-     */
+     * So we only have to consider a single flag or two flags set */
     private fun levelClause(): String {
         var levelString = ""
         if (levelBasic) levelString += "1"
@@ -64,8 +65,7 @@ object QueryManager {
     }
 
     /* MAIN selection QUERY
-     * this function builds the main query that implements the various selections made by the user
-     */
+     * this function builds the main query that implements the various selections made by the user */
     fun mainQuery(): String {
         var sqlMain =
             if (flashed) {
@@ -75,14 +75,14 @@ object QueryManager {
             }
         sqlMain += themaClause() + wordtypeClause() + levelClause() + lengthClause() + initialClause() + searchClause() + thresholdClause() + orderbyClause() + ";"
 
-        /* replace first 'AND' with 'WHERE' */
+        // replace first 'AND' with 'WHERE'
         if (sqlMain.contains(" AND ")) sqlMain = sqlMain.replaceFirst(" AND ", " WHERE ")
         return sqlMain
     }
 
     /*  H A N G M A N  query */
     fun hangmanQuery(): String {
-        /* length and order are not determined by the general configuration but specific to the hangman game */
+        /* length and order are NOT determined by the general configuration but specific to the hangman game */
         val lengthClause = if (useLength && pureLemmaLength in 1..15) " AND PureLength = $pureLemmaLength" else " AND PureLength <= 16"
 
         var sqlHangman = "SELECT PureLemma , NL FROM woorden" +
@@ -93,36 +93,38 @@ object QueryManager {
     }
 
     /*  V E R B   G A M E  query */
-    fun verbGameQuery(type1: Boolean = true, type2: Boolean = true, type3: Boolean = true): String {
+    fun verbGameQuery(typeActiveA: Boolean = true, typeActiveB: Boolean = true, typePassive: Boolean = true): String {
         var typeClause: String
-        if (type1 && type2 && type3) {
+        if (typeActiveA && typeActiveB && typePassive) {
             typeClause = ""
         } else {
-            val type1Clause = if (type1) """ OR (purelemma LIKE '%ω' AND purelemma NOT LIKE '%άω') """ else ""
-            val type2Clause = if (type2) """ OR substr(purelemma,-2)='άω' OR substr(purelemma,-1)='ώ' """ else ""
-            val type3Clause = if (type3) """ OR substr(purelemma,-3)='μαι' """ else ""
+            val typeActiveAClause = if (typeActiveA) """ OR (purelemma LIKE '%ω' AND purelemma NOT LIKE '%άω') """ else ""
+            val typeActiveBClause = if (typeActiveB) """ OR (purelemma LIKE '%άω' OR purelemma LIKE '%ώ') """ else ""
+            val typePassiveClause = if (typePassive) """ OR (purelemma LIKE '%μαι') """ else ""
 
-            typeClause = type1Clause + type2Clause + type3Clause
-            if (typeClause.contains(" OR ")) typeClause = typeClause.replaceFirst(" OR ", "")
-            typeClause = " AND ($typeClause)"
+            typeClause = typeActiveAClause + typeActiveBClause + typePassiveClause
+            typeClause = typeClause.replaceFirst(" OR ", " AND ( ") + ")"
         }
 
         return if (flashed) {
-            "SELECT woorden.idx, PureLemma, GR, NL FROM flashedlocal LEFT JOIN woorden ON woorden.idx = flashedlocal.idx WHERE woordsoort = 'werkwoord' " + levelClause()
+            "SELECT woorden.idx, PureLemma, GR, NL " +
+                  "FROM flashedlocal LEFT JOIN woorden ON woorden.idx = flashedlocal.idx " +
+                  " WHERE woordsoort = 'werkwoord' " +  levelClause() +
+                  " ORDER BY RANDOM();"
         } else {
-            "SELECT idx, PureLemma, GR, NL FROM woorden WHERE woordsoort = 'werkwoord' " + levelClause() + typeClause + " ORDER BY RANDOM()"
+            "SELECT idx, PureLemma, GR, NL FROM woorden WHERE woordsoort = 'werkwoord' " + levelClause() + typeClause + " ORDER BY RANDOM();"
         }
     }
 
     /* function counts how many lemma's are available to verb game using current selections */
     fun verbGameCount(): Int {
         val countSQL = if (flashed) {
-            "SELECT COUNT(*) AS verbCount FROM flashedlocal LEFT JOIN woorden ON woorden.idx = flashedlocal.idx WHERE woordsoort = 'werkwoord' " + levelClause()
+            "SELECT COUNT(*) FROM flashedlocal LEFT JOIN woorden ON woorden.idx = flashedlocal.idx WHERE woordsoort = 'werkwoord' " + levelClause()
         } else {
-            "SELECT COUNT(*) AS verbCount FROM woorden WHERE woordsoort = 'werkwoord' " + levelClause()
+            "SELECT COUNT(*)  FROM woorden WHERE woordsoort = 'werkwoord' " + levelClause()
         }
         val countCursor = zorbaDBHelper.readableDatabase.rawQuery(countSQL, null)
-        val cnt= if (countCursor.moveToFirst())  countCursor.getInt(countCursor.getColumnIndex("verbCount")) else 0
+        val cnt= if (countCursor.moveToFirst())  countCursor.getInt(0) else 0
         countCursor.close()
         return cnt
     }
@@ -130,14 +132,14 @@ object QueryManager {
     /* function counts how many lemma's are selected including locally flashed is so configured */
     fun selectedCount(): Int {
         var countSQL = if (flashed) {
-            "SELECT COUNT(*) AS selCount FROM flashedlocal LEFT JOIN woorden ON woorden.idx = flashedlocal.idx "
+            "SELECT COUNT(*) FROM flashedlocal LEFT JOIN woorden ON woorden.idx = flashedlocal.idx "
         } else {
-            "SELECT COUNT(*) AS selCount FROM woorden "
+            "SELECT COUNT(*) FROM woorden "
         }
         countSQL += themaClause() + wordtypeClause() + levelClause() + lengthClause() + initialClause() + searchClause() + thresholdClause() + ";"
         if (countSQL.contains(" AND ")) countSQL = countSQL.replaceFirst(" AND ", " WHERE ")
         val countCursor = zorbaDBHelper.readableDatabase.rawQuery(countSQL, null)
-        val cnt= if (countCursor.moveToFirst())  countCursor.getInt(countCursor.getColumnIndex("selCount")) else 0
+        val cnt = if (countCursor.moveToFirst()) countCursor.getInt(0) else 0
         countCursor.close()
         return cnt
     }

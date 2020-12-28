@@ -2,102 +2,155 @@
 <resources xmlns:tools="http://schemas.android.com/tools"
         tools:ignore="Typos"
         >
-    <string name="activity_title_main">Lemma\'s</string>
-    <string name="advanced">Gevorderd</string>
-    <string name="again">Opnieuw</string>
-    <string name="alphabetical">alfabetisch</string>
+<!--APP-->
     <string name="app_name">Zorba</string>
-    <string name="apply">aan/uit</string>
-    <string name="author">Herman van Rongen</string>
-    <string name="basis">Basis</string>
-    <string name="block_size_pre">Blokken van</string>
-    <string name="block_size_post">woorden.</string>
+    <string name="app_author">Herman van Rongen</string>
+    <string name="app_contact_email">herman@driemondglas.nl</string>
+    <string name="app_description">Griekse woorden leren.</string>
+    <string name="app_versioninfo">View binding replaces Synthetic binding</string>
 
-    <!--   ▶⫴  two characters: triangle pipes   \u25b6\u2af4  -->
-    <string name="btn_caption_next_block">\u25b6\u2af4</string>
-    <!-- ⫴◀ two characters: pipes triangle   \u2af4\u25c0-->
-    <string name="btn_caption_prev_block">\u2af4\u25c0</string>
+<!--TITLES / SUBTITLES-->
+    <string name="title_main">ZORBA by Herman</string>
+    <string name="title_activity">ZORBA</string>
+    <string name="subtitle_flash">Flashcard</string>
+    <string name="subtitle_listening">Luisteroefening</string>
+    <string name="subtitle_verbgame">Werkwoordspel</string>
+    <string name="subtitle_hangman">"Δήμιος - Galgje"</string>
+    <string name="subtitle_theme_wordtype">Selecteer thema en/of woordsoort</string>
+    <string name="subtitle_filter_sort">Detail selecties, blokken en volgorde</string>
 
-    <string name="cancel">Cancel</string>
+<!--LABELS-->
+    <string name="lbl_lemmalist">Lemma\'s</string>
+    <string name="lbl_themelist">Thema</string>
+    <string name="lbl_wordtypelist">Woordsoort</string>
+    <string name="lbl_search">Zoek:</string>
+    <string name="lbl_level">Niveau:</string>
+    <string name="lbl_basis">Basis</string>
+    <string name="lbl_advanced">Gevorderd</string>
+    <string name="lbl_nice2know">Ballast</string>
+    <string name="lbl_lemmalength_pre">Lemma lengte</string>
+    <string name="lbl_lemmalength_post">karakters.</string>
+    <string name="lbl_on_off">uit-aan</string>
+    <string name="lbl_initiaal">Initiaal:</string>
+    <string name="lbl_blocksize_pre">Blokken van</string>
+    <string name="lbl_blocksize_post">woorden.</string>
+    <string name="lbl_sort">Volgorde:</string>
+    <string name="lbl_index">positie</string>
+    <string name="lbl_alphabetical">alfabetisch</string>
+    <string name="lbl_random">door elkaar</string>
+    <string name="lbl_descending">ondersteboven</string>
+    <string name="lbl_threshold_pre">Geslaagd bij </string>
+    <string name="lbl_threshold_post"> x goed.</string>
+    <string name="lbl_hidejumpers">dan niet meer tonen</string>
+    <string name="lbl_flash">Flash ⚡</string>
+    <string name="lbl_flashed">alleen flashed</string>
+    <string name="lbl_lightning">⚡</string>
+    <string name="lbl_back">➜</string>
+    <string name="lbl_true">✓</string>
+    <string name="lbl_false">✗</string>
+    <string name="lbl_correct">Goed:</string>
+    <string name="lbl_error">Fout:</string>
+    <string name="lbl_position">blok %1$d - lemma %2$d</string>
+    <string name="lbl_speed">tempo</string>
+    <string name="lbl_speed_post">100%</string>
+    <string name="lbl_jumper">↷</string>
+    <string name="lbl_flash_chk">Flash</string>
 
-    <string name="caption_search">Zoek:</string>
-    <string name="clear">Reset</string>
-    <string name="contact_email">herman@driemondglas.nl</string>
-    <string name="correct">Goed:</string>
-    <string name="descending">ondersteboven</string>
-    <string name="description">Vocaulary learner Greek - Dutch </string>
+<!--captions-->
+    <string name="btn_caption_ok">🆗</string>
+    <string name="btn_caption_notok">\⛔</string>
+    <string name="btn_caption_again">Opnieuw</string>
+    <string name="btn_caption_next_block">▶⫴</string>
+    <string name="btn_caption_prev_block">⫴◀</string>
+    <string name="btn_caption_speak">🔈</string>
+    <string name="btn_caption_play">▶</string>
+    <string name="btn_caption_pause">⏸</string>
+    <string name="btn_caption_rewind">⏮</string>
+    <string name="btn_caption_reset">🔄</string>
+    <string name="btn_caption_active_passive">a/p</string>
+    <string name="btn_caption_default">standaard</string>
+    <string name="btn_caption_save_default">bewaar als\nstandaard</string>
+    <string name="btn_caption_cancel">Cancel</string>
+    <string name="btn_caption_select">Pas toe</string>
+    <string name="btn_caption_clear">Reset</string>
+    <string name="btn_caption_checknext">Check…\n en door</string>
+    <string name="btn_caption_restart">Oeps…\nopnieuw</string>
+    <string name="btn_caption_previous">Vorige</string>
+    <string name="btn_caption_ladder">Rijtje</string>
+    <string name="btn_caption_present">ενέσ</string>
+    <string name="btn_caption_future">μέλλ</string>
+    <string name="btn_caption_past">αόρι</string>
+    <string name="btn_caption_paratatikos">παρα</string>
+    <string name="btn_caption_imperative">προσ</string>
+    <string name="btn_caption_showall">όλοι</string>
+    <string name="btn_caption_reveal">👁</string>
 
-    <string name="emoji_back">\u279C</string>
-    <string name="emoji_correct">\u2713</string>
-    <string name="emoji_not_ok">\u26D4</string>
-    <string name="emoji_ok">&#127383;</string>
-    <string name="emoji_wrong">\u2717</string>
-
-    <string name="error">Fout:</string>
-    <string name="flag_dutch">vlag NL</string>
-    <string name="flag_greek">vlag GR</string>
-    <string name="hangman_meaning">Betekenis: %1$s</string>
-    <string name="hide_jumpers">dan niet meer tonen</string>
-    <string name="index">positie</string>
-    <string name="initiaal">Initiaal:</string>
-    <string name="lemma_length_pre">Lemma lengte</string>
-    <string name="lemma_length_post">karakters.</string>
-    <string name="level">Niveau:</string>
-
+<!--MENU CAPTIONS-->
     <string name="menu_caption_about">ⓘ Over Zorba…</string>
-    <string name="menu_caption_detail_selections">&#128736; Detail selecties</string>
-    <string name="menu_caption_email">📭 Email this lemma</string>
-    <string name="menu_caption_theme_wordtype">&#128218; Kies thema en woordsoort </string>
-    <string name="menu_caption_import_database">&#128451; Vernieuw database</string>
-    <string name="menu_caption_neurolingo">&#127760; Lookup - NeuroLingo</string>
-    <string name="menu_caption_reset_score">🅾🅾 Reset scores</string>
-    <string name="menu_caption_reset_hiscore">\u23f1 Reset high score</string>
-    <string name="menu_caption_reset_selects">&#128465; Reset alle selecties</string>
-    <string name="menu_caption_use_speech">&#128264; Gebruik spraak</string>
-    <string name="menu_caption_wordreference">&#127760; Lookup - WordReference</string>
-    <string name="menu_caption_base_record">💽 View Base Record</string>
+    <string name="menu_caption_detail_selections">⚙ Detail selecties</string>
+    <string name="menu_caption_email">\@ Email dit lemma</string>
+    <string name="menu_caption_theme_wordtype">📚 Kies thema en woordsoort </string>
+    <string name="menu_caption_import_database">🌪 Vernieuw database</string>
+    <string name="menu_caption_reset_score">🅾🅾 Reset score</string>
+    <string name="menu_caption_reset_hiscore">⏱ Reset high score</string>
+    <string name="menu_caption_reset_selects">🔄 Reset alle selecties</string>
+    <string name="menu_caption_use_speech">🔈 Gebruik spraak</string>
+    <string name="menu_caption_neurolingo">🌐 Zoek op - NeuroLingo</string>
+    <string name="menu_caption_wordreference">🌐 Zoek op - WordReference</string>
+    <string name="menu_caption_base_record">💽 Toon basis record</string>
     <string name="menu_caption_copy">📋 copy pure lemma</string>
+
+<!-- MESSAGES AND ALERTS-->
+    <string name="error_generic">That didn\'t work %1s</string>
 
     <string name="msg_blocksize_number">Vul positief getal in voor de blokgrootte.</string>
     <string name="msg_lemmalength_number">Vul positief getal in voor de woordlengte.</string>
     <string name="msg_threshold_number">Vul positief getal in voor de drempelwaarde.</string>
+    <string name="msg_import_db">Wil je de database opnieuw laden?</string>
+    <string name="msg_import_title">Importeer vanaf de server</string>
+    <string name="msg_thats_all">That\'s all</string>
+    <string name="msg_you_hang">YOU HANG !!!</string>
+    <string name="msg_got_it">YOU GOT IT !!!</string>
 
-    <string name="nice_to_know">Ballast</string>
+    <string name="warning_empty_cursor">Huidige selectie bevat geen lemma!</string>
+    <string name="warning_speech_init">spraak initialisatie probleem!</string>
 
-    <string name="random">door elkaar</string>
+    <string name="alert_lemma_unjump_message">Lemma vaak genoeg goed beantwoord.\nReset deze status voor dit lemma?</string>
+    <string name="alert_lemma_unjump_neg">Nee, is goed zo.</string>
+    <string name="alert_lemma_unjump_pos">Ja, reset!</string>
+    <string name="alert_lemma_unjump_title">Jumper</string>
+    <string name="alert_about_title">Over Zorba</string>
+    <string name="alert_baserecord_title">Base Record</string>
+    <string name="alert_endofblock_title">Dit blok is klaar</string>
 
-    <string name="select">Pas toe</string>
+<!--IMAGE CONTENT DESCR-->
+    <string name="img_content_flagnl">vlag NL</string>
+    <string name="img_content_flaggr">vlag GR</string>
+    <string name="img_content_flashcard">gebeugenkaarten</string>
+    <string name="img_content_listener">luister</string>
+    <string name="img_content_verbgame">werkwoorden</string>
+    <string name="img_content_x">leegmaken</string>
+    <string name="img_content_hangman">galgje</string>
+    <string name="img_content_thatsall">ThatsAll</string>
+    <string name="img_content_paperclip">paperclip</string>
 
-    <string name="sort">Volgorde:</string>
+    <!--MISCELLANEOUS-->
+    <string name="clean_sweep">Clean sweep in %1$02dm:%2$02ds</string>
+    <string name="all_correct">Alle lemma`s in dit blok %1d keer correct beantwoord in %2$02dm:%3$02ds</string>
+    <string name="hangman_meaning">Betekenis: %1$s</string>
+    <string name="title_verb_present">Tegenwoordige tijd van %1$s:</string>
+    <string name="title_verb_future">Toekomende tijd van %1$s:</string>
+    <string name="title_verb_past">Verleden tijd van %1$s:</string>
+    <string name="title_verb_paratatikos">Paratatikos van %1$s:</string>
+    <string name="title_verb_imperative">Gebiedende wijs van %1$s:</string>
+    <string name="single_plural">\nenkelvoud:\nmeervoud:</string>
+    <string name="total_value">Totaal: %1$s</string>
+    <string name="count_value">Aantal: %1$d</string>
+    <string name="reveal">%1s van %2s (%3s)</string>
 
-    <!-- 🔈 luidspreker &#128264;  U+1F508  \ud83d\udd08-->
-    <string name="speak">&#128264;</string>
-    <string name="btn_caption_play">▶</string>
-    <string name="btn_caption_pause">⏸</string>
-    <string name="btn_caption_rewind">⏮</string>
-    <string name="btn_caption_restart">🔄</string>
-    <string name="standard">standaard</string>
 
-    <string name="threshold_pre">Geslaagd bij </string>
-    <string name="threshold_post"> x goed.</string>
+<!--VERY SPECIAL-->
+    <string name="spaced_pair">%1s %2s</string>
+    <string name="spaced_triple">%1s %2s %3s</string>
 
-    <string name="version_info">Flash on device</string>
-
-    <string name="theme">Thema</string>
-
-    <string name="wordtype">Woordsoort</string>
-    <string name="ask">Ask</string>
-    <string name="reveal">Reveal</string>
-    <string name="theme_wordtype_subtitle">Selecteer thema en/of woordsoort</string>
-    <string name="positie">blok %1$d - lemma %2$d</string>
-    <string name="thatsall">ThatsAll</string>
-    <string name="pct100">100%</string>
-    <string name="tempo">tempo</string>
-    <string name="flash">⚡</string>
-    <string name="caption_flashed">alleen flashed</string>
-    <string name="lbl_flash">Flash ⚡</string>
-    <string name="btn_cap_check_next">check…\n en door</string>
-    <string name="btn_cap_restart">oops…\nopnieuw</string>
-    <string name="btn_cap_prev">vorige</string>
-    <string name="btn_cap_ladder">rijtje</string>
 </resources>

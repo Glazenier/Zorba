@@ -1,21 +1,26 @@
 package driemondglas.nl.zorba
 
-import android.content.*
-import android.os.*
-import android.text.*
-import android.view.*
-import androidx.appcompat.app.*
-import kotlinx.android.synthetic.main.filter_and_sort.*
+import android.content.Intent
+import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.MenuItem
+import android.view.View
+import androidx.appcompat.app.AppCompatActivity
+import driemondglas.nl.zorba.databinding.FilterAndSortBinding
 
 /*  This class represents the the activity "Filter and Sort" that holds
  *  the selection controls to filter the greek words on length, first letter and/or difficulty level etc.
- *  Sorting or shuffling is also set here.
- *  The layout currently only has a portrait version
- */
+ *  Sorting or shuffling is also set here. */
 
 class FilterAndSort : AppCompatActivity() {
 
-    /* preserve initial values to prepare for possible cancel action */
+    private lateinit var binding: FilterAndSortBinding // replaces synthetic view binding
+
+    // flags "user typed input" (true) or "programmic text input" (false). Flag used by text change listener to update related fields or not.
+    private var userTyped = true
+
+    // preserve initial values to prepare for possible cancel action
     private val oldLevel1 = levelBasic
     private val oldLevel2 = levelAdvanced
     private val oldLevel3 = levelBallast
@@ -32,109 +37,113 @@ class FilterAndSort : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.filter_and_sort)
+        binding = FilterAndSortBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        val myBar = supportActionBar
-        if (myBar != null) {
-            /* This next line shows the home/back button.
-             * The functionality is handled by the android system as long as a parent activity
-             * is specified in the manifest.xls file
-             * We OVERRIDE this functionality with our own goBack() function to cleanly close cursor and database
-             */
-            myBar.setDisplayHomeAsUpEnabled(true)
-            myBar.title = "ZORBA"
-            myBar.subtitle = "Detail selecties, blokken en volgorde"
+        supportActionBar?.apply {
+            setDisplayHomeAsUpEnabled(true)
+            title = getString(R.string.title_activity)
+            subtitle = getString(R.string.subtitle_filter_sort)
         }
 
-        /* First of all,
-         *  grab the active settings from the global variables and set the respective controls.*/
+        // First of all,
+        // grab the active settings from the global variables and set the respective controls.
         loadControlsFromVars()
 
-        /* add listeners for switches and buttons */
-        sw_level1.setOnClickListener { onLevelChange() }
-        sw_level2.setOnClickListener { onLevelChange() }
-        sw_level3.setOnClickListener { onLevelChange() }
-        sw_use_length.setOnClickListener { onLengthSwitch() }
-        sw_initial.setOnClickListener { onInitialChange() }
-        sw_use_blocks.setOnClickListener { onBlockSwitch() }
-        sw_index.setOnClickListener { onSort(it) }
-        sw_alfa.setOnClickListener { onSort(it) }
-        sw_random.setOnClickListener { onSort(it) }
-        sw_desc.setOnClickListener { onDescending() }
-        sw_hide_jumpers.setOnClickListener { onHideJumpersSwitch() }
-        btn_select.setOnClickListener { goBack() }
-        btn_cancel.setOnClickListener { cancelChanges() }
-        btn_default.setOnClickListener { defaultSelects() }
-        sw_flashed.setOnClickListener { onFlash() }
+        with (binding) {
+            /* add listeners for switches and buttons */
+            swLevel1.setOnClickListener { onLevelChange() }
+            swLevel2.setOnClickListener { onLevelChange() }
+            swLevel3.setOnClickListener { onLevelChange() }
+            swUseLength.setOnClickListener { onLengthSwitch() }
+            swInitial.setOnClickListener { onInitialChange() }
+            swUseBlocks.setOnClickListener { onBlockSwitch() }
+            swIndex.setOnClickListener { onSort(it) }
+            swAlfa.setOnClickListener { onSort(it) }
+            swRandom.setOnClickListener { onSort(it) }
+            swDesc.setOnClickListener { onDescending() }
+            swHideJumpers.setOnClickListener { onHideJumpersSwitch() }
+            btnSelect.setOnClickListener { goBack() }
+            btnCancel.setOnClickListener { cancelChanges() }
+            btnDefault.setOnClickListener { restoreDefaults() }
+            btnSaveAsDefault.setOnClickListener { saveAsDefaults() }
+            swFlashed.setOnClickListener { onFlash() }
 
-        /* set listener for changes in text field for block size  */
-        text_blocksize.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable) {
-                onBlockSizeChange(s)
-            }
+            /* set listener for changes in text field for block size  */
+            textBlocksize.addTextChangedListener(object : TextWatcher {
+                override fun afterTextChanged(s: Editable) {
+                    if (userTyped) onBlockSizeChange(s)
+                }
 
-            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
-        })
+                override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
+            })
 
-        /* set listener for changes in text field for lemma length  */
-        text_length.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable) {
-                onLengthChange(s)
-            }
+            /* set listener for changes in text field for lemma length  */
+            textLength.addTextChangedListener(object : TextWatcher {
+                override fun afterTextChanged(s: Editable) {
+                    if (userTyped) onLengthChange(s)
+                }
 
-            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
-        })
+                override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
+            })
 
-        /* set listener for changes in text field for threshold  */
-        text_threshold.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable) {
-                onThresholdChange(s)
-            }
+            /* set listener for changes in text field for threshold  */
+            textThreshold.addTextChangedListener(object : TextWatcher {
+                override fun afterTextChanged(s: Editable) {
+                    if (userTyped) onThresholdChange(s)
+                }
 
-            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
-        })
-
+                override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
+            })
+        }
     }
 
-    /* this function sets all UI views to values found in the QueryManager */
+    /* this function sets all UI controls from global variable values */
     private fun loadControlsFromVars() {
+
+        userTyped = false  // prevents unwanted actions triggered by the TextChangedListeners
+
         /* set level switches according to global values */
-        sw_level1.isChecked = levelBasic
-        sw_level2.isChecked = levelAdvanced
-        sw_level3.isChecked = levelBallast
+        with(binding) {
+            swLevel1.isChecked = levelBasic
+            swLevel2.isChecked = levelAdvanced
+            swLevel3.isChecked = levelBallast
 
-        /* set lemma length to global value */
-        sw_use_length.isChecked = useLength
-        text_length.setText(pureLemmaLength.toString())
+            /* set lemma length to global value */
+            textLength.setText(pureLemmaLength.toString())  // NOTE: change listener activated if flag [userTyped] is true!!!
+            swUseLength.isChecked = useLength
 
-        /* set the initial (first letter of a word) greek letter to global value */
-        tv_initial.text = initial
-        sw_initial.isChecked = initial.isNotEmpty()
+            /* set the initial (first letter of a word) greek letter to global value */
+            tvInitial.text = initial
+            swInitial.isChecked = initial.isNotEmpty()
 
-        /* set blocks to global value */
-        sw_use_blocks.isChecked = useBlocks
-        text_blocksize.setText(blockSize.toString())
+            /* set blocks to global value */
+            textBlocksize.setText(blockSize.toString()) // NOTE: change listener activated if flag [userTyped] is true!!!
+            swUseBlocks.isChecked = useBlocks
 
-        /* set sortby switches to queryManager's state */
-        sw_index.isChecked = false
-        sw_alfa.isChecked = false
-        sw_random.isChecked = false
-        when (orderbyTag) {
-            "alfa" -> sw_alfa.isChecked = true
-            "random" -> sw_random.isChecked = true
-            else -> sw_index.isChecked = true
+            /* set sortby switches to queryManager's state */
+            swIndex.isChecked = false
+            swAlfa.isChecked = false
+            swRandom.isChecked = false
+            when (orderbyTag) {
+                "alfa" -> swAlfa.isChecked = true
+                "random" -> swRandom.isChecked = true
+                else -> swIndex.isChecked = true
+            }
+
+            /* descending or ascending order */
+            swDesc.isChecked = orderDescending
+
+            /* set to hide the lemmas that jumped the threshold */
+            textThreshold.setText((jumpThreshold + 1).toString()) // NOTE: change listener activated if flag [userTyped] is true!!!
+            swHideJumpers.isChecked = hideJumpers
+
+            swFlashed.isChecked = flashed
         }
-
-        /* descending or ascending order */
-        sw_desc.isChecked = orderDescending
-
-        /* set to hide the lemmas that jumped the threshold */
-        text_threshold.setText((jumpThreshold + 1).toString())
-        sw_hide_jumpers.isChecked = hideJumpers
-        sw_flashed.isChecked = flashed
+        userTyped = true  //prepare for user input
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -149,31 +158,31 @@ class FilterAndSort : AppCompatActivity() {
 
     private fun onLevelChange() {
         /* if no level is selected, select all */
-        if (!(sw_level1.isChecked || sw_level2.isChecked || sw_level3.isChecked)) {
-            sw_level1.isChecked = true
-            sw_level2.isChecked = true
-            sw_level3.isChecked = true
+        if (!(binding.swLevel1.isChecked || binding.swLevel2.isChecked || binding.swLevel3.isChecked)) {
+            binding.swLevel1.isChecked = true
+            binding.swLevel2.isChecked = true
+            binding.swLevel3.isChecked = true
         }
 
-        levelBasic = sw_level1.isChecked
-        levelAdvanced = sw_level2.isChecked
-        levelBallast = sw_level3.isChecked
+        levelBasic = binding.swLevel1.isChecked
+        levelAdvanced = binding.swLevel2.isChecked
+        levelBallast = binding.swLevel3.isChecked
 
         zorbaPreferences.edit()
-              .putBoolean("levelbasic", levelBasic)
-              .putBoolean("leveladvanced", levelAdvanced)
-              .putBoolean("levelballast", levelBallast)
-              .apply()
+            .putBoolean("levelbasic", levelBasic)
+            .putBoolean("leveladvanced", levelAdvanced)
+            .putBoolean("levelballast", levelBallast)
+            .apply()
     }
 
     private fun onBlockSwitch() {
         /* use of blocks  OFF -> ON  */
-        if (sw_use_blocks.isChecked) {
+        if (binding.swUseBlocks.isChecked) {
             /* check valid block size in text field */
-            val numberInField = text_blocksize.text.toString().toIntOrNull()
+            val numberInField = binding.textBlocksize.text.toString().toIntOrNull()
             if (numberInField == null || numberInField < 1) {
                 colorToast(context = this, msg = getString(R.string.msg_blocksize_number))
-                sw_use_blocks.isChecked = false
+                binding.swUseBlocks.isChecked = false
             } else {
                 useBlocks = true
                 zorbaPreferences.edit().putBoolean("useblocks", true).apply()
@@ -191,34 +200,38 @@ class FilterAndSort : AppCompatActivity() {
             null -> {
                 colorToast(context = this, msg = getString(R.string.msg_blocksize_number))
                 useBlocks = false
-                sw_use_blocks.isChecked = false
+                binding.swUseBlocks.isChecked = false
             }
             0 -> {
-                zorbaPreferences.edit().putInt("blocksize", 0).apply()
-                zorbaPreferences.edit().putBoolean("useblocks", false).apply()
+                zorbaPreferences.edit()
+                    .putInt("blocksize", 0)
+                    .putBoolean("useblocks", false)
+                    .apply()
                 blockSize = 0
                 useBlocks = false
-                sw_use_blocks.isChecked = false
+                binding.swUseBlocks.isChecked = false
             }
             else -> {
-                zorbaPreferences.edit().putInt("blocksize", targetSize).apply()
-                zorbaPreferences.edit().putBoolean("useblocks", true).apply()
-
+                zorbaPreferences.edit()
+                    .putInt("blocksize", targetSize)
+                    .putBoolean("useblocks", true)
+                    .apply()
                 blockSize = targetSize
                 useBlocks = true
-                sw_use_blocks.isChecked = true
+                binding.swUseBlocks.isChecked = true
             }
         }
     }
 
     private fun onLengthSwitch() {
         /* OFF -> ON  */
-        if (sw_use_length.isChecked) {
+        if (binding.swUseLength.isChecked) {
             /* check valid length in text field */
-            val textField = text_length.text.toString().toIntOrNull()
+            val textField = binding.textLength.text.toString().toIntOrNull()
             if (textField == null || textField < 1) {
                 colorToast(context = this, msg = getString(R.string.msg_lemmalength_number))
-                sw_use_length.isChecked = false
+                binding.swUseLength.isChecked = false
+                useLength = false
             } else {
                 useLength = true
             }
@@ -235,92 +248,93 @@ class FilterAndSort : AppCompatActivity() {
             null -> {
                 colorToast(context = this, msg = getString(R.string.msg_lemmalength_number))
                 useLength = false
-                sw_use_length.isChecked = false
+                binding.swUseLength.isChecked = false
             }
             0 -> {
                 pureLemmaLength = 0
                 useLength = false
-                sw_use_length.isChecked = false
+                binding.swUseLength.isChecked = false
             }
             else -> {
                 pureLemmaLength = targetLength
                 useLength = true
-                sw_use_length.isChecked = true
+                binding.swUseLength.isChecked = true
             }
         }
         zorbaPreferences.edit()
-              .putBoolean("uselength", useLength)
-              .putInt("purelemmalenght", pureLemmaLength)
-              .apply()
+            .putBoolean("uselength", useLength)
+            .putInt("purelemmalenght", pureLemmaLength)
+            .apply()
     }
 
     fun onGreekLetter(view: View) {
         val tag = view.tag.toString()
         if (tag == "_") {
-            tv_initial.text = ""
+            binding.tvInitial.text = ""
             initial = ""
-            sw_initial.isChecked = false
+            binding.swInitial.isChecked = false
         } else {
-            tv_initial.text = tag
+            binding.tvInitial.text = tag
             initial = tag
-            sw_initial.isChecked = true
+            binding.swInitial.isChecked = true
         }
         zorbaPreferences.edit().putString("initial", initial).apply()
     }
 
 
     private fun onInitialChange() {
-        val textvalue = tv_initial.text.toString()
-        if (sw_initial.isChecked && textvalue.isNotEmpty()) {
+        val textvalue = binding.tvInitial.text.toString()
+        if (binding.swInitial.isChecked && textvalue.isNotEmpty()) {
             initial = textvalue
         } else {
             initial = ""
-            sw_initial.isChecked = false
+            binding.swInitial.isChecked = false
         }
         zorbaPreferences.edit().putString("initial", initial).apply()
     }
 
     private fun onSort(view: View) {
         /* reset all sorting switches */
-        sw_index.isChecked = false
-        sw_alfa.isChecked = false
-        sw_random.isChecked = false
+        binding.swIndex.isChecked = false
+        binding.swAlfa.isChecked = false
+        binding.swRandom.isChecked = false
 
         /* identify which order has been selected */
         val tag = view.tag.toString()
 
         /* set the appropriate flag with selected sort order */
         when (tag) {
-            "index" -> sw_index.isChecked = true
+            "index" -> binding.swIndex.isChecked = true
             "alfa" -> {
-                sw_alfa.isChecked = true
-                sw_desc.isChecked = false
+                binding.swAlfa.isChecked = true
+                binding.swDesc.isChecked = false
                 onDescending()
             }
-            "random" -> sw_random.isChecked = true
+            "random" -> binding.swRandom.isChecked = true
         }
         orderbyTag = tag
         zorbaPreferences.edit().putString("orderbytag", orderbyTag).apply()
     }
 
     private fun onDescending() {
-        orderDescending = sw_desc.isChecked
+        orderDescending = binding.swDesc.isChecked
         zorbaPreferences.edit().putBoolean("orderdescending", orderDescending).apply()
     }
 
     private fun onFlash() {
-        flashed = sw_flashed.isChecked
+        flashed = binding.swFlashed.isChecked
         zorbaPreferences.edit().putBoolean("flashed", flashed).apply()
     }
 
     private fun onHideJumpersSwitch() {
         /* OFF --> ON  */
-        if (sw_hide_jumpers.isChecked) {
+        if (binding.swHideJumpers.isChecked) {
             /* check valid length in text field */
-            val textField = text_threshold.text.toString().toIntOrNull()
+            val textField = binding.textThreshold.text.toString().toIntOrNull()
             if (textField == null || textField < 1) {
                 colorToast(context = this, msg = getString(R.string.msg_threshold_number))
-                sw_hide_jumpers.isChecked = false
+                binding.swHideJumpers.isChecked = false
+                hideJumpers = false
             } else {
                 hideJumpers = true
             }
@@ -337,23 +351,23 @@ class FilterAndSort : AppCompatActivity() {
             null -> {
                 colorToast(context = this, msg = getString(R.string.msg_threshold_number))
                 hideJumpers = false
-                sw_hide_jumpers.isChecked = false
+                binding.swHideJumpers.isChecked = false
             }
             0 -> {
                 jumpThreshold = 0
                 hideJumpers = false
-                sw_hide_jumpers.isChecked = false
+                binding.swHideJumpers.isChecked = false
             }
             else -> jumpThreshold = targetHeight - 1
         }
         zorbaPreferences.edit()
-              .putInt("jumpthreshold", jumpThreshold)
-              .putBoolean("hidejumpers", hideJumpers)
-              .apply()
+            .putInt("jumpthreshold", jumpThreshold)
+            .putBoolean("hidejumpers", hideJumpers)
+            .apply()
     }
 
     private fun cancelChanges() {
-        /* restore initial values */
+        // restore configuration values as they were on activity start
         useBlocks = oldUseBlocks
         blockSize = oldBlockSize
         levelBasic = oldLevel1
@@ -368,23 +382,24 @@ class FilterAndSort : AppCompatActivity() {
         jumpThreshold = oldThreshold
         flashed = oldFlashed
 
+        // ... and store them as recent use
         zorbaPreferences.edit()
-              .putBoolean("useblocks", useBlocks)
-              .putInt("blocksize", blockSize)
-              .putBoolean("levelbasic", levelBasic)
-              .putBoolean("leveladvanced", levelAdvanced)
-              .putBoolean("levelballast", levelBallast)
-              .putBoolean("uselength", useLength)
-              .putInt("purelemmalength", pureLemmaLength)
-              .putString("initial", initial)
-              .putString("orderbytag", orderbyTag)
-              .putBoolean("orderdescending", orderDescending)
-              .putInt("jumpthreshold", jumpThreshold)
-              .putBoolean("hidejumpers", hideJumpers)
-              .putBoolean("flashed", flashed)
-              .apply()
+            .putBoolean("useblocks", useBlocks)
+            .putInt("blocksize", blockSize)
+            .putBoolean("levelbasic", levelBasic)
+            .putBoolean("leveladvanced", levelAdvanced)
+            .putBoolean("levelballast", levelBallast)
+            .putBoolean("uselength", useLength)
+            .putInt("purelemmalength", pureLemmaLength)
+            .putString("initial", initial)
+            .putString("orderbytag", orderbyTag)
+            .putBoolean("orderdescending", orderDescending)
+            .putInt("jumpthreshold", jumpThreshold)
+            .putBoolean("hidejumpers", hideJumpers)
+            .putBoolean("flashed", flashed)
+            .apply()
 
-        /* go back to calling activity */
+        // go back to calling activity
         val myIntent = Intent()
         myIntent.putExtra("result", "cancel")
         setResult(RESULT_OK, myIntent)
@@ -392,15 +407,43 @@ class FilterAndSort : AppCompatActivity() {
     }
 
     private fun goBack() {
-        /* finish this intent, go back to main activity, providing action result */
+        // finish this intent, go back to calling activity, providing action result
         val myIntent = Intent()
         myIntent.putExtra("result", "selected")
         setResult(RESULT_OK, myIntent)
         finish()
     }
 
-    private fun defaultSelects() {
+    override fun finish() {
+        super.finish()
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
+    }
+
+    private fun restoreDefaults() {
+        // get default values from shared preferences and assign them to applicable global variables
         resetDetails()
+
+        // show these values in the various fields
         loadControlsFromVars()
+
+    }
+
+    /* method stores current configuration as default configuration in shared preferences */
+    private fun saveAsDefaults() {
+        zorbaPreferences.edit()
+            .putBoolean("defaultuseblocks", useBlocks)
+            .putInt("defaultblocksize", blockSize)
+            .putBoolean("defaultlevelbasic", levelBasic)
+            .putBoolean("defaultleveladvanced", levelAdvanced)
+            .putBoolean("defaultlevelballast", levelBallast)
+            .putBoolean("defaultuselength", useLength)
+            .putInt("defaultpurelemmalength", pureLemmaLength)
+            .putString("defaultinitial", initial)
+            .putString("defaultorderbytag", orderbyTag)
+            .putBoolean("defaultorderdescending", orderDescending)
+            .putInt("defaultjumpthreshold", jumpThreshold)
+            .putBoolean("defaulthidejumpers", hideJumpers)
+            .putBoolean("defaultflashed", flashed)
+            .apply()
     }
 }

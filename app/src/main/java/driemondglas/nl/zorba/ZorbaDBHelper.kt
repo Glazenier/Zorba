@@ -42,19 +42,16 @@ class ZorbaDBHelper(zorbaContext: Context) : SQLiteOpenHelper(zorbaContext, DATA
               "Level INT," +
               "Woordsoort TEXT," +
               "PureLemma TEXT," +
-              "PureLength INT)"
+              "PureLength INT," +
+              "ActivePassiveRef INT)"
     }
 
     fun assessJumperTable() {
-        val db = writableDatabase
-        db.execSQL("CREATE TABLE IF NOT EXISTS jumpers (idx INT UNIQUE PRIMARY KEY, threshold INT)")
-        db.close()
+        writableDatabase.execSQL("CREATE TABLE IF NOT EXISTS jumpers (idx INT UNIQUE PRIMARY KEY, threshold INT)")
     }
 
     fun assessFlashTable() {
-        val db = writableDatabase
-        db.execSQL("CREATE TABLE IF NOT EXISTS flashedlocal (idx INT UNIQUE PRIMARY KEY, flashvalue INT)")
-        db.close()
+        writableDatabase.execSQL("CREATE TABLE IF NOT EXISTS flashedlocal (idx INT UNIQUE PRIMARY KEY, flashvalue INT)")
     }
 
     fun jsonToSqlite(volleyResponse: String) {
@@ -69,23 +66,25 @@ class ZorbaDBHelper(zorbaContext: Context) : SQLiteOpenHelper(zorbaContext, DATA
         // From stackoverflow:
         // Unfortunately, JsonArray does not expose an iterator. So you will have to iterate through it using an index range:
         for (i in 0 until (json.length())) {
-            val jsonRecord = json.getJSONObject(i)
-            val thisId = jsonRecord.getString("id").toInt()
-            val thisIdx = jsonRecord.getString("idx").toInt()
-            val thisGR = jsonRecord.getString("GR")
-            val thisNL = jsonRecord.getString("NL")
-            val thisOpm = jsonRecord.getString("Opm")
-            val thisThema = jsonRecord.getString("Groep")
-            val thisFlash = jsonRecord.getString("Flash").toInt()
-            val thisLevel = jsonRecord.getString("Level").toInt()
-            val thisWoordsoort = jsonRecord.getString("Woordsoort")
-            val pureLemma = pureLemma(thisGR).trim()
-            val pureLength = pureLemma.length
+            json.getJSONObject(i).apply {
+                val thisId = getString("id").toInt()
+                val thisIdx = getString("idx").toInt()
+                val thisGR = getString("GR")
+                val thisNL = getString("NL")
+                val thisOpm = getString("Opm")
+                val thisThema = getString("Groep")
+                val thisFlash = getString("Flash").toInt()
+                val thisLevel = getString("Level").toInt()
+                val thisWoordsoort = getString("Woordsoort")
+                val apRef = getString("ActivePassiveRef").toInt()
+                val pureLemma = pureLemma(thisGR).trim()
+                val pureLength = pureLemma.length
 
-            val query = "INSERT INTO woorden VALUES " +
-                  "($thisId, $thisIdx, '$thisGR', '$thisNL', '$thisOpm', '$thisThema', $thisFlash," +
-                  " $thisLevel, '$thisWoordsoort', '$pureLemma', $pureLength);"
-            db.execSQL(query)
+                val query = "INSERT INTO woorden VALUES " +
+                      "($thisId, $thisIdx, '$thisGR', '$thisNL', '$thisOpm', '$thisThema', $thisFlash," +
+                      " $thisLevel, '$thisWoordsoort', '$pureLemma', $pureLength, $apRef);"
+                db.execSQL(query)
+            }
         }
 
         /* Remove records from jumpers if idx is no longer present in reloaded woorden table */
@@ -118,4 +117,8 @@ class ZorbaDBHelper(zorbaContext: Context) : SQLiteOpenHelper(zorbaContext, DATA
     fun lemmaCount() = DatabaseUtils.queryNumEntries(readableDatabase, "woorden")
     fun flashCount() = DatabaseUtils.queryNumEntries(readableDatabase, "flashedlocal")
     fun countJumpers() = DatabaseUtils.queryNumEntries(readableDatabase, "jumpers")
+
+    /* see if record is flashed (record idx present in the flashed table) */
+    fun isFlashed(indx: Int) = DatabaseUtils.queryNumEntries(readableDatabase, "flashedlocal", "idx=$indx") != 0L
+
 }

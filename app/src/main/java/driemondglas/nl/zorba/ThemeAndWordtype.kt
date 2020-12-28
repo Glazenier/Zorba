@@ -5,7 +5,7 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AppCompatActivity
-import kotlinx.android.synthetic.main.theme_wordtype.*
+import driemondglas.nl.zorba.databinding.ThemeWordtypeBinding
 import java.util.*
 
 class ThemeAndWordType : AppCompatActivity() {
@@ -18,36 +18,33 @@ class ThemeAndWordType : AppCompatActivity() {
     private val originalTheme = thema
     private val originalType = wordType
 
+    private lateinit var binding: ThemeWordtypeBinding  // replaces synthetic binding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.theme_wordtype)
+        binding = ThemeWordtypeBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        val myBar = supportActionBar
-        if (myBar != null) {
-            /* This next line shows the home/back button.
-             * The functionality is handled by the android system as long as a parent activity
-             * is specified in the manifest.xls file
-             */
-            myBar.setDisplayHomeAsUpEnabled(true)
-            myBar.title = "ZORBA"
-            myBar.subtitle = getString(R.string.theme_wordtype_subtitle)
+        supportActionBar?.apply {
+            setDisplayHomeAsUpEnabled(true)
+            title = getString(R.string.title_activity)
+            subtitle = getString(R.string.subtitle_theme_wordtype)
         }
 
-        btn_select.setOnClickListener { selectAndFinish() }
-        btn_cancel.setOnClickListener { cancelChanges() }
-        btn_default.setOnClickListener { clearSelections() }
+        binding.btnSelect.setOnClickListener { selectAndFinish() }
+        binding.btnCancel.setOnClickListener { cancelChanges() }
+        binding.btnDefault.setOnClickListener { clearSelections() }
 
         populateThemes()
         populateWordTypes()
 
-        lst_theme.setOnItemClickListener { _, _, position, _ ->
+        binding.lstTheme.setOnItemClickListener { _, _, position, _ ->
             val selectedTheme = allThemes[position]
             thema = if (position==0) "" else selectedTheme.substringBefore(" (")
             zorbaPreferences.edit().putString("theme", thema).apply()
         }
 
-        lst_wordtype.setOnItemClickListener { _, _, position, _ ->
+        binding.lstWordtype.setOnItemClickListener { _, _, position, _ ->
             val selWoordsoort = allTypes[position]
             wordType = if (position==0) "" else selWoordsoort.substringBefore(" (")
             zorbaPreferences.edit().putString("wordtype", wordType).apply()
@@ -55,10 +52,6 @@ class ThemeAndWordType : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.decor.
-        // We have our own goBack() routine (hvr)
         if (item.itemId == android.R.id.home) selectAndFinish()
         return true
     }
@@ -71,11 +64,15 @@ class ThemeAndWordType : AppCompatActivity() {
         finish()
     }
 
+    override fun finish() {
+        super.finish()
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out)    }
+
     private fun clearSelections() {
         thema = ""
         wordType = ""
-        lst_theme.setItemChecked(0, true)
-        lst_wordtype.setItemChecked(0, true)
+        binding.lstTheme.setItemChecked(0, true)
+        binding.lstWordtype.setItemChecked(0, true)
         zorbaPreferences.edit()
             .putString("theme", "")
             .putString("wordtype", "")
@@ -100,58 +97,61 @@ class ThemeAndWordType : AppCompatActivity() {
     private fun populateThemes() {
         var originalPosition = 0
         var runningPosition = 0
+        allThemes.clear()
 
         // prepopulate arrayList with '★' (all)
         allThemes.add("★")
 
         // this query returns all distinct themes (column "Thema") and
         // the number of records per theme (column "thematotaal")
-        val query = QueryManager.queryAlleThemas
         val db = zorbaDBHelper.readableDatabase
-        val myCursor = db.rawQuery(query, null)
-
-        // step through the records (themes)
-        while (myCursor.moveToNext()) {
-            val thema = myCursor.getString(myCursor.getColumnIndex("Thema"))
-            val themaTotaal: Int = myCursor.getInt(myCursor.getColumnIndex("thematotaal"))
-            allThemes.add("$thema ($themaTotaal)")
-            runningPosition++
-            if (thema == originalTheme) originalPosition = runningPosition
+        db.rawQuery(QueryManager.queryAllThemes, null).apply {
+            val col0 = getColumnIndex("Thema")
+            val col1 = getColumnIndex("thematotaal")
+            // step through the records (themes)
+            while (moveToNext()) {
+                val thema = getString(col0)
+                val themaTotaal: Int = getInt(col1)
+                allThemes.add("$thema ($themaTotaal)")
+                runningPosition++
+                if (thema == originalTheme) originalPosition = runningPosition
+            }
+            close()
         }
-        myCursor.close()
         db.close()
         // attach data to listbox via adapter
         val myAdapter = ArrayAdapter(this, R.layout.simple_list_item_checked, allThemes)
-        lst_theme.adapter = myAdapter
-        lst_theme.setItemChecked(originalPosition, true)
+        binding.lstTheme.adapter = myAdapter
+        binding.lstTheme.setItemChecked(originalPosition, true)
     }
 
     private fun populateWordTypes() {
         var originalPosition = 0
         var runningPosition = 0
+        allTypes.clear()
         // prepopulate arrayList with '★' (all)
         allTypes.add("★")
 
         // this query returns all distinct wordtypes (column "woordsoort") and
         // the number of records per wordtype (column "soorttotaal")
-        val query = QueryManager.queryAlleWoordSoorten
         val db = zorbaDBHelper.readableDatabase
-        val myCursor = db.rawQuery(query, null)
-
-        // step through the records (wordtypes)
-        while (myCursor.moveToNext()) {
-            val woordsoort = myCursor.getString(myCursor.getColumnIndex("woordsoort"))
-            val soorttotaal = myCursor.getInt(myCursor.getColumnIndex("soorttotaal"))
-            allTypes.add("$woordsoort ($soorttotaal)")
-            runningPosition++
-            if (woordsoort == originalType) originalPosition = runningPosition
+        db.rawQuery(QueryManager.queryAllWordTypes, null).apply {
+            val col0 = getColumnIndex("woordsoort")
+            val col1 = getColumnIndex("soorttotaal")
+            // step through the records (wordtypes)
+            while (moveToNext()) {
+                val woordsoort = getString(col0)
+                val soorttotaal = getInt(col1)
+                allTypes.add("$woordsoort ($soorttotaal)")
+                runningPosition++
+                if (woordsoort == originalType) originalPosition = runningPosition
+            }
+            close()
         }
-
-        myCursor.close()
         db.close()
-        // attach data to listbox via adapter
+        // attach data to listbox through adapter
         val myAdapter = ArrayAdapter(this, R.layout.simple_list_item_checked, allTypes)
-        lst_wordtype.adapter = myAdapter
-        lst_wordtype.setItemChecked(originalPosition, true)
+        binding.lstWordtype.adapter = myAdapter
+        binding.lstWordtype.setItemChecked(originalPosition, true)
     }
 }

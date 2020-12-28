@@ -22,18 +22,17 @@ import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import driemondglas.nl.zorba.QueryManager.selectedCount
 import driemondglas.nl.zorba.QueryManager.verbGameCount
-import kotlinx.android.synthetic.main.activity_main.*
+import driemondglas.nl.zorba.databinding.ActivityMainBinding
 import java.util.*
 
 
 /* Top-level Properties:
- * below are the self chosen 'unique' request codes used to start the various activities
- */
+ * below are the self chosen 'unique' request codes used to start the various activities */
 const val SHOW_CARDS_CODE = 3108
 const val THEME_WORDTYPE_CODE = 3208
 const val SELECTIES_CODE = 3308
 
-const val DATABASE_URI = "https://driemondglas.nl/RESTgrieks_v3.php"
+const val DATABASE_URI = "https://driemondglas.nl/RESTgrieks_v4.php"
 const val TAG = "hvr"
 
 /* 'global' variables holding configuration data.
@@ -49,14 +48,13 @@ var useLength = false     // filter lemma's on length on/off
 var pureLemmaLength = 0   // set lemma length to filter
 var initial = ""          // set filter for lemma's to start with this character
 var orderbyTag = ""       // initial lemma order is by index in table
-var orderDescending = true// highes index on top (newest first)
+var orderDescending = true// highest index on top (newest first)
 var search = ""           // search text can be lemma (Greek) or meaning (Dutch)
 var flashed = false       // flag to signal to show only flashed lemma's
 
 /* Jumpers:
  * Jumpers are lemmas with count of correct answers above the set threshold. "They jumped the threshold"
- * The idea is to hide those lemmas in further selections to focus on remaining lemmas
- */
+ * The idea is to hide those lemmas in further selections to focus on remaining lemmas */
 var jumpThreshold = 2
 var hideJumpers = false  // do not move jumpers completely out of sight
 
@@ -72,11 +70,13 @@ var useSpeech = true
 /* shared preferences to keep configuration as well as certain progress ans score values */
 lateinit var zorbaPreferences: SharedPreferences
 
-lateinit var clipboardManager :ClipboardManager
+lateinit var clipboardManager: ClipboardManager
 
 /* main activity class implements TextToSpeech.OnInitListener */
 class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
+    private lateinit var binding: ActivityMainBinding  // replaces synthetic view binding
+    
     /* list containing all the Lemma data items that attaches to the recycler through the adapter */
     private val lemmaArrayList: ArrayList<LemmaItem> = ArrayList()
 
@@ -98,7 +98,10 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         val myIntent = Intent(this, FlashCard::class.java)
         myIntent.putExtra("idx", thisIdx)
+        myIntent.putExtra("singlecard", true)
+
         startActivityForResult(myIntent, SHOW_CARDS_CODE)
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -108,8 +111,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         val splashIntent = Intent(this, Splash::class.java)
         startActivity(splashIntent)
 
+        binding = ActivityMainBinding.inflate(layoutInflater)
         /*  inflate the layout file for this activity */
-        setContentView(R.layout.activity_main)
+        setContentView(binding.root)
 
         zorbaDBHelper = ZorbaDBHelper(applicationContext)
 
@@ -118,33 +122,34 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         clipboardManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
 
         /* retrieve config from shared preferences  */
-        useBlocks = zorbaPreferences.getBoolean("useblocks", true)
-        blockSize = zorbaPreferences.getInt("blocksize", 5)
-        thema = zorbaPreferences.getString("theme", "") ?: ""
-        wordType = zorbaPreferences.getString("wordtype", "") ?: ""
-        levelBasic = zorbaPreferences.getBoolean("levelbasic", true)
-        levelAdvanced = zorbaPreferences.getBoolean("leveladvanced", true)
-        levelBallast = zorbaPreferences.getBoolean("levelballast", true)
-        useLength = zorbaPreferences.getBoolean("uselength", true)
-        pureLemmaLength = zorbaPreferences.getInt("purelemmalenght", 6)
-        initial = zorbaPreferences.getString("initial", "") ?: ""
-        orderbyTag = zorbaPreferences.getString("orderbytag", "index") ?: "index"
-        orderDescending = zorbaPreferences.getBoolean("orderdescending", true)
-        jumpThreshold = zorbaPreferences.getInt("jumpthreshold", 2)
-        hideJumpers = zorbaPreferences.getBoolean("hidejumpers", false)
-        flashed = zorbaPreferences.getBoolean("flashed", false)
+        with(zorbaPreferences) {
+            useBlocks = getBoolean("useblocks", true)
+            blockSize = getInt("blocksize", 5)
+            thema = getString("theme", "") ?: ""
+            wordType = getString("wordtype", "") ?: ""
+            levelBasic = getBoolean("levelbasic", true)
+            levelAdvanced = getBoolean("leveladvanced", true)
+            levelBallast = getBoolean("levelballast", true)
+            useLength = getBoolean("uselength", false)
+            pureLemmaLength = getInt("purelemmalenght", 6)
+            initial = getString("initial", "") ?: ""
+            orderbyTag = getString("orderbytag", "index") ?: "index"
+            orderDescending = getBoolean("orderdescending", true)
+            jumpThreshold = getInt("jumpthreshold", 2)
+            hideJumpers = getBoolean("hidejumpers", false)
+            flashed = getBoolean("flashed", false)
+        }
 
-        val zTitle = SpannableString("ZORBA by Herman")
-        with(zTitle) {
+        val mainTitle = SpannableString(getString(R.string.title_main)).apply {
             setSpan(StyleSpan(Typeface.BOLD_ITALIC), 0, 4, 0)
             setSpan(StyleSpan(Typeface.NORMAL), 5, 15, 0)
             setSpan(RelativeSizeSpan(0.75f), 5, 15, 0)
         }
 
         /* create action bar on top */
-        with(supportActionBar!!) {
+        supportActionBar?.apply {
             setDisplayShowHomeEnabled(true)
-            title = zTitle
+            title = mainTitle
             setIcon(R.drawable.greneth)
         }
 
@@ -152,8 +157,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         zorbaSpeaks = TextToSpeech(applicationContext, this)
 
         /* set listener for changes in search field   */
-        text_search.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable) = onSearch(s)
+        binding.textSearch.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(searchWhat: Editable) = onSearch(searchWhat)
             override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
         })
@@ -180,60 +185,65 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         /* attach listeners to the front page buttons */
         /*** open FLASHCARDS ***/
-        btn_open_deck.setOnClickListener {
+        binding.btnOpenDeck.setOnClickListener {
             /* launch the FlashCard Activity */
 
             if (selectedCount() > 0 ) {
                 val myIntent = Intent(this, FlashCard::class.java)
+                myIntent.putExtra("singlecard", false)
                 startActivityForResult(myIntent, SHOW_CARDS_CODE)
+                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
             } else {
-                colorToast(applicationContext, "Current selection does not contain any lemma !")
+                colorToast(applicationContext, getString(R.string.warning_empty_cursor))
             }
         }
 
-        /*** open LUISTERLIJST ***/
-        btn_luister.setOnClickListener {
+        /*** open LISTENING excercise ***/
+        binding.btnLuister.setOnClickListener {
             /* launch the luisterlijst Activity only if selection contains lemma's */
             if (selectedCount() > 0 ) {
                 val myIntent = Intent(this, Luisterlijst::class.java)
                 startActivity(myIntent)
+                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
             } else {
-                colorToast(applicationContext, "Current selection does not contain any lemma !")
+                colorToast(applicationContext, getString(R.string.warning_empty_cursor))
             }
         }
 
-        /*** open WERKWOORD SPEL ***/
-        btn_verb_game.setOnClickListener {
+        /*** open VERB game ***/
+        binding.btnVerbGame.setOnClickListener {
             /* launch the verb game activity if selection contains any verbs */
             if (verbGameCount() > 0 ) {
                 val myIntent = Intent(this, VerbGame::class.java)
                 startActivity(myIntent)
+                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
             } else {
-                colorToast(applicationContext, "Current selection does not contain any verbs !")
+                colorToast(applicationContext, getString(R.string.warning_empty_cursor))
             }
         }
 
-        /*** open GALGJE ***/
-        btn_hangman.setOnClickListener {
+        /*** open HANGMAN game ***/
+        binding.btnHangman.setOnClickListener {
             /* launch the Hangman Activity */
             val myIntent = Intent(this, Hangman::class.java)
             startActivity(myIntent)
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
         }
 
         /*  pressing the Greek flag toggles the Greek text on/off */
-        img_flag_greek.setOnClickListener {
+        binding.imgFlagGreek.setOnClickListener {
             if (recyclerViewAdapter.showDutch) recyclerViewAdapter.showGreek = !recyclerViewAdapter.showGreek
             recyclerViewAdapter.notifyDataSetChanged()
         }
 
         /*  pressing the Dutch flag toggles the Dutch text on/off */
-        ibtn_flag_nl.setOnClickListener {
+        binding.ibtnFlagNl.setOnClickListener {
             if (recyclerViewAdapter.showGreek) recyclerViewAdapter.showDutch = !recyclerViewAdapter.showDutch
             recyclerViewAdapter.notifyDataSetChanged()
         }
 
-        btn_clear.setOnClickListener {
-            text_search.setText("")
+        binding.btnClear.setOnClickListener {
+            binding.textSearch.setText("")
             val inputManager: InputMethodManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             @Suppress("RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
             inputManager.hideSoftInputFromWindow(currentFocus?.windowToken, InputMethodManager.SHOW_FORCED)
@@ -246,14 +256,14 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         if (status == TextToSpeech.SUCCESS) {
             zorbaSpeaks.language = Locale("el_GR")
         } else {
-            Log.d(TAG, "speech initilization problem!")
-            colorToast(context = this, msg = "speech initilization problem!", fgColor = Color.RED)
+            Log.d(TAG, getString(R.string.warning_speech_init))
+            colorToast(context = this, msg = getString(R.string.warning_speech_init), fgColor = Color.RED)
         }
     }
 
     override fun onResume() {
         super.onResume()
-        if (search.isNotEmpty()) text_search.setText (search)
+        binding.textSearch.setText (search)
         zorbaSpeaks.language = Locale("el_GR")
     }
 
@@ -283,6 +293,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 /* launch the Thema/Woordsoort Selection Activity */
                 val myIntent = Intent(this, ThemeAndWordType::class.java)
                 startActivityForResult(myIntent, THEME_WORDTYPE_CODE)
+                overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
             }
 
             /*  menu detail selecties */
@@ -290,11 +301,13 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 /* launch the Selecties Activity */
                 val myIntent = Intent(this, FilterAndSort::class.java)
                 startActivityForResult(myIntent, SELECTIES_CODE)
+                overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
             }
 
             /* menu wis alle selecties */
             R.id.menu_clear_selects -> {
                 clearAll()
+                binding.textSearch.setText("")
                 refreshData()
                 recyclerViewAdapter.notifyDataSetChanged()
             }
@@ -318,26 +331,26 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         return true
     }
 
+    /* method clears the existing array list and refills it with fresh data from the local database */
     private fun refreshData() {
-        /* method clears the existing array list and refills it with fresh data from the local database */
-        val db = zorbaDBHelper.readableDatabase
-        val myCursor = db.rawQuery(QueryManager.mainQuery(), null)
 
         /* remove existing content */
         lemmaArrayList.clear()
 
-        /* step through the records (wordtypes) */
-        while (myCursor.moveToNext()) {
-            val lemmaItem = LemmaItem(
-                myCursor.getString(myCursor.getColumnIndex("PureLemma")),
-                myCursor.getString(myCursor.getColumnIndex("GR")),
-                myCursor.getString(myCursor.getColumnIndex("NL")),
-                myCursor.getString(myCursor.getColumnIndex("Woordsoort")),
-                myCursor.getLong(myCursor.getColumnIndex("idx"))
-            )
-            lemmaArrayList.add(lemmaItem)
+        val db = zorbaDBHelper.readableDatabase
+
+        db.rawQuery(QueryManager.mainQuery(), null).run {
+            val col0 = getColumnIndex("PureLemma")
+            val col1 = getColumnIndex("GR")
+            val col2 = getColumnIndex("NL")
+            val col3 = getColumnIndex("Woordsoort")
+            val col4 = getColumnIndex("idx")
+            while (moveToNext()) {
+                val lemmaItem = LemmaItem(getString(col0), getString(col1), getString(col2), getString(col3), getLong(col4))
+                lemmaArrayList.add(lemmaItem)
+            }
+            close()
         }
-        myCursor.close()
         db.close()
     }
 
@@ -359,28 +372,34 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     /* Implement the 'about...' method invoked through the main menu */
     private fun about() {
         val webView = WebView(applicationContext)
-        val about = "<html><head><style>" +
-              "table{border: 1px solid black;border-collapse: collapse; background-color: gold;}" +
-              "td{border: 1px solid black;vertical-align:top;}" +
-              "</style></head>" +
-              "<body>" +
-              "<table>" +
-              "<tr><td>&nbsp;</td><td>${getString(R.string.description)}</td></tr>" +
-              "<tr><td>Author:</td><td>${getString(R.string.author)}</td></tr>" +
-              "<tr><td>Version:</td><td>" + BuildConfig.VERSION_NAME + "</td></tr>" +
-              "<tr><td>Build:</td><td>" + BuildConfig.VERSION_CODE + "</td></tr>" +
-              "<tr><td>Change:</td><td>" + getString(R.string.version_info) + "</td></tr>" +
-              "<tr><td>Lemmas:</td><td>" + zorbaDBHelper.lemmaCount() + "</td></tr>" +
-              "<tr><td>Selected:</td><td>" + selectedCount() + "</td></tr>" +
-              "<tr><td>Flashed:</td><td>" + zorbaDBHelper.flashCount() + "</td></tr>" +
-              "<tr><td>Jumpers:</td><td>" + zorbaDBHelper.countJumpers() + "</td></tr>" +
-              "</table></body></html>"
+        val about = """
+    <html>
+        <head>
+            <style>
+                table{border: 1px solid black;border-collapse: collapse; background-color: gold;}
+                td{border: 1px solid black;vertical-align:top;}
+            </style>
+        </head>
+        <body>
+            <table>
+                <tr><td>&nbsp;</td><td>${getString(R.string.app_description)}</td></tr>
+                <tr><td>Author:</td><td>${getString(R.string.app_author)}</td></tr>
+                <tr><td>Version:</td><td>${BuildConfig.VERSION_NAME}</td></tr>
+                <tr><td>Build:</td><td>${BuildConfig.VERSION_CODE}</td></tr>
+                <tr><td>Change:</td><td>${getString(R.string.app_versioninfo)}</td></tr>
+                <tr><td>Lemmas:</td><td>${zorbaDBHelper.lemmaCount()}</td></tr>
+                <tr><td>Selected:</td><td>${selectedCount()}</td></tr>
+                <tr><td>Flashed:</td><td>${zorbaDBHelper.flashCount()}</td></tr>
+                <tr><td>Jumpers:</td><td>${zorbaDBHelper.countJumpers()}</td></tr>
+            </table>
+        </body>
+    </html>"""
         webView.loadData(about, "text/html", "UTF-8")
 
         val bob = AlertDialog.Builder(this)
-            .setTitle("About Zorba")
+            .setTitle(getString(R.string.alert_about_title))
             .setView(webView)
-            .setPositiveButton(R.string.emoji_ok, null)
+            .setPositiveButton(R.string.btn_caption_ok, null)
 
         /* create the dialog from the builder */
         val alertDialog = bob.create()
@@ -391,10 +410,10 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     /* create attention before importing new woorden table */
     private fun importTable() {
         val bob = AlertDialog.Builder(this)
-            .setTitle("Import from Server")
-            .setMessage("Do you want to re-import the database from the remote SQL server?")
-            .setPositiveButton(R.string.emoji_ok) { _, _ -> importJson() }
-            .setNegativeButton(R.string.emoji_not_ok, null)
+            .setTitle(getString(R.string.msg_import_title))
+            .setMessage(getString(R.string.msg_import_db))
+            .setPositiveButton(R.string.btn_caption_ok) { _, _ -> importJson() }
+            .setNegativeButton(R.string.btn_caption_notok, null)
         val alert = bob.show()
         alert.show()
         alert.getButton(DialogInterface.BUTTON_POSITIVE).textSize = 28f
@@ -405,21 +424,20 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
      * also, all synchronous code must be in the callback lambda */
     private fun importJson() {
 
-        progress_bar.visibility = View.VISIBLE
+        binding.progressBar.visibility = View.VISIBLE
 
         /* initialise the Volley Request Queue */
         val queue = Volley.newRequestQueue(this)
 
         /* Request a string response from the URL */
-        val stringRequest = StringRequest(
-            Request.Method.GET, DATABASE_URI,
+        val stringRequest = StringRequest( Request.Method.GET, DATABASE_URI,
             { response ->
-                progress_bar.visibility = View.INVISIBLE
+                binding.progressBar.visibility = View.INVISIBLE
                 zorbaDBHelper.jsonToSqlite(response)
                 refreshData()
                 recyclerViewAdapter.notifyDataSetChanged()
             },
-            { error -> Log.d(TAG, "That didn't work: $error") })
+            { error -> Log.d(TAG, getString(R.string.error_generic, error)) })
 
         /* Add the requests to the RequestQueue. */
         queue.add(stringRequest)

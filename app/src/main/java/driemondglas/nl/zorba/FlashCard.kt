@@ -10,6 +10,7 @@ import android.graphics.Rect
 import android.graphics.Typeface
 import android.net.Uri
 import android.os.Bundle
+import android.os.SystemClock
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.method.ScrollingMovementMethod
@@ -25,10 +26,12 @@ import driemondglas.nl.zorba.ScoreBoard.undoLastScore
 import driemondglas.nl.zorba.Utils.enabled
 import driemondglas.nl.zorba.Utils.toggleVisibility
 import driemondglas.nl.zorba.Utils.visible
-import kotlinx.android.synthetic.main.flashcard.*
+import driemondglas.nl.zorba.databinding.FlashcardBinding
 
 class FlashCard : AppCompatActivity() {
-
+    
+    private lateinit var binding: FlashcardBinding  // replaces synthetic view binding
+    
     /* initialize reference to the Zorba database */
     private lateinit var db: SQLiteDatabase
 
@@ -44,6 +47,7 @@ class FlashCard : AppCompatActivity() {
     private var thisWordType = ""
     private var thisThema = ""
     private var thisLevel = 1
+    private var thisAPref = 0
 
     private var blockOffset = 0
     private var maxOffset = 0
@@ -52,105 +56,112 @@ class FlashCard : AppCompatActivity() {
     private var idxRequested = 0L
     private var singleLemma = false
 
+    private var startTime=0L
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.flashcard)
+
+        binding = FlashcardBinding.inflate(layoutInflater)
+            setContentView(binding.root)
 
         /* initialise the ZORBA Action Bar */
-        val zorbaActionBar = supportActionBar
-        zorbaActionBar?.setDisplayHomeAsUpEnabled(true)
-        zorbaActionBar?.title = "ZORBA"
-        zorbaActionBar?.subtitle = "Flashcards Nederlands-Grieks"
-
-        /* setup the touch areas response to various motions */
-        shadow_grieks.setOnTouchListener { v: View, m: MotionEvent ->
-            if (!singleLemma) touche(v, m, true)
-            true
-        }
-        text_grieks.setOnTouchListener { v: View, m: MotionEvent ->
-            if (!singleLemma) touche(v, m, true)
-            true
-        }
-        shadow_note.setOnTouchListener { v: View, m: MotionEvent ->
-            if (!singleLemma) touche(v, m, false)
-            true
-        }
-        text_note.setOnTouchListener { v: View, m: MotionEvent ->
-            if (!singleLemma) touche(v, m, false)
-            true
+        supportActionBar?.apply {
+            setDisplayHomeAsUpEnabled(true)
+            title = getString(R.string.title_activity)
+            subtitle = getString(R.string.subtitle_flash)
         }
 
-        /* enable scrolling for long texts (does not work together with onTouchListener) */
-        text_nederlands.movementMethod = ScrollingMovementMethod()
-        //text_grieks.movementMethod = ScrollingMovementMethod()
-        //text_note.movementMethod = ScrollingMovementMethod()
-
-        /* initialize the buttons' listeners
-         * NOTE that the text fields also double as (large) buttons:
-         * Greek text field: go to previous card
-         * Dutch text field: wrong answer, go to next card
-         * Note text field:  correct answer, go to next card
-         * Touch DOWN shows hidden fields and Score
-         * Touch UP  moves to next record
-         * Move outside the view's boundaries while touch DOWN, prevents goto next and restores the score
-         */
-        btn_reveal.setOnClickListener {
-            text_grieks.toggleVisibility()
-            text_note.toggleVisibility()
-        }
-        btn_next_block.setOnClickListener { nextBlock() }
-        btn_prev_block.setOnClickListener { prevBlock() }
-        text_nederlands.setOnClickListener { if (!singleLemma) previous() }
-        btn_OTT.setOnClickListener { showVerb(conjugateEnestotas(thisGreekText).joinToString("\n"), "Tegenwoordige tijd van $thisPureLemma:") }
-        btn_OTTT.setOnClickListener { showVerb(conjugateMellontas(thisGreekText).joinToString("\n"), "Toekomende tijd van $thisPureLemma:") }
-        btn_VVT.setOnClickListener { showVerb(conjugateAoristos(thisGreekText).joinToString("\n"), "Verleden tijd van $thisPureLemma:") }
-        btn_OVT.setOnClickListener { showVerb(conjugateParatatikos(thisGreekText).joinToString("\n"), "Paratatikos van $thisPureLemma:") }
-        btn_GW.setOnClickListener { showVerb(createProstaktiki(thisGreekText).joinToString(" - "), "Gebiedende wijs (ev, mv) van $thisPureLemma:") }
-        btn_speak.setOnClickListener { cleanSpeech(thisGreekText, thisWordType) }
-        lbl_jumper.setOnClickListener { unJump() }
-        btn_show_all.setOnClickListener { alleRijtjes() }
-        flash_chk.setOnClickListener { onFlashChange() }
-
-        /* init database */
-        db = zorbaDBHelper.readableDatabase
-
-        /* Determine weather only a single card is to be displayed
-         *  If so, several views can be hidden  (next previous score, etc.
-         */
-        idxRequested = intent.getLongExtra("idx", 0)
-        singleLemma = idxRequested != 0L
-
-        /* disable buttons when single lemma */
-        btn_reveal.enabled(!singleLemma)
-        btn_next_block.enabled(!singleLemma)
-        btn_prev_block.enabled(!singleLemma)
-
-        /* hide action labels */
-        lbl_correct.visible(!singleLemma)
-        lbl_wrong.visible(!singleLemma)
-        lbl_prev.visible(!singleLemma)
-
-
-        /* fetch the data */
-        reQuery()
-        /* populate fields with current data  */
-        populateFields()
-
-        if (!singleLemma) {
-            /* retrieve last viewed block/position from shared preferences */
-            blockOffset = minOf(zorbaPreferences.getInt("last_viewed_block", 0), maxOffset)
-            positionInBlock = minOf(zorbaPreferences.getInt("last_viewed_position", 0), maxPosition)
-            if (mainCursor.moveToPosition(blockOffset * blockSize + positionInBlock)) {
-                populateFields()
-                showProgress()
-                /* and initial scores */
-                text_score.text = ScoreBoard.getSessionScore()
+        with (binding) {
+            /* setup the touch areas response to various motions */
+            shadowGrieks.setOnTouchListener { v: View, m: MotionEvent ->
+                if (!singleLemma) touche(v, m, true)
+                true
             }
-        } else {
-            text_grieks.visibility = View.VISIBLE
-            text_note.visibility = View.VISIBLE
-            text_score.text = ""
+            textGrieks.setOnTouchListener { v: View, m: MotionEvent ->
+                if (!singleLemma) touche(v, m, true)
+                true
+            }
+            shadowNote.setOnTouchListener { v: View, m: MotionEvent ->
+                if (!singleLemma) touche(v, m, false)
+                true
+            }
+            textNote.setOnTouchListener { v: View, m: MotionEvent ->
+                if (!singleLemma) touche(v, m, false)
+                true
+            }
+
+            /* enable scrolling for long texts (does not work together with onTouchListener) */
+            textNederlands.movementMethod = ScrollingMovementMethod()
+
+            /* initialize the buttons' listeners
+             * NOTE that the text fields also double as (large) buttons:
+             * Greek text field: go to previous card
+             * Dutch text field: wrong answer, go to next card
+             * Note text field:  correct answer, go to next card
+             * Touch DOWN shows hidden fields and Score
+             * Touch UP  moves to next record
+             * Move outside the view's boundaries while touch DOWN, prevents goto next and restores the score
+             */
+            btnReveal.setOnClickListener {
+                textGrieks.toggleVisibility()
+                textNote.toggleVisibility()
+            }
+            btnNextBlock.setOnClickListener { nextBlock() }
+            btnPrevBlock.setOnClickListener { prevBlock() }
+            textNederlands.setOnClickListener { if (!singleLemma) previous() }
+            btnOTT.setOnClickListener { showVerb(conjugateEnestotas(thisGreekText), getString(R.string.title_verb_present,thisPureLemma) )}
+            btnOTTT.setOnClickListener { showVerb(conjugateMellontas(thisGreekText), getString(R.string.title_verb_future,thisPureLemma)) }
+            btnVVT.setOnClickListener { showVerb(conjugateAoristos(thisGreekText), getString(R.string.title_verb_past,thisPureLemma)) }
+            btnOVT.setOnClickListener { showVerb(conjugateParatatikos(thisGreekText), getString(R.string.title_verb_paratatikos,thisPureLemma)) }
+            btnGW.setOnClickListener { showVerb(createProstaktiki(thisGreekText), getString(R.string.title_verb_imperative,thisPureLemma)) }
+            btnSpeak.setOnClickListener { cleanSpeech(thisGreekText, thisWordType) }
+            lblJumper.setOnClickListener { unJump() }
+            btnShowAll.setOnClickListener { alleRijtjes() }
+            flashChk.setOnClickListener { onFlashChange() }
+            btnActivePassive.setOnClickListener { swichActivePassive() }
+
+            /* init database */
+            db = zorbaDBHelper.readableDatabase
+
+            /* Determine weather only a single card is to be displayed
+             *  If so, several views can be hidden  (next previous score, etc.
+             */
+            singleLemma = intent.getBooleanExtra("singlecard", false)
+            idxRequested = intent.getLongExtra("idx", 0)
+
+            /* disable buttons when single lemma */
+            btnReveal.enabled(!singleLemma)
+            btnNextBlock.enabled(!singleLemma)
+            btnPrevBlock.enabled(!singleLemma)
+
+            /* hide action labels */
+            lblCorrect.visible(!singleLemma)
+            lblWrong.visible(!singleLemma)
+            lblPrev.visible(!singleLemma)
+
+
+            /* fetch the data */
+            reQuery()
+            /* populate fields with current data  */
+            populateFields()
+
+            if (!singleLemma) {
+                /* retrieve last viewed block/position from shared preferences */
+                blockOffset = minOf(zorbaPreferences.getInt("last_viewed_block", 0), maxOffset)
+                positionInBlock = minOf(zorbaPreferences.getInt("last_viewed_position", 0), maxPosition)
+                if (mainCursor.moveToPosition(blockOffset * blockSize + positionInBlock)) {
+                    startTime = SystemClock.elapsedRealtime()
+                    populateFields()
+                    showProgress()
+                    /* and initial scores */
+                    textScore.text = ScoreBoard.getSessionScore()
+                }
+            } else {
+                textGrieks.visibility = View.VISIBLE
+                textNote.visibility = View.VISIBLE
+                textScore.text = ""
+            }
         }
     }
 
@@ -159,8 +170,8 @@ class FlashCard : AppCompatActivity() {
     private fun touche(v: View, m: MotionEvent, isCorrect: Boolean) {
         when (m.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
-                text_grieks.visibility = View.VISIBLE
-                text_note.visibility = View.VISIBLE
+                binding.textGrieks.visibility = View.VISIBLE
+                binding.textNote.visibility = View.VISIBLE
                 if (!ScoreBoard.allAreCorrect()) ScoreBoard.updateCounters(thisIdx, isCorrect)
             }
             MotionEvent.ACTION_UP -> {
@@ -168,8 +179,8 @@ class FlashCard : AppCompatActivity() {
                 val boundaries = Rect(0, 0, v.width, v.height)
 
                 if (boundaries.contains(m.getX().toInt(), m.getY().toInt())) {
-                    text_grieks.visibility = View.INVISIBLE
-                    text_note.visibility = View.INVISIBLE
+                    binding.textGrieks.visibility = View.INVISIBLE
+                    binding.textNote.visibility = View.INVISIBLE
                     next()
 
                 } else if (!ScoreBoard.allAreCorrect()) ScoreBoard.undoLastScore() // correct false negative/positive count
@@ -179,24 +190,18 @@ class FlashCard : AppCompatActivity() {
     }
 
     /*  If the setting for using blocks is off then disable the [previous block] and [next block]-buttons
-     *  Function lives in onResume() because the value can have changed by other activities
-     */
+     *  Function lives in onResume() because the value can have changed by other activities */
     override fun onResume() {
-        /* when blocks (sets of limited number of cards) are used, enable the previous/next block buttons */
-        btn_prev_block.enabled(useBlocks && !singleLemma)
-        btn_next_block.enabled(useBlocks && !singleLemma)
+        binding.btnPrevBlock.enabled(!singleLemma)
+        binding.btnNextBlock.enabled(useBlocks && !singleLemma)
+        db = zorbaDBHelper.readableDatabase
         super.onResume()
-    }
-
-    override fun onBackPressed() {
-        finishIntent()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         /* Inflate the menu; this adds menu items to the zorba action bar. */
         menuInflater.inflate(R.menu.menu_flashcard, menu)
         menu.findItem(R.id.menu_card_speech).isChecked = useSpeech
-
         menu.findItem(R.id.menu_set_theme_wordtype).isVisible = !singleLemma
         menu.findItem(R.id.menu_set_block_sort).isVisible = !singleLemma
         menu.findItem(R.id.menu_clear_selects).isVisible = !singleLemma
@@ -212,11 +217,13 @@ class FlashCard : AppCompatActivity() {
                 // launch the wordgroup/wordtype selection activity
                 val myIntent = Intent(this, ThemeAndWordType::class.java)
                 startActivityForResult(myIntent, THEME_WORDTYPE_CODE)
+                overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
             }
             R.id.menu_set_block_sort -> {
                 // launch the detail selections and order-by activity
                 val myIntent = Intent(this, FilterAndSort::class.java)
                 startActivityForResult(myIntent, SELECTIES_CODE)
+                overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
             }
 
             /* menu wis alle selecties */
@@ -231,7 +238,7 @@ class FlashCard : AppCompatActivity() {
             R.id.menu_card_speech -> {
                 useSpeech = !item.isChecked
                 item.isChecked = !item.isChecked
-                btn_speak.enabled(useSpeech)
+                binding.btnSpeak.enabled(useSpeech)
             }
 
             R.id.menu_mail_lemma -> mailLemma()
@@ -241,7 +248,7 @@ class FlashCard : AppCompatActivity() {
                 clipboardManager.setPrimaryClip(clipData)
             }
 
-            R.id.menu_raw_view ->  buidHTMLbox()
+            R.id.menu_raw_view -> buidHTMLbox()
 
             R.id.menu_wordreference -> {
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse("""https://www.wordreference.com/gren/""" + thisPureLemma))
@@ -253,7 +260,7 @@ class FlashCard : AppCompatActivity() {
             }
 
             /* home button (left arrow in app bar) pressed */
-            android.R.id.home -> finishIntent()
+            android.R.id.home -> finish()
 
             else -> super.onOptionsItemSelected(item)
         }
@@ -293,53 +300,56 @@ class FlashCard : AppCompatActivity() {
             }
 
             /* initialize progress bar */
-            block_progress_bar.max = blockSize * (jumpThreshold + 1)
-            block_progress_bar.progress = 0
+            binding.blockProgressBar.max = blockSize * (jumpThreshold + 1)
+            binding.blockProgressBar.progress = 0
             resetScoreMap()
         }
     }
 
-    /* finish intent and return to main activity */
-    private fun finishIntent() {
+    override fun finish() {
         mainCursor.close()
         db.close()
-
         val myIntent = Intent()
         myIntent.putExtra("action", "stop")
         setResult(RESULT_OK, myIntent)
-        finish()
+        super.finish()
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
     }
 
     private fun unJump() {
         /* create attention before removing from jumper table */
         AlertDialog.Builder(this)
-            .setTitle("Jumper")
-            .setMessage("Lemma vaak genoeg goed beantwoord.\nReset deze status voor dit lemma?")
-            .setNegativeButton("Nee, is goed zo.", null)
-            .setPositiveButton("Ja, reset!") { _, _ ->
+            .setTitle(getString(R.string.alert_lemma_unjump_title))
+            .setMessage(getString(R.string.alert_lemma_unjump_message))
+            .setNegativeButton(getString(R.string.alert_lemma_unjump_neg), null)
+            .setPositiveButton(getString(R.string.alert_lemma_unjump_pos)) { _, _ ->
                 db.execSQL("DELETE FROM jumpers WHERE idx=$thisIdx")
                 populateFields()
             }
             .show()
     }
 
-    /* see if record is a jumper? (record has been moved to the table of jumpers) */
-    private fun isJumper() = DatabaseUtils.queryNumEntries(db, "jumpers", "idx=$thisIdx") != 0L
+    /* see if record is a jumper? (record has been added to the table of jumpers) */
+    private fun isJumper(index: Int) = DatabaseUtils.queryNumEntries(db, "jumpers", "idx=$index") != 0L
 
-    private fun onFlashChange() = if (flash_chk.isChecked) flashLocally() else unFlash()
+    private fun onFlashChange() = if (binding.flashChk.isChecked) flashLocally() else unFlash()
 
     /* see if record is flashed (record idx present in the flashed table) */
-    private fun isFlashed() = DatabaseUtils.queryNumEntries(db, "flashedlocal", "idx=$thisIdx") != 0L
+    private fun isFlashed(index: Int) = DatabaseUtils.queryNumEntries(db, "flashedlocal", "idx=$index") != 0L
 
-    private fun flashLocally() { if (thisIdx > 0) db.execSQL("INSERT INTO flashedlocal (idx,flashvalue) VALUES($thisIdx,1);") }
+    private fun flashLocally() {
+        if (thisIdx > 0) db.execSQL("INSERT INTO flashedlocal (idx,flashvalue) VALUES($thisIdx,1);")
+    }
 
     private fun unFlash() = db.execSQL("DELETE FROM flashedlocal WHERE idx=$thisIdx;")
 
     /************ NEXT LEMMA **************/
     private fun next() {
         if (idxRequested == 0L) {
-            if (ScoreBoard.allAreCorrect()) {
-                beforeNext()
+            if (ScoreBoard.strike()) {
+                prepareNextBlock()
+            } else if (ScoreBoard.allAreCorrect()) {
+                prepareNextBlock()
                 /* add all jumpers( correct > threshold ) to jumper table EXCEPT when only 1 lemma was loaded */
                 db.execSQL("INSERT OR REPLACE INTO jumpers VALUES ${ScoreBoard.scoreMapToString()};")
             } else {
@@ -357,8 +367,8 @@ class FlashCard : AppCompatActivity() {
                 }
 
                 populateFields()
-                text_grieks.visibility = View.INVISIBLE
-                text_note.visibility = View.INVISIBLE
+                binding.textGrieks.visibility = View.INVISIBLE
+                binding.textNote.visibility = View.INVISIBLE
                 showProgress()
                 // maintain progress in shared preferences
                 zorbaPreferences.edit().putInt("last_viewed_position", positionInBlock).apply()
@@ -386,34 +396,45 @@ class FlashCard : AppCompatActivity() {
 
     /* copy field content from cursor and enable/disable appropriate buttons */
     private fun populateFields() {
-        thisIdx = mainCursor.getInt(mainCursor.getColumnIndex("idx"))
-        thisGreekText = mainCursor.getString(mainCursor.getColumnIndex("GR"))
-        thisDutchText = mainCursor.getString(mainCursor.getColumnIndex("NL"))
-        thisRemark = mainCursor.getString(mainCursor.getColumnIndex("Opm"))
-        thisWordType = mainCursor.getString(mainCursor.getColumnIndex("Woordsoort"))
-        thisThema = mainCursor.getString(mainCursor.getColumnIndex("Thema"))
-        thisPureLemma = mainCursor.getString(mainCursor.getColumnIndex("PureLemma"))
-        thisLevel = mainCursor.getInt(mainCursor.getColumnIndex("Level"))
-        text_grieks.text = thisGreekText
-        text_nederlands.text = thisDutchText
-        text_note.text = thisRemark
-        Log.d(TAG, "Current record: $thisIdx lemma: $thisPureLemma")
+        with(mainCursor) {
+            thisIdx = getInt(getColumnIndex("idx"))
+            thisGreekText = getString(getColumnIndex("GR"))
+            thisDutchText = getString(getColumnIndex("NL"))
+            thisRemark = getString(getColumnIndex("Opm"))
+            thisWordType = getString(getColumnIndex("Woordsoort"))
+            thisThema = getString(getColumnIndex("Thema"))
+            thisPureLemma = getString(getColumnIndex("PureLemma"))
+            thisLevel = getInt(getColumnIndex("Level"))
+            thisAPref = getInt(getColumnIndex("ActivePassiveRef"))
+        }
+        binding.textGrieks.text = thisGreekText
+        binding.textNederlands.text = thisDutchText
+        binding.textNote.text = thisRemark
 
         /* enable/disable buttons when applicable */
-        val isVerb = (thisWordType == "werkwoord")
-
-        btn_OTT.visibility = if (isVerb) View.VISIBLE else View.GONE
-        btn_show_all.visibility = if (isVerb) View.VISIBLE else View.GONE
-        btn_OTTT.visibility = if (isVerb && hasMellontas(thisGreekText)) View.VISIBLE else View.GONE
-        btn_VVT.visibility = if (isVerb && hasAorist(thisGreekText)) View.VISIBLE else View.GONE
-        btn_OVT.visibility = if (isVerb && hasParatatikos(thisGreekText)) View.VISIBLE else View.GONE
-        btn_GW.visibility = if (isVerb && hasMellontas(thisGreekText)) View.VISIBLE else View.GONE  //Gebiedende wijs is afgeleid van toekomende tijd
-        btn_speak.enabled(useSpeech)
-        lbl_jumper.visible(isJumper())
-        flash_chk.isChecked = isFlashed()
+        if (thisWordType != "werkwoord") {
+            binding.btnOTT.visibility = View.GONE
+            binding.btnOTTT.visibility = View.GONE
+            binding.btnVVT.visibility = View.GONE
+            binding.btnOVT.visibility = View.GONE
+            binding.btnGW.visibility = View.GONE
+            binding.btnShowAll.visibility = View.GONE
+            binding.btnActivePassive.visibility = View.INVISIBLE
+        } else {
+            binding.btnOTT.visible(true)
+            binding.btnOTTT.visible(hasMellontas(thisGreekText))
+            binding.btnVVT.visible(hasAorist(thisGreekText))
+            binding.btnOVT.visible(hasParatatikos(thisGreekText))
+            binding.btnGW.visible(hasMellontas(thisGreekText))      //Gebiedende wijs is afgeleid van toekomende tijd
+            binding.btnShowAll.visible(true)
+            binding.btnActivePassive.visible(thisAPref != 0)
+        }
+        binding.btnSpeak.enabled(useSpeech)
+        binding.lblJumper.visible(isJumper(thisIdx))
+        binding.flashChk.isChecked = isFlashed(thisIdx)
 
         /* show correct-incorrect count using a series of green or red rectangles */
-        text_saldo.text = ScoreBoard.showLemmaScore(this, thisIdx)
+        binding.textSaldo.text = ScoreBoard.showLemmaScore(this, thisIdx)
     }
 
     /* move one block forward */
@@ -428,12 +449,16 @@ class FlashCard : AppCompatActivity() {
             zorbaPreferences.edit().putInt("last_viewed_block", blockOffset).apply()
         }
         positionInBlock = 0
+        zorbaPreferences.edit().putInt("last_viewed_position", positionInBlock).apply()
+
         mainCursor.moveToPosition(blockOffset * blockSize)
         populateFields()
 
-        text_grieks.visibility = View.INVISIBLE
-        text_note.visibility = View.INVISIBLE
-        block_progress_bar.progress = 0
+        startTime = SystemClock.elapsedRealtime()
+
+        binding.textGrieks.visibility = View.INVISIBLE
+        binding.textNote.visibility = View.INVISIBLE
+        binding.blockProgressBar.progress = 0
         showProgress()
     }
 
@@ -442,33 +467,40 @@ class FlashCard : AppCompatActivity() {
         /* reset correct-incorrect counter */
         ScoreBoard.resetScoreMap()
         /* decrease the offset to go to the previous block */
-        if (blockOffset > 0) {
+        if (blockOffset > 0 && positionInBlock == 0) {
             blockOffset--
             // maintain progress in shared preferences
             zorbaPreferences.edit().putInt("last_viewed_block", blockOffset).apply()
         }
         positionInBlock = 0
+        zorbaPreferences.edit().putInt("last_viewed_position", positionInBlock).apply()
         mainCursor.moveToPosition(blockOffset * blockSize)
         populateFields()
 
-        text_grieks.visibility = View.INVISIBLE
-        text_note.visibility = View.INVISIBLE
-        block_progress_bar.progress = 0
+        binding.textGrieks.visibility = View.INVISIBLE
+        binding.textNote.visibility = View.INVISIBLE
+        binding.blockProgressBar.progress = 0
         showProgress()
     }
 
     /* update and show scores for current lemma, current block and  total session */
     private fun showScores() {
-        text_score.text = ScoreBoard.getSessionScore()
-        text_saldo.text = ScoreBoard.showLemmaScore(this, thisIdx)
-        block_progress_bar.progress = ScoreBoard.getBlockScore()
+        binding.textScore.text = ScoreBoard.getSessionScore()
+        binding.textSaldo.text = ScoreBoard.showLemmaScore(this, thisIdx)
+        binding.blockProgressBar.progress = ScoreBoard.getBlockScore()
     }
 
     /* create attention after all correct, before moving to next block */
-    private fun beforeNext() {
+    private fun prepareNextBlock() {
+        val elapsedSeconds = (SystemClock.elapsedRealtime() - startTime) / 1000
+        var minutes = (elapsedSeconds / 60).toInt()
+        var seconds = elapsedSeconds - (60 * minutes)
+        var msg = if (ScoreBoard.strike())
+            getString(R.string.clean_sweep,  minutes,  seconds)   else
+            getString(R.string.all_correct,jumpThreshold + 1,  minutes,  seconds)
         val bob = AlertDialog.Builder(this)
-            .setTitle("Block finished")
-            .setMessage("Alle lemma's in dit blok ${jumpThreshold + 1} keer correct beantwoord.")
+            .setTitle(getString(R.string.alert_endofblock_title))
+            .setMessage(msg)
             .setPositiveButton(R.string.btn_caption_next_block) { _, _ -> nextBlock() }
         val alert = bob.show()
         alert.show()
@@ -476,18 +508,20 @@ class FlashCard : AppCompatActivity() {
     }
 
     /* show verb conjugations */
-    private fun showVerb(conjugations: String, title: String) {
-
-        var ladder = conjugations
+    private fun showVerb(conjugations: List<String>, title: String) {
+        if (conjugations.size !=2 && conjugations.size !=6) return
+        var ladder = conjugations.joinToString("\n")
         var verbPos = title.lastIndexOf(' ')
         val titleSpan = SpannableString(title)
         val greekTextColor = ContextCompat.getColor(applicationContext, R.color.κυανός)
         val thisColorSpan = ForegroundColorSpan(greekTextColor)
         val italicSpan = StyleSpan(Typeface.ITALIC)
         val verbSizeSpan = RelativeSizeSpan(1.3f)
+
         titleSpan.setSpan(thisColorSpan, verbPos, title.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         titleSpan.setSpan(verbSizeSpan, verbPos, title.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         titleSpan.setSpan(italicSpan, verbPos, title.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+
         val ladderSpan = SpannableString(ladder)
         ladderSpan.setSpan(italicSpan, 0, ladder.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         ladderSpan.setSpan(thisColorSpan, 0, ladder.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
@@ -495,19 +529,27 @@ class FlashCard : AppCompatActivity() {
         val bob = AlertDialog.Builder(this)
             .setTitle(titleSpan)
             .setMessage(ladderSpan)
-            .setPositiveButton(R.string.emoji_ok, null)
-            .setNeutralButton(R.string.speak, null)  // listener gets overridden below
+            .setPositiveButton(R.string.btn_caption_ok, null)
+            .setNeutralButton(R.string.btn_caption_speak, null)  // listener gets overridden below
 
         /* create the dialog from the builder (we need the reference to change text size) */
         val alertDialog = bob.create()
         alertDialog.show()
 
+        var sayThis = ""
         /* change properties of the alert dialog internal views */
         (alertDialog.findViewById(android.R.id.message) as TextView).textSize = 20f
+        when (conjugations.size) {
+            6 -> {
+                val persoonsvormGR = listOf("Εγώ", "Εσύ", setOf("Αυτός", "Αυτή", "Αυτό").random(), "Εμείς", "Εσείς", setOf("Αυτοί", "Αυτές", "Αυτά").random())
+                sayThis = persoonsvormGR.mapIndexed { i, pronoun -> pronoun + " " + conjugations[i] }.joinToString(",")
+            }
+            2 -> sayThis = conjugations[0] + ", " + conjugations[1] + "."
+        }
 
         with(alertDialog.getButton(AlertDialog.BUTTON_NEUTRAL)) {
             textSize = 28f
-            setOnClickListener { cleanSpeech(conjugations.replace("\n", ","), "standaard") }
+            setOnClickListener { cleanSpeech(sayThis, "standaard") }
             enabled(useSpeech)
         }
 
@@ -522,41 +564,49 @@ class FlashCard : AppCompatActivity() {
               "Note: $thisRemark\n\n" +
               "Woordsoort: $thisWordType\n\n" +
               "Thema: $thisThema\n\n" +
-              "Level: $thisLevel"
+              "Level: $thisLevel\n\n" +
+              "A/P ref: $thisAPref"
 
-        val emailIntent = Intent(Intent.ACTION_SENDTO, Uri.fromParts("mailto", getString(R.string.contact_email), null))
+        val emailIntent = Intent(Intent.ACTION_SENDTO, Uri.fromParts("mailto", getString(R.string.app_contact_email), null))
             .putExtra(Intent.EXTRA_SUBJECT, subject)
             .putExtra(Intent.EXTRA_TEXT, body)
         startActivity(Intent.createChooser(emailIntent, "Send lemma by email..."))
     }
 
     private fun showProgress() {
-        txt_progress.text = getString(R.string.positie, 1 + blockOffset, 1 + positionInBlock)   // users count from 1
+        binding.txtProgress.text = getString(R.string.lbl_position, 1 + blockOffset, 1 + positionInBlock)   // users count from 1
     }
 
-    /* build the Raw Record View invoked through the main menu */
+    /* build the Raw Record View invoked through the menu */
     fun buidHTMLbox() {
         val webView = WebView(applicationContext)
-        val record = "<html><head><style>" +
-              "  table{border: 1px solid black;border-collapse: collapse; background-color: gold;}" +
-              "  td{border: 1px solid black;vertical-align:top;}" +
-              "</style></head>" +
-              "<body><table>" +
-              "  <tr><td>index:</td><td>$thisIdx</td></tr>" +
-              "  <tr><td>pure lemma:</td><td>$thisPureLemma</td></tr>" +
-              "  <tr><td>grieks:</td><td>" + thisGreekText.replace("\n", "<br>") + "</td></tr>" +
-              "  <tr><td>nederlands:</td><td>" + thisDutchText.replace("\n", "<br>") + "</td></tr>" +
-              "  <tr><td>noot:</td><td>" + thisRemark.replace("\n", "<br>") + "</td></tr>" +
-              "  <tr><td>woordsoort:</td><td>$thisWordType</td></tr>" +
-              "  <tr><td>thema:</td><td>$thisThema</td></tr>" +
-              "  <tr><td>niveau:</td><td>$thisLevel</td></tr>" +
-              "</table></body></html>"
+        val record =
+    """<html>
+        <head>
+            <style>
+                table{border: 1px solid black;border-collapse: collapse; background-color: gold;}
+                td{border: 1px solid black; vertical-align:top;}
+            </style>"
+        </head>
+        <body>
+            <table>
+                <tr><td>index:</td><td>$thisIdx</td></tr>
+                <tr><td>pure lemma:</td><td>$thisPureLemma</td></tr>
+                <tr><td>grieks:</td><td>${thisGreekText.replace("\n", "<br>")}</td></tr>
+                <tr><td>nederlands:</td><td>${thisDutchText.replace("\n", "<br>")}</td></tr>
+                <tr><td>noot:</td><td>${thisRemark.replace("\n", "<br>")}</td></tr>
+                <tr><td>woordsoort:</td><td>$thisWordType</td></tr>
+                <tr><td>thema:</td><td>$thisThema</td></tr>
+                <tr><td>niveau:</td><td>$thisLevel</td></tr>
+                <tr><td>a/p ref:</td><td>$thisAPref</td></tr>
+            </table>
+        </body>
+    </html>"""
         webView.loadData(record, "text/html", "UTF-8")
         val bob = AlertDialog.Builder(this)
-        bob.setTitle("Base Record")
-        bob.setView(webView)
-        bob.setPositiveButton(R.string.emoji_ok, null)
-
+            .setTitle(getString(R.string.alert_baserecord_title))
+            .setView(webView)
+            .setPositiveButton(R.string.btn_caption_ok, null)
         val alertDialog = bob.create()
         alertDialog.show()
         alertDialog.getButton(DialogInterface.BUTTON_POSITIVE).textSize = 28f
@@ -568,12 +618,25 @@ class FlashCard : AppCompatActivity() {
         val table = buildHTMLtable(thisGreekText)
         webView.loadData(table, "text/html", "UTF-8")
         val bob = AlertDialog.Builder(this)
-        bob.setTitle(thisPureLemma)
-        bob.setView(webView)
-        bob.setPositiveButton(R.string.emoji_ok, null)
-
+            .setTitle(thisPureLemma)
+            .setView(webView)
+            .setPositiveButton(R.string.btn_caption_ok, null)
         val alertDialog = bob.create()
         alertDialog.show()
         alertDialog.getButton(DialogInterface.BUTTON_POSITIVE).textSize = 28f
+    }
+
+    private fun swichActivePassive() {
+        // if activity was created using active/passive switch, just finish it
+        if (intent.getStringExtra("origin") == "apSwitch") {
+            finish()
+        } else {
+            val myIntent = Intent(this, FlashCard::class.java)
+                .putExtra("idx", thisAPref.toLong())
+                .putExtra("singlecard", true)
+                .putExtra("origin", "apSwitch")
+            startActivity(myIntent)
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
+        }
     }
 }

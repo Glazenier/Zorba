@@ -1,6 +1,5 @@
 package driemondglas.nl.zorba
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Typeface
 import androidx.core.content.ContextCompat
@@ -12,7 +11,6 @@ import kotlin.math.absoluteValue
 
 object ScoreBoard {
 
-    @SuppressLint("UseSparseArrays")  // there may be a performance gain using sparseArray instead of HashMap
     /* scoremap holds ids and correct(positive) or incorrect(negative) count per lemma in a block */
     private var scoreMap = HashMap<Int, Int>()
     private var correctCount = 0
@@ -102,12 +100,18 @@ object ScoreBoard {
 
     /*  Retrieve the lowest value in the score list
      *  If lowest value is higher than threshold then all entries are higher so all are correct. */
-    fun allAreCorrect(): Boolean = (scoreMap.values.minOrNull() ?: 0 > jumpThreshold)
+    fun allAreCorrect(): Boolean = (scoreMapMin() > jumpThreshold)
+
+    private fun scoreMapMin() =  scoreMap.values.minOrNull() ?: 0
+    private fun scoreMapMax() =  scoreMap.values.maxOrNull() ?: 0
 
     /*  Prepare list for sql expression to add jumpers
      *  result is like  "(163, 1), (1816, 1), (1082, 1)" for 3 entries */
     fun scoreMapToString(): String = scoreMap.toList().toString().removeSurrounding("[", "]")
 
     fun noJumper(theIdx: Int): Boolean = (scoreMap.getOrDefault(theIdx, 0) <= jumpThreshold)
+
+    /* all lemma's in block answered correctly 1x without any errors (100% score after one pass) */
+    fun strike():Boolean = (scoreMap.size == blockSize &&  scoreMapMin() == 1 && scoreMapMax() == 1)
 }
 

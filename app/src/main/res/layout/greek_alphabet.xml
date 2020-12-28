@@ -10,8 +10,8 @@
         >
 
     <Button
-            android:layout_width="@dimen/greek_button_width"
-            android:layout_height="@dimen/greek_button_height"
+            android:layout_width="@dimen/btn_greek_width"
+            android:layout_height="@dimen/btn_greek_height"
             android:fontFamily="@font/tinos_italic"
             android:onClick="onGreekLetter"
             android:tag="α"
@@ -21,8 +21,8 @@
             android:textSize="22sp"
             />
     <Button
-            android:layout_width="@dimen/greek_button_width"
-            android:layout_height="@dimen/greek_button_height"
+            android:layout_width="@dimen/btn_greek_width"
+            android:layout_height="@dimen/btn_greek_height"
             android:fontFamily="@font/tinos_italic"
             android:onClick="onGreekLetter"
             android:tag="β"
@@ -33,8 +33,8 @@
             tools:ignore="ButtonStyle,HardcodedText"
             />
     <Button
-            android:layout_width="@dimen/greek_button_width"
-            android:layout_height="@dimen/greek_button_height"
+            android:layout_width="@dimen/btn_greek_width"
+            android:layout_height="@dimen/btn_greek_height"
             android:fontFamily="@font/tinos_italic"
             android:onClick="onGreekLetter"
             android:tag="γ"
@@ -45,8 +45,8 @@
             tools:ignore="ButtonStyle,HardcodedText"
             />
     <Button
-            android:layout_width="@dimen/greek_button_width"
-            android:layout_height="@dimen/greek_button_height"
+            android:layout_width="@dimen/btn_greek_width"
+            android:layout_height="@dimen/btn_greek_height"
             android:fontFamily="@font/tinos_italic"
             android:onClick="onGreekLetter"
             android:tag="δ"
@@ -57,8 +57,8 @@
             tools:ignore="ButtonStyle,HardcodedText"
             />
     <Button
-            android:layout_width="@dimen/greek_button_width"
-            android:layout_height="@dimen/greek_button_height"
+            android:layout_width="@dimen/btn_greek_width"
+            android:layout_height="@dimen/btn_greek_height"
             android:fontFamily="@font/tinos_italic"
             android:onClick="onGreekLetter"
             android:tag="ε"
@@ -69,8 +69,8 @@
             tools:ignore="ButtonStyle,HardcodedText"
             />
     <Button
-            android:layout_width="@dimen/greek_button_width"
-            android:layout_height="@dimen/greek_button_height"
+            android:layout_width="@dimen/btn_greek_width"
+            android:layout_height="@dimen/btn_greek_height"
             android:fontFamily="@font/tinos_italic"
             android:onClick="onGreekLetter"
             android:tag="ζ"
@@ -81,8 +81,8 @@
             tools:ignore="ButtonStyle,HardcodedText"
             />
     <Button
-            android:layout_width="@dimen/greek_button_width"
-            android:layout_height="@dimen/greek_button_height"
+            android:layout_width="@dimen/btn_greek_width"
+            android:layout_height="@dimen/btn_greek_height"
             android:fontFamily="@font/tinos_italic"
             android:onClick="onGreekLetter"
             android:tag="η"
@@ -93,8 +93,8 @@
             tools:ignore="ButtonStyle,HardcodedText"
             />
     <Button
-            android:layout_width="@dimen/greek_button_width"
-            android:layout_height="@dimen/greek_button_height"
+            android:layout_width="@dimen/btn_greek_width"
+            android:layout_height="@dimen/btn_greek_height"
             android:fontFamily="@font/tinos_italic"
             android:onClick="onGreekLetter"
             android:tag="θ"
@@ -105,8 +105,8 @@
             android:textSize="22sp"
             />
     <Button
-            android:layout_width="@dimen/greek_button_width"
-            android:layout_height="@dimen/greek_button_height"
+            android:layout_width="@dimen/btn_greek_width"
+            android:layout_height="@dimen/btn_greek_height"
             android:fontFamily="@font/tinos_italic"
             android:onClick="onGreekLetter"
             android:tag="ι"
@@ -117,8 +117,8 @@
             tools:ignore="ButtonStyle,HardcodedText"
             />
     <Button
-            android:layout_width="@dimen/greek_button_width"
-            android:layout_height="@dimen/greek_button_height"
+            android:layout_width="@dimen/btn_greek_width"
+            android:layout_height="@dimen/btn_greek_height"
             android:fontFamily="@font/tinos_italic"
             android:onClick="onGreekLetter"
             android:tag="κ"
@@ -129,8 +129,8 @@
             tools:ignore="ButtonStyle,HardcodedText"
             />
     <Button
-            android:layout_width="@dimen/greek_button_width"
-            android:layout_height="@dimen/greek_button_height"
+            android:layout_width="@dimen/btn_greek_width"
+            android:layout_height="@dimen/btn_greek_height"
             android:fontFamily="@font/tinos_italic"
             android:onClick="onGreekLetter"
             android:tag="λ"
@@ -141,8 +141,8 @@
             tools:ignore="ButtonStyle,HardcodedText"
             />
     <Button
-            android:layout_width="@dimen/greek_button_width"
-            android:layout_height="@dimen/greek_button_height"
+            android:layout_width="@dimen/btn_greek_width"
+            android:layout_height="@dimen/btn_greek_height"
             android:fontFamily="@font/tinos_italic"
             android:onClick="onGreekLetter"
             android:tag="μ"
@@ -153,8 +153,8 @@
             tools:ignore="ButtonStyle,HardcodedText"
             />
     <Button
-            android:layout_width="@dimen/greek_button_width"
-            android:layout_height="@dimen/greek_button_height"
+            android:layout_width="@dimen/btn_greek_width"
+            android:layout_height="@dimen/btn_greek_height"
             android:fontFamily="@font/tinos_italic"
             android:onClick="onGreekLetter"
             android:tag="ν"
@@ -165,8 +165,8 @@
             tools:ignore="ButtonStyle,HardcodedText"
             />
     <Button
-            android:layout_width="@dimen/greek_button_width"
-            android:layout_height="@dimen/greek_button_height"
+            android:layout_width="@dimen/btn_greek_width"
+            android:layout_height="@dimen/btn_greek_height"
             android:fontFamily="@font/tinos_italic"
             android:onClick="onGreekLetter"
             android:tag="ξ"
@@ -177,8 +177,8 @@
             tools:ignore="ButtonStyle,HardcodedText"
             />
     <Button
-            android:layout_width="@dimen/greek_button_width"
-            android:layout_height="@dimen/greek_button_height"
+            android:layout_width="@dimen/btn_greek_width"
+            android:layout_height="@dimen/btn_greek_height"
             android:fontFamily="@font/tinos_italic"
             android:onClick="onGreekLetter"
             android:tag="ο"
@@ -189,8 +189,8 @@
             tools:ignore="ButtonStyle,HardcodedText"
             />
     <Button
-            android:layout_width="@dimen/greek_button_width"
-            android:layout_height="@dimen/greek_button_height"
+            android:layout_width="@dimen/btn_greek_width"
+            android:layout_height="@dimen/btn_greek_height"
             android:fontFamily="@font/tinos_italic"
             android:onClick="onGreekLetter"
             android:tag="π"
@@ -201,8 +201,8 @@
             tools:ignore="ButtonStyle,HardcodedText"
             />
     <Button
-            android:layout_width="@dimen/greek_button_width"
-            android:layout_height="@dimen/greek_button_height"
+            android:layout_width="@dimen/btn_greek_width"
+            android:layout_height="@dimen/btn_greek_height"
             android:fontFamily="@font/tinos_italic"
             android:onClick="onGreekLetter"
             android:tag="ρ"
@@ -213,8 +213,8 @@
             tools:ignore="ButtonStyle,HardcodedText"
             />
     <Button
-            android:layout_width="@dimen/greek_button_width"
-            android:layout_height="@dimen/greek_button_height"
+            android:layout_width="@dimen/btn_greek_width"
+            android:layout_height="@dimen/btn_greek_height"
             android:fontFamily="@font/tinos_italic"
             android:onClick="onGreekLetter"
             android:tag="σ"
@@ -225,8 +225,8 @@
             tools:ignore="ButtonStyle,HardcodedText"
             />
     <Button
-            android:layout_width="@dimen/greek_button_width"
-            android:layout_height="@dimen/greek_button_height"
+            android:layout_width="@dimen/btn_greek_width"
+            android:layout_height="@dimen/btn_greek_height"
             android:fontFamily="@font/tinos_italic"
             android:onClick="onGreekLetter"
             android:tag="τ"
@@ -237,8 +237,8 @@
             tools:ignore="ButtonStyle,HardcodedText"
             />
     <Button
-            android:layout_width="@dimen/greek_button_width"
-            android:layout_height="@dimen/greek_button_height"
+            android:layout_width="@dimen/btn_greek_width"
+            android:layout_height="@dimen/btn_greek_height"
             android:fontFamily="@font/tinos_italic"
             android:onClick="onGreekLetter"
             android:tag="υ"
@@ -249,8 +249,8 @@
             tools:ignore="ButtonStyle,HardcodedText"
             />
     <Button
-            android:layout_width="@dimen/greek_button_width"
-            android:layout_height="@dimen/greek_button_height"
+            android:layout_width="@dimen/btn_greek_width"
+            android:layout_height="@dimen/btn_greek_height"
             android:fontFamily="@font/tinos_italic"
             android:onClick="onGreekLetter"
             android:tag="φ"
@@ -261,8 +261,8 @@
             tools:ignore="ButtonStyle,HardcodedText"
             />
     <Button
-            android:layout_width="@dimen/greek_button_width"
-            android:layout_height="@dimen/greek_button_height"
+            android:layout_width="@dimen/btn_greek_width"
+            android:layout_height="@dimen/btn_greek_height"
             android:fontFamily="@font/tinos_italic"
             android:onClick="onGreekLetter"
             android:tag="χ"
@@ -273,8 +273,8 @@
             tools:ignore="ButtonStyle,HardcodedText"
             />
     <Button
-            android:layout_width="@dimen/greek_button_width"
-            android:layout_height="@dimen/greek_button_height"
+            android:layout_width="@dimen/btn_greek_width"
+            android:layout_height="@dimen/btn_greek_height"
             android:fontFamily="@font/tinos_italic"
             android:onClick="onGreekLetter"
             android:tag="ψ"
@@ -285,8 +285,8 @@
             tools:ignore="ButtonStyle,HardcodedText"
             />
     <Button
-            android:layout_width="@dimen/greek_button_width"
-            android:layout_height="@dimen/greek_button_height"
+            android:layout_width="@dimen/btn_greek_width"
+            android:layout_height="@dimen/btn_greek_height"
             android:fontFamily="@font/tinos_italic"
             android:onClick="onGreekLetter"
             android:tag="ω"
@@ -297,8 +297,8 @@
             tools:ignore="ButtonStyle,HardcodedText"
             />
     <Button
-            android:layout_width="@dimen/greek_button_width"
-            android:layout_height="@dimen/greek_button_height"
+            android:layout_width="@dimen/btn_greek_width"
+            android:layout_height="@dimen/btn_greek_height"
             android:fontFamily="@font/tinos_italic"
             android:onClick="onGreekLetter"
             android:tag="_"

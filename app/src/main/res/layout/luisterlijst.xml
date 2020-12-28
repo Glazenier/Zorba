@@ -9,37 +9,57 @@
         >
     <Button
             android:id="@+id/btn_next_block"
-            android:layout_width="@dimen/nav_btn_width"
-            android:layout_height="@dimen/nav_btn_height"
+            android:layout_width="@dimen/btn_main_width"
+            android:layout_height="@dimen/btn_main_height"
             android:layout_marginEnd="8dp"
             android:layout_marginBottom="16dp"
             android:text="@string/btn_caption_next_block"
-            android:textSize="18sp"
+            android:textSize="24sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             />
     <Button
             android:id="@+id/btn_prev_block"
-            android:layout_width="@dimen/nav_btn_width"
-            android:layout_height="@dimen/nav_btn_height"
-            android:layout_marginStart="8dp"
+            android:layout_width="@dimen/btn_main_width"
+            android:layout_height="@dimen/btn_main_height"
+            android:layout_marginStart="4dp"
             android:layout_marginBottom="16dp"
             android:text="@string/btn_caption_prev_block"
-            android:textSize="18sp"
+            android:textSize="24sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             />
     <Button
             android:id="@+id/btn_play"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="@dimen/btn_main_width"
+            android:layout_height="@dimen/btn_main_height"
             android:layout_marginBottom="16dp"
             android:gravity="center"
             android:text="@string/btn_caption_play"
             android:textSize="44sp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/btn_rewind"
+            />
+    <Button
+            android:id="@+id/btn_void"
+            android:layout_width="@dimen/btn_main_width"
+            android:layout_height="@dimen/btn_main_height"
+            android:layout_marginBottom="16dp"
+            android:gravity="center"
+
+            android:textSize="44sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/btn_play"
+            />
+    <Button
+            android:id="@+id/btn_rewind"
+            android:layout_width="@dimen/btn_main_width"
+            android:layout_height="@dimen/btn_main_height"
+            android:layout_marginBottom="16dp"
+            android:text="@string/btn_caption_rewind"
+            android:textSize="44sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/btn_prev_block"
             />
     <TextView
             android:id="@+id/txt_blockpos"
@@ -51,16 +71,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             tools:text="0-0"
-            />
-    <Button
-            android:id="@+id/btn_rewind"
-            android:layout_width="88dp"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:text="@string/btn_caption_rewind"
-            android:textSize="44sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/btn_prev_block"
             />
     <SeekBar
             android:id="@+id/sb_speed"
@@ -78,7 +88,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:text="@string/tempo"
+            android:text="@string/lbl_speed"
             app:layout_constraintBottom_toBottomOf="@+id/sb_speed"
             app:layout_constraintStart_toStartOf="parent"
             />
@@ -86,7 +96,7 @@
             android:id="@+id/txt_speed"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/pct100"
+            android:text="@string/lbl_speed_post"
             android:textSize="18sp"
             app:layout_constraintBottom_toBottomOf="@+id/sb_speed"
             app:layout_constraintStart_toEndOf="@+id/sb_speed"
@@ -115,7 +125,7 @@
             android:layout_height="116dp"
             android:layout_marginBottom="16dp"
             android:background="@drawable/background_with_border"
-            android:contentDescription="@string/thatsall"
+            android:contentDescription="@string/img_content_thatsall"
             android:elevation="4dp"
             android:visibility="invisible"
             app:layout_constraintBottom_toTopOf="@+id/sb_speed"
@@ -123,14 +133,5 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@+id/farfarAway"
             app:srcCompat="@drawable/thatsall"
-            />
-    <TextView
-            android:layout_width="74dp"
-            android:layout_height="76dp"
-            android:layout_marginStart="2dp"
-            android:layout_marginBottom="20dp"
-            android:background="?attr/colorButtonNormal"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/btn_play"
             />
 </androidx.constraintlayout.widget.ConstraintLayout>
