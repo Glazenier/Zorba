@@ -7,7 +7,7 @@
     <string name="app_author">Herman van Rongen</string>
     <string name="app_contact_email">herman@driemondglas.nl</string>
     <string name="app_description">Griekse woorden leren.</string>
-    <string name="app_versioninfo">View binding replaces Synthetic binding</string>
+    <string name="app_versioninfo">Speech rate config and shared prefs</string>
 
 <!--TITLES / SUBTITLES-->
     <string name="title_main">ZORBA by Herman</string>
@@ -55,6 +55,7 @@
     <string name="lbl_speed_post">100%</string>
     <string name="lbl_jumper">↷</string>
     <string name="lbl_flash_chk">Flash</string>
+    <string name="lbl_speech">Spraak</string>
 
 <!--captions-->
     <string name="btn_caption_ok">🆗</string>
@@ -99,6 +100,7 @@
     <string name="menu_caption_wordreference">🌐 Zoek op - WordReference</string>
     <string name="menu_caption_base_record">💽 Toon basis record</string>
     <string name="menu_caption_copy">📋 copy pure lemma</string>
+    <string name="menu_caption_set_default">Bewaar als standaard</string>
 
 <!-- MESSAGES AND ALERTS-->
     <string name="error_generic">That didn\'t work %1s</string>
@@ -112,8 +114,8 @@
     <string name="msg_you_hang">YOU HANG !!!</string>
     <string name="msg_got_it">YOU GOT IT !!!</string>
 
-    <string name="warning_empty_cursor">Huidige selectie bevat geen lemma!</string>
-    <string name="warning_speech_init">spraak initialisatie probleem!</string>
+    <string name="warning_empty_cursor">Huidige selectie bevat geen enkel lemma.</string>
+    <string name="warning_speech_init">Spraak initialisatie probleem!</string>
 
     <string name="alert_lemma_unjump_message">Lemma vaak genoeg goed beantwoord.\nReset deze status voor dit lemma?</string>
     <string name="alert_lemma_unjump_neg">Nee, is goed zo.</string>
@@ -148,9 +150,8 @@
     <string name="count_value">Aantal: %1$d</string>
     <string name="reveal">%1s van %2s (%3s)</string>
 
-
 <!--VERY SPECIAL-->
     <string name="spaced_pair">%1s %2s</string>
     <string name="spaced_triple">%1s %2s %3s</string>
-
+    <string name="whole_percent">%1$d%%</string>
 </resources>

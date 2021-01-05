@@ -57,16 +57,21 @@ class ThemeAndWordType : AppCompatActivity() {
     }
 
     private fun selectAndFinish() {
-        // return to calling activity
-        val myIntent = Intent()
-        myIntent.putExtra("result", "selected")
-        setResult(RESULT_OK, myIntent)
-        finish()
+            // return to calling activity
+            val myIntent = Intent()
+            myIntent.putExtra("result", "selected")
+            setResult(RESULT_OK, myIntent)
+            finish()
     }
 
     override fun finish() {
-        super.finish()
-        overridePendingTransition(R.anim.fade_in, R.anim.fade_out)    }
+        if (QueryManager.selectedCount() == 0) {
+            colorToast(this, getString(R.string.warning_empty_cursor))
+        } else {
+            super.finish()
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
+        }
+    }
 
     private fun clearSelections() {
         thema = ""
@@ -111,7 +116,7 @@ class ThemeAndWordType : AppCompatActivity() {
             // step through the records (themes)
             while (moveToNext()) {
                 val thema = getString(col0)
-                val themaTotaal: Int = getInt(col1)
+                val themaTotaal = getInt(col1)
                 allThemes.add("$thema ($themaTotaal)")
                 runningPosition++
                 if (thema == originalTheme) originalPosition = runningPosition

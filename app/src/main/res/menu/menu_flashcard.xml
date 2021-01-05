@@ -6,7 +6,7 @@
             android:title="@string/menu_caption_theme_wordtype"
             />
     <item
-            android:id="@+id/menu_set_block_sort"
+            android:id="@+id/menu_set_details_sort"
             android:title="@string/menu_caption_detail_selections"
             />
     <item

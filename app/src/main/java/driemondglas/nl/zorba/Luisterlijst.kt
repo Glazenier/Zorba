@@ -81,28 +81,19 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
         /* trigger for speech progress events */
         spreker.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
             /* these events runs in separate thread from UI thread!
-             * All changes to UI must be run on UI thread or you get unpredictable results.
-             */
-            override fun onDone(utteranceId: String?) {
-                isDone = true
-            }
-            override fun onError(utteranceId: String?) {
-                Log.d(TAG, "[spreker] Error $utteranceId")
-            }
-            override fun onStart(utteranceId: String?) {
-                hasStarted = true
-                // Log.d(TAG, "[spreker] Start $utteranceId")
-            }
+             * All changes to UI must be run on UI thread or you get unpredictable results. */
+            override fun onStart(utteranceId: String?) { hasStarted = true }
+            override fun onDone(utteranceId: String?) { isDone = true }
+            override fun onError(utteranceId: String?) { Log.d(TAG, "[spreker] Error $utteranceId") }
         })
 
-        binding.sbSpeed.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+        binding.sbSpeechrate.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
 
             override fun onProgressChanged(sb_speed: SeekBar, progress: Int, fromUser: Boolean) {
-                val speed = sb_speed.progress
-                spreker.setSpeechRate(speed / 10f)
-                val speedstring=(speed*10).toString() + "%"
-                binding.txtSpeed.text = speedstring
+                spreker.setSpeechRate(progress / 100f)
+                binding.txtSpeed.text = getString(R.string.whole_percent, progress)
             }
+
             override fun onStartTrackingTouch(sb_speed: SeekBar) {}
             override fun onStopTrackingTouch(sb_speed: SeekBar) {}
         })
@@ -114,7 +105,7 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
         /* check how many blocks are possible */
         val maxOffset = if (blockSize == 0 || !useBlocks) 0 else (thisCursor.count - 1) / blockSize
 
-        /* retrieve last_listened_block from shared preferences (if it is not too big!)*/
+        /* retrieve last_listened_block from shared preferences (if it is not too big!) */
         blockOffset = minOf(zorbaPreferences.getInt("last_listened_block", 0), maxOffset)
 
         binding.btnNextBlock.setOnClickListener {
@@ -152,14 +143,14 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
             R.id.menu_set_theme_wordtype -> {
                 /* launch the Thema/Woordsoort Selection Activity */
                 val myIntent = Intent(this, ThemeAndWordType::class.java)
-                startActivityForResult(myIntent, THEME_WORDTYPE_CODE)
+                startActivity(myIntent)
             }
 
             /*  menu detail selecties */
-            R.id.menu_set_block_sort -> {
+            R.id.menu_set_details_sort -> {
                 /* launch the Selecties Activity */
                 val myIntent = Intent(this, FilterAndSort::class.java)
-                startActivityForResult(myIntent, SELECTIES_CODE)
+                startActivity(myIntent)
             }
 
             /* menu wis alle selecties */
@@ -170,8 +161,8 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
 
             /* speech on/off */
             R.id.menu_speech -> {
-                useSpeech = !item.isChecked
                 item.isChecked = !item.isChecked
+                useSpeech = item.isChecked
                 binding.btnPlay.enabled(useSpeech)
                 stopTalking = true
                 spreker.stop()
@@ -184,32 +175,6 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
             else -> super.onOptionsItemSelected(item)
         }
         return true
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, myIntent: Intent?) {
-        /*
-         * This is the place where the activities/intents return after finishing
-         * you can pick up the result from each intent by looking at the request code used */
-        if (myIntent != null) {   // to get rid of the Intent? null safety
-
-            /* refresh data in the 'lemmaArrayList' using the changed selections */
-            when (requestCode) {
-
-                THEME_WORDTYPE_CODE -> {
-                    if (myIntent.getStringExtra("result") == "selected") {
-                        /* refresh data in the mainCursor using the changed selections */
-                        thisCursor = db.rawQuery(QueryManager.mainQuery(), null)
-                    }
-                }
-                SELECTIES_CODE -> {
-                    if (myIntent.getStringExtra("result") == "selected") {
-                        /* refresh data in the mainCursor using the changed selections */
-                        thisCursor = db.rawQuery(QueryManager.mainQuery(), null)
-                    }
-                }
-            }
-        }
-        super.onActivityResult(requestCode, resultCode, myIntent)
     }
 
     private fun startStop() {
@@ -386,8 +351,9 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
         overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
     }
 
-     override fun onResume() {
+    override fun onResume() {
         /* set state to waiting for start */
+        thisCursor = db.rawQuery(QueryManager.mainQuery(), null)
         stopTalking = true
         /* show play icon */
         binding.btnPlay.text = getString(R.string.btn_caption_play)

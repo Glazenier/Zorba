@@ -4,8 +4,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.view.MenuItem
-import android.view.View
+import android.view.*
+import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
 import driemondglas.nl.zorba.databinding.FilterAndSortBinding
 
@@ -13,6 +13,7 @@ import driemondglas.nl.zorba.databinding.FilterAndSortBinding
  *  the selection controls to filter the greek words on length, first letter and/or difficulty level etc.
  *  Sorting or shuffling is also set here. */
 
+var voorbeeldtext ="Ξεσκεπάζω την ψυχοφθόρα σας βδελυγμία."
 class FilterAndSort : AppCompatActivity() {
 
     private lateinit var binding: FilterAndSortBinding // replaces synthetic view binding
@@ -34,6 +35,7 @@ class FilterAndSort : AppCompatActivity() {
     private val oldSortTag = orderbyTag
     private val oldDescending = orderDescending
     private val oldFlashed = flashed
+    private val oldSpeechRate = speechRate
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,6 +51,18 @@ class FilterAndSort : AppCompatActivity() {
         // First of all,
         // grab the active settings from the global variables and set the respective controls.
         loadControlsFromVars()
+
+        // set listener for changes in seekbar for speech rate
+        binding.sbSpeechrate.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(sb_speed: SeekBar, progress: Int, fromUser: Boolean) {
+                speechRate = progress / 100f
+                zorbaSpeaks.setSpeechRate(speechRate)
+                binding.txtSpeed.text = getString(R.string.whole_percent, progress)
+                zorbaPreferences.edit().putFloat("speechrate", speechRate).apply()
+            }
+            override fun onStartTrackingTouch(sb_speed: SeekBar) {}
+            override fun onStopTrackingTouch(sb_speed: SeekBar) {}
+        })
 
         with (binding) {
             /* add listeners for switches and buttons */
@@ -66,35 +80,26 @@ class FilterAndSort : AppCompatActivity() {
             btnSelect.setOnClickListener { goBack() }
             btnCancel.setOnClickListener { cancelChanges() }
             btnDefault.setOnClickListener { restoreDefaults() }
-            btnSaveAsDefault.setOnClickListener { saveAsDefaults() }
             swFlashed.setOnClickListener { onFlash() }
+            btnSpeedtest.setOnClickListener{ cleanSpeech(voorbeeldtext, "standaard")}
 
             /* set listener for changes in text field for block size  */
             textBlocksize.addTextChangedListener(object : TextWatcher {
-                override fun afterTextChanged(s: Editable) {
-                    if (userTyped) onBlockSizeChange(s)
-                }
-
+                override fun afterTextChanged(s: Editable) { if (userTyped) onBlockSizeChange(s) }
                 override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
                 override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
             })
 
             /* set listener for changes in text field for lemma length  */
             textLength.addTextChangedListener(object : TextWatcher {
-                override fun afterTextChanged(s: Editable) {
-                    if (userTyped) onLengthChange(s)
-                }
-
+                override fun afterTextChanged(s: Editable) { if (userTyped) onLengthChange(s) }
                 override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
                 override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
             })
 
             /* set listener for changes in text field for threshold  */
             textThreshold.addTextChangedListener(object : TextWatcher {
-                override fun afterTextChanged(s: Editable) {
-                    if (userTyped) onThresholdChange(s)
-                }
-
+                override fun afterTextChanged(s: Editable) { if (userTyped) onThresholdChange(s) }
                 override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
                 override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
             })
@@ -142,17 +147,42 @@ class FilterAndSort : AppCompatActivity() {
             swHideJumpers.isChecked = hideJumpers
 
             swFlashed.isChecked = flashed
+            val rate = (100 * speechRate).toInt()
+            txtSpeed.text = getString(R.string.whole_percent, rate)
+            sbSpeechrate.progress = rate
         }
         userTyped = true  //prepare for user input
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        /* Inflate the menu; this adds menu items to the zorba action bar. */
+        menuInflater.inflate(R.menu.menu_filter_sort, menu)
+        return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         /* Handle action bar item clicks here. The action bar will
          * automatically handle clicks on the Home/Up button, so long
          * as you specify a parent activity in Android Manifest.
-         * We use our own goBack routine (hvr)
-         */
-        if (item.itemId == android.R.id.home) goBack()
+         * We use our own goBack routine (hvr) */
+        when (item.itemId) {
+            R.id.menu_set_theme_wordtype -> {
+                // launch the wordgroup/wordtype selection activity
+                val myIntent = Intent(this, ThemeAndWordType::class.java)
+                startActivity(myIntent)
+                overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
+            }
+            R.id.menu_clear_selects -> {
+                resetThemeType()
+                restoreDefaults()
+            }
+
+            R.id.menu_set_default -> saveAsDefaults()
+
+            android.R.id.home -> goBack()
+
+            else -> super.onOptionsItemSelected(item)
+        }
         return true
     }
 
@@ -381,6 +411,7 @@ class FilterAndSort : AppCompatActivity() {
         hideJumpers = oldHideJumpers
         jumpThreshold = oldThreshold
         flashed = oldFlashed
+        speechRate=oldSpeechRate
 
         // ... and store them as recent use
         zorbaPreferences.edit()
@@ -397,6 +428,7 @@ class FilterAndSort : AppCompatActivity() {
             .putInt("jumpthreshold", jumpThreshold)
             .putBoolean("hidejumpers", hideJumpers)
             .putBoolean("flashed", flashed)
+            .putFloat("speechrate", speechRate)
             .apply()
 
         // go back to calling activity
@@ -415,8 +447,12 @@ class FilterAndSort : AppCompatActivity() {
     }
 
     override fun finish() {
-        super.finish()
-        overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
+        if (QueryManager.selectedCount() == 0) {
+            colorToast(this, getString(R.string.warning_empty_cursor))
+        } else {
+            super.finish()
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
+        }
     }
 
     private fun restoreDefaults() {
@@ -444,6 +480,7 @@ class FilterAndSort : AppCompatActivity() {
             .putInt("defaultjumpthreshold", jumpThreshold)
             .putBoolean("defaulthidejumpers", hideJumpers)
             .putBoolean("defaultflashed", flashed)
+            .putFloat("defaultspeechrate", speechRate)
             .apply()
     }
 }

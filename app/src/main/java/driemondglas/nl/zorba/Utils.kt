@@ -2,6 +2,7 @@ package driemondglas.nl.zorba
 
 import android.content.Context
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.speech.tts.TextToSpeech
 import android.view.View
 import android.widget.TextView
@@ -20,14 +21,18 @@ val inBracketsRegex = Regex( """\(.*?\)""")
 
 /* function is called from the menu item 'Clear All' to reset all selections made by user. */
 fun clearAll() {
+    resetThemeType()
+    resetDetails()
+}
+
+fun resetThemeType(){
     thema = ""
     wordType = ""
     search = ""
     zorbaPreferences.edit()
-          .putString("theme", "")
-          .putString("wordtype", "")
-          .apply()
-    resetDetails()
+        .putString("theme", "")
+        .putString("wordtype", "")
+        .apply()
 }
 
 fun resetDetails() {
@@ -46,6 +51,7 @@ fun resetDetails() {
         jumpThreshold = getInt("defaultjumpthreshold", 2)
         hideJumpers = getBoolean("defaulthidejumpers", false)
         flashed = getBoolean("defaultflashed", false)
+        speechRate = getFloat("defaultspeechrate", 1.0f)
     }
     zorbaPreferences.edit()
           .putBoolean("useblocks", useBlocks)
@@ -61,11 +67,12 @@ fun resetDetails() {
           .putInt("jumpthreshold", jumpThreshold)
           .putBoolean("hidejumpers", hideJumpers)
           .putBoolean("flashed", flashed)
+          .putFloat("speechrate", speechRate)
           .apply()
 }
 
 val articleRegex = Regex("""(.*?),\s(τ?[ηοα]ι?)""")  //match greek articles after a komma: , ο, η, το, οι, τα
-val adjectiveRegex = Regex("""(.*?)([οηόύή][ςιί]),\s?-(ε?[αάεέηήιί][αάς]?),\s?-([άαεέίοόύ]ς?)""")   //βαρύς, -εία, -ύ
+val adjectiveRegex = Regex("""(.*?)(ε?[οηόύήί][ςιί]),\s?-(ε?[αάεέηήιί][αάς]?),\s?-([άαεέίοόύή]ς?)""")   //changed for -είς, -είς, -ή
 val eeStartSound = Regex("""\b[οε]?[ιηυίήύ]""")
 
 fun cleanSpeech(rawText: String, wordType: String) {
@@ -89,9 +96,9 @@ fun cleanSpeech(rawText: String, wordType: String) {
                     val maleEnd = matchResult.groups[2]?.value
                     val femaleEnd = matchResult.groups[3]?.value
                     val neuterEnd = matchResult.groups[4]?.value
-                    "$stem$maleEnd,$stem$femaleEnd,$stem$neuterEnd."
+                    "$stem$maleEnd, $stem$femaleEnd, $stem$neuterEnd. "
                 } else {
-                    it.replace(inBracketsRegex, "") + "."
+                    it.replace(inBracketsRegex, "") + ". "
                 }
             }
         }
@@ -126,6 +133,7 @@ fun cleanSpeech(rawText: String, wordType: String) {
                 }
             }
         }
+
         "lidwoord" -> {
             result = rawText.replace(" ", ",")
         }
@@ -138,6 +146,7 @@ fun cleanSpeech(rawText: String, wordType: String) {
             if (hasMellontas(rawText)) result += ", προστακτική," +  createProstaktiki(rawText)
             result += "."
         }
+        
         else -> {   /* Standard clean-up for other word types: */
 
             /* 1: In speech output we don't want text in brackets */
@@ -150,6 +159,7 @@ fun cleanSpeech(rawText: String, wordType: String) {
             result = result.replace("=", ",")
         }
     }
+//    Log.d(TAG, "cleanSpeech: $result")
     zorbaSpeaks.speak(result, TextToSpeech.QUEUE_FLUSH, null, "")
 }
 
@@ -198,12 +208,12 @@ fun buildHTMLtable(textGreek: String): String {
 
     // middle header row
     htmlText += "<tr><th style='border: 1px solid black; background-color:gold;'>PARATATIKOS</th><th style='border: 1px solid black; background-color:gold;'>AORISTOS</th></tr>"
+    // conjugations
     for (i in 0..5) htmlText += "<tr><td>${par[i]}</td><td>${aor[i]}</td></tr>"
 
     // imperatief προστακτική
     htmlText += "<tr><th colspan=2 style='border: 1px solid black; background-color:gold;' >PROSTAKTIKI</th></tr>"
     htmlText += "<tr><td>${pro[0]}</td><td>${pro[1]}</td></tr>"
-
     htmlText += "</table>"
     return htmlText
 }
@@ -280,14 +290,14 @@ fun conjugateEnestotas(textGreek: String): List<String> {
         "Γ3" -> listOf("ιέμαι", "ιέσαι", "ιέται",  "ιόμαστε",   "ιέστε", "ιούνται").map { stem + it }
         "Γ4" -> listOf("ούμαι", "είσαι", "είται",  "ούμαστε",   "είστε", "ούνται" ).map { stem + it }
         "Γ5" -> listOf("είμαι", "είσαι", "είναι",  "είμαστε",   "είστε", "είναι"  ).map { stem + it }
-        else -> listOf()
+        else -> emptyList()
     }
 }
 
 fun conjugateMellontas(textGreek: String): List<String> {
     val verbType: String
     val mellontas = getMellontas(textGreek)
-    if (mellontas.isEmpty()) return listOf()
+    if (mellontas.isEmpty()) return emptyList()
 
     val stem = mellontas.dropLast(1)
 
@@ -301,11 +311,11 @@ fun conjugateMellontas(textGreek: String): List<String> {
     }
 
     return when (verbType) {
+        "regular"        -> listOf("ω",     "εις",   "ει",    "ουμε",    "ετε",   "ουν").map { "θα $stem$it" }
+        "irregular1"     -> listOf("ώ",     "είς",   "εί",    "ούμε",    "είτε",  "ούν").map { "θα $stem$it" }
+        "irregular2"     -> listOf("ω",     "ς",     "ει",    "με",      "τε",    "νε").mapIndexed { idx, it -> "θα " + (if (idx == 1) stem.unStress() else stem) + it }
+        "irregular3"     -> listOf("ω",     "εις",   "ει",    "ούμε",    "είτε",  "ουν").map { "θα $stem$it" }
         "very irregular" -> listOf("είμαι", "είσαι", "είναι", "είμαστε", "είστε", "είναι").map { "θα $it" }
-        "regular" -> listOf("ω", "εις", "ει", "ουμε", "ετε", "ουν").map { "θα $stem$it" }
-        "irregular1" -> listOf("ώ", "είς", "εί", "ούμε", "είτε", "ούν").map { "θα $stem$it" }
-        "irregular2" -> listOf("ω", "ς", "ει", "με", "τε", "νε").mapIndexed { idx, it -> "θα " + (if (idx == 1) stem.unStress() else stem) + it }
-        "irregular3" -> listOf("ω", "εις", "ει", "ούμε", "είτε", "ουν").map { "θα $stem$it" }
         else -> emptyList()
     }
 }
@@ -336,7 +346,7 @@ fun conjugateAoristos(textGreek: String): List<String> {
             if (mellontas.last() == 'ώ') stemFromFuture + "ήκ" else stemFromFuture
         }
     }
-    if (stemPlural.last() in("αά") ) stemPlural += 'γ' // φά γ αμε
+    if (stemPlural.last() in("αά") ) stemPlural += 'γ' // φά-γ-αμε
     return listOf("α", "ες", "ε", "αμε", "ατε", "αν").mapIndexed { idx, it -> (if (idx in 3..4) stemPlural else stemSingle) + it }
 }
 
@@ -345,7 +355,7 @@ fun conjugateParatatikos(textGreek: String): List<String>{
     var stemPlural: String
     val enestotas = getEnestotas(textGreek)
     val paratatikos = getParatatikos(textGreek)
-    if (paratatikos.isEmpty()) return listOf()
+    if (paratatikos.isEmpty()) return emptyList()
 
     return when {
         //irregular
@@ -374,7 +384,7 @@ fun conjugateParatatikos(textGreek: String): List<String>{
             }
             listOf("α", "ες", "ε", "αμε", "ατε", "αν").mapIndexed { idx, it -> (if (idx in 3..4) stemPlural else stemSingle) + it }
         }
-        else -> listOf()
+        else -> emptyList()
     }
 }
 
@@ -440,14 +450,14 @@ fun createProstaktiki(textGreek: String): List<String> {
     /* If no accent in the stem then add accent to last vowel */
     var stressPos = stem.indexOfAny(allStressedVowels)
         // σημειώσ
-        // 012345-   <- stressPos = 5
+        //      ^---- stressPos = 5
         // χαιρ
         // ----     <- stressPos = -1
     if (stressPos == -1) {
         /* find last vowel */
         stressPos = stem.lastIndexOfAny(allUnstressedVowels)
             // χαιρ
-            // 012-   <- vowelPos = 2
+            //   ^---- vowelPos = 2
         stem = stem.replace(atPosition = stressPos, replacement = stressOneChar(unStressed = stem[stressPos]))
             // χαιρ -> χαίρ
     }
@@ -458,18 +468,18 @@ fun createProstaktiki(textGreek: String): List<String> {
         // χαίρε
 
     /* create plural Imperative from the stem, suffix depends on last character of the stem: '-ετε' or '-τε'  */
-    val plural = if (stem.takeLast(1) in "νγβθχ") stem + "ετε" else stem + "τε"
+    val plural = if (stem.takeLast(1) in "νγβθχ") "${stem}ετε" else "${stem}τε"
         // σημειώστε
         // χαίρτε
     /* move stress 1 syllable to the left, if possible */
     if (stressPos > 0) {
-        val dbl = stem.substring(stressPos - 1..stressPos )
-        if (dbl in setOf("αύ","εύ","αί", "εί","οί", "ού")) stressPos--
+        val dbl = stem.substring(stressPos - 1..stressPos)
+        if (dbl in setOf("αύ", "εύ", "αί", "εί", "οί", "ού")) stressPos--
         val vowelPos = single.take(stressPos).lastIndexOfAny(allUnstressedVowels)
         if (vowelPos > -1) single = single.unStress().replace(atPosition = vowelPos, replacement = stressOneChar(unStressed = single[vowelPos]))
     }
     /* return Imperative as: 2nd person single - 2nd person plural */
-    return listOf(single,plural)
+    return listOf(single, plural)
 }
 
 fun colorToast(context: Context, msg: String, bgColor: Int = Color.DKGRAY, fgColor: Int = Color.WHITE, duration: Int = 0) {
@@ -485,8 +495,14 @@ fun colorToast(context: Context, msg: String, bgColor: Int = Color.DKGRAY, fgCol
     /* change the text color */
     myText.setTextColor(fgColor)
 
-    /* change background */
-    myView.setBackgroundColor(bgColor)
+    /* create background */
+    val gd = GradientDrawable().apply {
+        setColor(bgColor)
+        cornerRadius = 30f
+        setStroke(5, Color.BLACK)
+    }
+    /* set background to view*/
+    myView.background = gd
 
     /* and  finally ... show this differently colored Toast */
     myToast.show()

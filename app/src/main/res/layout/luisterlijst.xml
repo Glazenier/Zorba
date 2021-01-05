@@ -73,13 +73,13 @@
             tools:text="0-0"
             />
     <SeekBar
-            android:id="@+id/sb_speed"
+            android:id="@+id/sb_speechrate"
             android:layout_width="200dp"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:max="15"
-            android:min="5"
-            android:progress="10"
+            android:max="150"
+            android:min="50"
+            android:progress="100"
             app:layout_constraintBottom_toTopOf="@+id/txt_blockpos"
             app:layout_constraintStart_toEndOf="@+id/lbl_speed"
             />
@@ -89,7 +89,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:text="@string/lbl_speed"
-            app:layout_constraintBottom_toBottomOf="@+id/sb_speed"
+            app:layout_constraintBottom_toBottomOf="@+id/sb_speechrate"
             app:layout_constraintStart_toStartOf="parent"
             />
     <TextView
@@ -98,8 +98,8 @@
             android:layout_height="wrap_content"
             android:text="@string/lbl_speed_post"
             android:textSize="18sp"
-            app:layout_constraintBottom_toBottomOf="@+id/sb_speed"
-            app:layout_constraintStart_toEndOf="@+id/sb_speed"
+            app:layout_constraintBottom_toBottomOf="@+id/sb_speechrate"
+            app:layout_constraintStart_toEndOf="@+id/sb_speechrate"
             />
     <TextView
             android:id="@+id/farfarAway"
@@ -112,7 +112,7 @@
             android:scrollbars="vertical"
             android:textColor="@color/sky_text_normal"
             android:textSize="24sp"
-            app:layout_constraintBottom_toTopOf="@+id/sb_speed"
+            app:layout_constraintBottom_toTopOf="@+id/sb_speechrate"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
@@ -128,7 +128,7 @@
             android:contentDescription="@string/img_content_thatsall"
             android:elevation="4dp"
             android:visibility="invisible"
-            app:layout_constraintBottom_toTopOf="@+id/sb_speed"
+            app:layout_constraintBottom_toTopOf="@+id/sb_speechrate"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@+id/farfarAway"

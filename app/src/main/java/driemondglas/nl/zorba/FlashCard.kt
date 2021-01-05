@@ -15,7 +15,6 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.method.ScrollingMovementMethod
 import android.text.style.*
-import android.util.Log
 import android.view.*
 import android.webkit.WebView
 import android.widget.TextView
@@ -195,6 +194,8 @@ class FlashCard : AppCompatActivity() {
         binding.btnPrevBlock.enabled(!singleLemma)
         binding.btnNextBlock.enabled(useBlocks && !singleLemma)
         db = zorbaDBHelper.readableDatabase
+        reQuery()
+        if (mainCursor.count>0) populateFields()
         super.onResume()
     }
 
@@ -203,7 +204,7 @@ class FlashCard : AppCompatActivity() {
         menuInflater.inflate(R.menu.menu_flashcard, menu)
         menu.findItem(R.id.menu_card_speech).isChecked = useSpeech
         menu.findItem(R.id.menu_set_theme_wordtype).isVisible = !singleLemma
-        menu.findItem(R.id.menu_set_block_sort).isVisible = !singleLemma
+        menu.findItem(R.id.menu_set_details_sort).isVisible = !singleLemma
         menu.findItem(R.id.menu_clear_selects).isVisible = !singleLemma
         menu.findItem(R.id.menu_reset_score).isVisible = !singleLemma
 
@@ -216,13 +217,13 @@ class FlashCard : AppCompatActivity() {
             R.id.menu_set_theme_wordtype -> {
                 // launch the wordgroup/wordtype selection activity
                 val myIntent = Intent(this, ThemeAndWordType::class.java)
-                startActivityForResult(myIntent, THEME_WORDTYPE_CODE)
+                startActivity(myIntent)
                 overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
             }
-            R.id.menu_set_block_sort -> {
+            R.id.menu_set_details_sort -> {
                 // launch the detail selections and order-by activity
                 val myIntent = Intent(this, FilterAndSort::class.java)
-                startActivityForResult(myIntent, SELECTIES_CODE)
+                startActivity(myIntent)
                 overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
             }
 
@@ -267,18 +268,18 @@ class FlashCard : AppCompatActivity() {
         return true
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, myIntent: Intent?) {
-        /* when configuration changing activities are finished, they return here.
-         * if result is a possible selection change, requery the data
-         */
-        if (requestCode == THEME_WORDTYPE_CODE || requestCode == SELECTIES_CODE) {
-            if (myIntent?.getStringExtra("result") == "selected") {
-                reQuery()
-                populateFields()
-            }
-        }
-        super.onActivityResult(requestCode, resultCode, myIntent)
-    }
+//    override fun onActivityResult(requestCode: Int, resultCode: Int, myIntent: Intent?) {
+//        /* when configuration changing activities are finished, they return here.
+//         * if result is a possible selection change, requery the data
+//         */
+//        if (requestCode == THEME_WORDTYPE_CODE || requestCode == SELECTIES_CODE) {
+//            if (myIntent?.getStringExtra("result") == "selected") {
+//                reQuery()
+//                if (mainCursor.count>0) populateFields()
+//            }
+//        }
+//        super.onActivityResult(requestCode, resultCode, myIntent)
+//    }
 
     /* re-execute the main query and get new set of data from database table */
     private fun reQuery() {
@@ -299,6 +300,15 @@ class FlashCard : AppCompatActivity() {
                 maxPosition = minOf(blockSize, mainCursor.count) - 1
             }
 
+            // not sure that old positions exist in new cursor, so go back to start
+            blockOffset = 0
+            positionInBlock = 0
+            zorbaPreferences.edit()
+                .putInt("last_viewed_block", blockOffset)
+                .putInt("last_viewed_position", positionInBlock)
+                .apply()
+            showProgress()
+
             /* initialize progress bar */
             binding.blockProgressBar.max = blockSize * (jumpThreshold + 1)
             binding.blockProgressBar.progress = 0
@@ -309,6 +319,7 @@ class FlashCard : AppCompatActivity() {
     override fun finish() {
         mainCursor.close()
         db.close()
+
         val myIntent = Intent()
         myIntent.putExtra("action", "stop")
         setResult(RESULT_OK, myIntent)

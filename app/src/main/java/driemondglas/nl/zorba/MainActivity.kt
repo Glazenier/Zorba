@@ -26,12 +26,7 @@ import driemondglas.nl.zorba.databinding.ActivityMainBinding
 import java.util.*
 
 
-/* Top-level Properties:
- * below are the self chosen 'unique' request codes used to start the various activities */
-const val SHOW_CARDS_CODE = 3108
-const val THEME_WORDTYPE_CODE = 3208
-const val SELECTIES_CODE = 3308
-
+/* Top-level Properties: */
 const val DATABASE_URI = "https://driemondglas.nl/RESTgrieks_v4.php"
 const val TAG = "hvr"
 
@@ -51,6 +46,7 @@ var orderbyTag = ""       // initial lemma order is by index in table
 var orderDescending = true// highest index on top (newest first)
 var search = ""           // search text can be lemma (Greek) or meaning (Dutch)
 var flashed = false       // flag to signal to show only flashed lemma's
+var speechRate = 1.25f
 
 /* Jumpers:
  * Jumpers are lemmas with count of correct answers above the set threshold. "They jumped the threshold"
@@ -100,7 +96,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         myIntent.putExtra("idx", thisIdx)
         myIntent.putExtra("singlecard", true)
 
-        startActivityForResult(myIntent, SHOW_CARDS_CODE)
+        startActivity(myIntent)
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
     }
 
@@ -138,6 +134,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             jumpThreshold = getInt("jumpthreshold", 2)
             hideJumpers = getBoolean("hidejumpers", false)
             flashed = getBoolean("flashed", false)
+            speechRate = getFloat("speechrate", 1.0f)
         }
 
         val mainTitle = SpannableString(getString(R.string.title_main)).apply {
@@ -191,7 +188,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             if (selectedCount() > 0 ) {
                 val myIntent = Intent(this, FlashCard::class.java)
                 myIntent.putExtra("singlecard", false)
-                startActivityForResult(myIntent, SHOW_CARDS_CODE)
+                startActivity(myIntent)
                 overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
             } else {
                 colorToast(applicationContext, getString(R.string.warning_empty_cursor))
@@ -255,6 +252,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         /* set Greek as language for text to speech object */
         if (status == TextToSpeech.SUCCESS) {
             zorbaSpeaks.language = Locale("el_GR")
+            zorbaSpeaks.setSpeechRate(speechRate)
         } else {
             Log.d(TAG, getString(R.string.warning_speech_init))
             colorToast(context = this, msg = getString(R.string.warning_speech_init), fgColor = Color.RED)
@@ -263,7 +261,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     override fun onResume() {
         super.onResume()
-        binding.textSearch.setText (search)
+        // remove used search text
+        binding.textSearch.setText (search)  // ATTENTION this also reloads the recycle list with current data!
         zorbaSpeaks.language = Locale("el_GR")
     }
 
@@ -292,15 +291,15 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             R.id.menu_set_theme_wordtype -> {
                 /* launch the Thema/Woordsoort Selection Activity */
                 val myIntent = Intent(this, ThemeAndWordType::class.java)
-                startActivityForResult(myIntent, THEME_WORDTYPE_CODE)
+                startActivity(myIntent)
                 overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
             }
 
             /*  menu detail selecties */
-            R.id.menu_set_block_sort -> {
+            R.id.menu_set_details_sort -> {
                 /* launch the Selecties Activity */
                 val myIntent = Intent(this, FilterAndSort::class.java)
-                startActivityForResult(myIntent, SELECTIES_CODE)
+                startActivity(myIntent)
                 overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
             }
 
@@ -317,8 +316,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
             /* speech on/off */
             R.id.menu_speech -> {
-                useSpeech = !item.isChecked
                 item.isChecked = !item.isChecked
+                useSpeech = item.isChecked
                 recyclerViewAdapter.notifyDataSetChanged()
             }
 
@@ -339,7 +338,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         val db = zorbaDBHelper.readableDatabase
 
-        db.rawQuery(QueryManager.mainQuery(), null).run {
+        db.rawQuery(QueryManager.mainQuery(), null).apply {
             val col0 = getColumnIndex("PureLemma")
             val col1 = getColumnIndex("GR")
             val col2 = getColumnIndex("NL")
@@ -352,21 +351,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             close()
         }
         db.close()
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, myIntent: Intent?) {
-        /*
-         * This is the place where the activities/intents return after finishing
-         * you can pick up the result from each intent by looking at the request code used */
-        if (myIntent != null) {                      // to get rid of the Intent? null safety/* refresh data in the 'lemmaArrayList' using the changed selections */
-            /* refresh data in the 'lemmaArrayList' using the changed selections */
-            if (requestCode in listOf(SHOW_CARDS_CODE,THEME_WORDTYPE_CODE,SELECTIES_CODE)){
-                /* refresh data in the 'lemmaArrayList' using the changed selections */
-                refreshData()
-                recyclerViewAdapter.notifyDataSetChanged()
-            }
-        }
-        super.onActivityResult(requestCode, resultCode, myIntent)
     }
 
     /* Implement the 'about...' method invoked through the main menu */

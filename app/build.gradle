@@ -9,8 +9,8 @@ android {
         applicationId "driemondglas.nl.zorba"
         minSdkVersion 28
         targetSdkVersion 29
-        versionCode 136
-        versionName "3.2.0 view binding"
+        versionCode 141
+        versionName "3.3.1 Preferences speech"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
