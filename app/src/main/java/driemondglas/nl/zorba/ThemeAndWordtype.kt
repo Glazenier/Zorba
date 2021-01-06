@@ -56,10 +56,17 @@ class ThemeAndWordType : AppCompatActivity() {
         return true
     }
 
+    override fun onBackPressed() {
+        selectAndFinish()
+        super.onBackPressed()
+    }
+
+    /* return to calling activity */
     private fun selectAndFinish() {
-            // return to calling activity
+            // check if selection has changed so the cursor needs to get refreshed in the calling activity
+            val result = if (thema == originalTheme && wordType == originalType)  "unchanged" else "changed"
             val myIntent = Intent()
-            myIntent.putExtra("result", "selected")
+            myIntent.putExtra("result", result)
             setResult(RESULT_OK, myIntent)
             finish()
     }
@@ -84,14 +91,15 @@ class ThemeAndWordType : AppCompatActivity() {
             .apply()
     }
 
+    /* restore initial values */
     private fun cancelChanges() {
-        /* restore initial values */
         wordType = originalType
         thema = originalTheme
         zorbaPreferences.edit()
               .putString("theme", thema)
               .putString("wordtype", wordType)
               .apply()
+
         // go back to calling activity
         val myIntent = Intent()
         myIntent.putExtra("result", "cancel")
@@ -134,6 +142,7 @@ class ThemeAndWordType : AppCompatActivity() {
         var originalPosition = 0
         var runningPosition = 0
         allTypes.clear()
+
         // prepopulate arrayList with '★' (all)
         allTypes.add("★")
 
@@ -141,7 +150,7 @@ class ThemeAndWordType : AppCompatActivity() {
         // the number of records per wordtype (column "soorttotaal")
         val db = zorbaDBHelper.readableDatabase
         db.rawQuery(QueryManager.queryAllWordTypes, null).apply {
-            val col0 = getColumnIndex("woordsoort")
+            val col0 = getColumnIndex("Woordsoort")
             val col1 = getColumnIndex("soorttotaal")
             // step through the records (wordtypes)
             while (moveToNext()) {

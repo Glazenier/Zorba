@@ -22,8 +22,6 @@ import driemondglas.nl.zorba.Utils.enabled
 import driemondglas.nl.zorba.Utils.toggleVisibility
 import driemondglas.nl.zorba.databinding.VerbGameBinding
 
-
-
 class VerbGame : AppCompatActivity() {
 
     private lateinit var db: SQLiteDatabase        // shall be reference to the local sqlite database

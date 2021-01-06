@@ -438,10 +438,17 @@ class FilterAndSort : AppCompatActivity() {
         finish()
     }
 
+    override fun onBackPressed() {
+        goBack()
+        super.onBackPressed()
+    }
+
+    /* finish this intent, go back to calling activity, providing action result*/
     private fun goBack() {
-        // finish this intent, go back to calling activity, providing action result
+        // check if selection has changed so the cursor needs to get refreshed in the calling activity
+
         val myIntent = Intent()
-        myIntent.putExtra("result", "selected")
+        myIntent.putExtra("result", if (hasChanged()) "changed" else "unchanged")
         setResult(RESULT_OK, myIntent)
         finish()
     }
@@ -482,5 +489,19 @@ class FilterAndSort : AppCompatActivity() {
             .putBoolean("defaultflashed", flashed)
             .putFloat("defaultspeechrate", speechRate)
             .apply()
+    }
+
+    private fun hasChanged(): Boolean {
+        if (oldLevel1 != levelBasic || oldLevel2 != levelAdvanced || oldLevel3 != levelBallast) return true
+        if (oldUseLength != useLength) return true
+        if (useLength && oldPureLength != pureLemmaLength) return true
+        if (oldInitiaalGrieks != initial) return true
+        if (oldUseBlocks != useBlocks) return true
+        if (useBlocks && oldBlockSize != blockSize) return true
+        if (oldHideJumpers != hideJumpers) return true
+        if (oldSortTag != orderbyTag) return true
+        if (oldDescending != orderDescending) return true
+        if (oldFlashed != flashed) return true
+        return false
     }
 }

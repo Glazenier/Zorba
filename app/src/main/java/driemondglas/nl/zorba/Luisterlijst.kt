@@ -219,7 +219,7 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
                 val lemma = thisCursor.getString(thisCursor.getColumnIndex("PureLemma"))
                 var meaning = thisCursor.getString(thisCursor.getColumnIndex("NL"))
                 /* only first line */
-                meaning = meaning.substringBefore('\n')
+                meaning = meaning.substringBefore("\n").trim()
 
                 /* say it. */
                 hasStarted = false
@@ -238,7 +238,7 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
                 /* fade down text */
                 runOnUiThread {
                     var runningStart = 0
-                    val cleanMeaning = (meaning.substringBefore("\n")).trim()
+                    val cleanMeaning = meaning.substringBefore("\n").trim()
                     val lemmaLine = "$lemma ~ $cleanMeaning"
 
                     history = if (history.isEmpty()) lemmaLine else "$history\n$lemmaLine"

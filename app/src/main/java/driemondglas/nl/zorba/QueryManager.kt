@@ -1,10 +1,8 @@
 package driemondglas.nl.zorba
 
-import android.util.Log
-
 object QueryManager {
 
-    const val queryAllWordTypes = "SELECT Woordsoort AS woordsoort, Count(*) AS soorttotaal FROM woorden GROUP BY Woordsoort ORDER BY Woordsoort;"
+    const val queryAllWordTypes = "SELECT Woordsoort, Count(*) AS soorttotaal FROM woorden GROUP BY Woordsoort ORDER BY Woordsoort;"
     const val queryAllThemes = "SELECT Thema, Count(*) AS thematotaal FROM woorden WHERE woordsoort != 'liedtekst' GROUP BY Thema ORDER BY Thema;"
 
     /* translate lowercase greek letter to corresponding SQL WHERE clause that also contains accented variants of the same letter */
@@ -38,7 +36,7 @@ object QueryManager {
     private fun themaClause() = if (thema.isNotEmpty()) " AND thema = '$thema'" else ""
     private fun wordtypeClause() = if (wordType.isNotEmpty()) " AND woordsoort = '$wordType'" else ""
     private fun lengthClause() = if (pureLemmaLength != 0 && useLength) " AND PureLength = $pureLemmaLength" else ""
-    private fun initialClause() = if (initial.isNotEmpty()) " AND " + initialToClause[initial].toString() else ""
+    private fun initialClause() = if (initial.isNotEmpty()) " AND " + initialToClause[initial] else ""
     private fun searchClause() = if (search.isNotEmpty()) " AND ( GR like '%$search%' OR  NL like '%$search%') " else ""
     private fun thresholdClause() = if (hideJumpers) " AND  woorden.idx NOT IN (SELECT idx FROM jumpers) " else ""
 

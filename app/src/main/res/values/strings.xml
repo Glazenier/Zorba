@@ -69,8 +69,6 @@
     <string name="btn_caption_rewind">⏮</string>
     <string name="btn_caption_reset">🔄</string>
     <string name="btn_caption_active_passive">a/p</string>
-    <string name="btn_caption_default">standaard</string>
-    <string name="btn_caption_save_default">bewaar als\nstandaard</string>
     <string name="btn_caption_cancel">Cancel</string>
     <string name="btn_caption_select">Pas toe</string>
     <string name="btn_caption_clear">Reset</string>
@@ -138,7 +136,7 @@
 
     <!--MISCELLANEOUS-->
     <string name="clean_sweep">Clean sweep in %1$02dm:%2$02ds</string>
-    <string name="all_correct">Alle lemma`s in dit blok %1d keer correct beantwoord in %2$02dm:%3$02ds</string>
+    <string name="all_correct" tools:ignore="PluralsCandidate">Alle lemma`s in dit blok %1d keer correct beantwoord in %2$02dm:%3$02ds</string>
     <string name="hangman_meaning">Betekenis: %1$s</string>
     <string name="title_verb_present">Tegenwoordige tijd van %1$s:</string>
     <string name="title_verb_future">Toekomende tijd van %1$s:</string>

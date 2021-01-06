@@ -73,7 +73,6 @@ class Splash : AppCompatActivity() {
             Thread.sleep(ANIMATION_DELAY)
         }
         finish()
-        overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
     }
 }
 

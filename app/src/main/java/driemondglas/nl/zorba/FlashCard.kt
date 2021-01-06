@@ -27,6 +27,8 @@ import driemondglas.nl.zorba.Utils.toggleVisibility
 import driemondglas.nl.zorba.Utils.visible
 import driemondglas.nl.zorba.databinding.FlashcardBinding
 
+
+
 class FlashCard : AppCompatActivity() {
     
     private lateinit var binding: FlashcardBinding  // replaces synthetic view binding
@@ -130,14 +132,15 @@ class FlashCard : AppCompatActivity() {
             idxRequested = intent.getLongExtra("idx", 0)
 
             /* disable buttons when single lemma */
-            btnReveal.enabled(!singleLemma)
-            btnNextBlock.enabled(!singleLemma)
-            btnPrevBlock.enabled(!singleLemma)
+            btnReveal.visible(!singleLemma)
+            btnNextBlock.visible(!singleLemma)
+            btnPrevBlock.visible(!singleLemma)
 
             /* hide action labels */
             lblCorrect.visible(!singleLemma)
             lblWrong.visible(!singleLemma)
             lblPrev.visible(!singleLemma)
+            txtProgress.visible(!singleLemma)
 
 
             /* fetch the data */
@@ -194,8 +197,6 @@ class FlashCard : AppCompatActivity() {
         binding.btnPrevBlock.enabled(!singleLemma)
         binding.btnNextBlock.enabled(useBlocks && !singleLemma)
         db = zorbaDBHelper.readableDatabase
-        reQuery()
-        if (mainCursor.count>0) populateFields()
         super.onResume()
     }
 
@@ -217,13 +218,13 @@ class FlashCard : AppCompatActivity() {
             R.id.menu_set_theme_wordtype -> {
                 // launch the wordgroup/wordtype selection activity
                 val myIntent = Intent(this, ThemeAndWordType::class.java)
-                startActivity(myIntent)
+                startActivityForResult(myIntent, THEME_WORDTYPE)
                 overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
             }
             R.id.menu_set_details_sort -> {
                 // launch the detail selections and order-by activity
                 val myIntent = Intent(this, FilterAndSort::class.java)
-                startActivity(myIntent)
+                startActivityForResult(myIntent, DETAILS)
                 overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
             }
 
@@ -268,18 +269,18 @@ class FlashCard : AppCompatActivity() {
         return true
     }
 
-//    override fun onActivityResult(requestCode: Int, resultCode: Int, myIntent: Intent?) {
-//        /* when configuration changing activities are finished, they return here.
-//         * if result is a possible selection change, requery the data
-//         */
-//        if (requestCode == THEME_WORDTYPE_CODE || requestCode == SELECTIES_CODE) {
-//            if (myIntent?.getStringExtra("result") == "selected") {
-//                reQuery()
-//                if (mainCursor.count>0) populateFields()
-//            }
-//        }
-//        super.onActivityResult(requestCode, resultCode, myIntent)
-//    }
+    override fun onActivityResult(requestCode: Int, resultCode: Int, myIntent: Intent?) {
+        /* when configuration changing activities are finished, they return here.
+         * if result is a possible selection change, requery the data
+         */
+        if (requestCode in setOf( THEME_WORDTYPE, DETAILS, FLASHCARDS)) {
+            if (myIntent?.getStringExtra("result") == "changed") {
+                reQuery()
+                if (mainCursor.count>0) populateFields()
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, myIntent)
+    }
 
     /* re-execute the main query and get new set of data from database table */
     private fun reQuery() {

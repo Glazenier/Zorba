@@ -29,6 +29,10 @@ import java.util.*
 /* Top-level Properties: */
 const val DATABASE_URI = "https://driemondglas.nl/RESTgrieks_v4.php"
 const val TAG = "hvr"
+const val THEME_WORDTYPE = 3208
+const val DETAILS = 3308
+const val FLASHCARDS = 3408
+//const val LISTEN = 3508
 
 /* 'global' variables holding configuration data.
  *  Initial values are retrieved from shared preferences, including the default values */
@@ -95,7 +99,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         val myIntent = Intent(this, FlashCard::class.java)
         myIntent.putExtra("idx", thisIdx)
         myIntent.putExtra("singlecard", true)
-
         startActivity(myIntent)
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
     }
