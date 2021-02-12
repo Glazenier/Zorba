@@ -3,7 +3,12 @@
     <!--    background of the splash screen (activity)-->
     <item>
         <shape>
-            <gradient android:angle="90" android:centerColor="#E2500B" android:endColor="#20EEEE" android:startColor="#EBDA58" />
+            <gradient
+                    android:angle="90"
+                    android:centerColor="#E2500B"
+                    android:endColor="#20EEEE"
+                    android:startColor="#EBDA58"
+                    />
         </shape>
     </item>
 </selector>

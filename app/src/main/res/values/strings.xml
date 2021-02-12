@@ -20,7 +20,6 @@
     <string name="subtitle_filter_sort">Detail selecties, blokken en volgorde</string>
 
 <!--LABELS-->
-    <string name="lbl_lemmalist">Lemma\'s</string>
     <string name="lbl_themelist">Thema</string>
     <string name="lbl_wordtypelist">Woordsoort</string>
     <string name="lbl_search">Zoek:</string>
@@ -50,25 +49,25 @@
     <string name="lbl_false">✗</string>
     <string name="lbl_correct">Goed:</string>
     <string name="lbl_error">Fout:</string>
-    <string name="lbl_position">blok %1$d - lemma %2$d</string>
+    <string name="lbl_position">blok %1$d\nlemma %2$d</string>
     <string name="lbl_speed">tempo</string>
     <string name="lbl_speed_post">100%</string>
     <string name="lbl_jumper">↷</string>
-    <string name="lbl_flash_chk">Flash</string>
+    <string name="lbl_flash_chk">⚡</string>
     <string name="lbl_speech">Spraak</string>
 
 <!--captions-->
     <string name="btn_caption_ok">🆗</string>
-    <string name="btn_caption_notok">\⛔</string>
+    <string name="btn_caption_notok">🚫</string>
     <string name="btn_caption_again">Opnieuw</string>
-    <string name="btn_caption_next_block">▶⫴</string>
-    <string name="btn_caption_prev_block">⫴◀</string>
+    <string name="btn_caption_next_block">⎘</string>
+    <string name="btn_caption_prev_block">⎗</string>
     <string name="btn_caption_speak">🔈</string>
     <string name="btn_caption_play">▶</string>
     <string name="btn_caption_pause">⏸</string>
     <string name="btn_caption_rewind">⏮</string>
     <string name="btn_caption_reset">🔄</string>
-    <string name="btn_caption_active_passive">a/p</string>
+    <string name="btn_caption_active_passive">🏃💤</string>
     <string name="btn_caption_cancel">Cancel</string>
     <string name="btn_caption_select">Pas toe</string>
     <string name="btn_caption_clear">Reset</string>
@@ -83,6 +82,7 @@
     <string name="btn_caption_imperative">προσ</string>
     <string name="btn_caption_showall">όλοι</string>
     <string name="btn_caption_reveal">👁</string>
+    <string name="btn_caption_4tenses">4 tijden</string>
 
 <!--MENU CAPTIONS-->
     <string name="menu_caption_about">ⓘ Over Zorba…</string>

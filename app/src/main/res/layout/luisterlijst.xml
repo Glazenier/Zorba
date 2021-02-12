@@ -11,10 +11,10 @@
             android:id="@+id/btn_next_block"
             android:layout_width="@dimen/btn_main_width"
             android:layout_height="@dimen/btn_main_height"
-            android:layout_marginEnd="8dp"
+            android:layout_marginEnd="4dp"
             android:layout_marginBottom="16dp"
             android:text="@string/btn_caption_next_block"
-            android:textSize="24sp"
+            android:textSize="36sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             />
@@ -25,7 +25,7 @@
             android:layout_marginStart="4dp"
             android:layout_marginBottom="16dp"
             android:text="@string/btn_caption_prev_block"
-            android:textSize="24sp"
+            android:textSize="36sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             />
@@ -35,8 +35,9 @@
             android:layout_height="@dimen/btn_main_height"
             android:layout_marginBottom="16dp"
             android:gravity="center"
+            android:paddingTop="3dp"
             android:text="@string/btn_caption_play"
-            android:textSize="44sp"
+            android:textSize="36sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toEndOf="@+id/btn_rewind"
             />
@@ -47,7 +48,7 @@
             android:layout_marginBottom="16dp"
             android:gravity="center"
 
-            android:textSize="44sp"
+            android:textSize="36sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toEndOf="@+id/btn_play"
             />
@@ -56,8 +57,9 @@
             android:layout_width="@dimen/btn_main_width"
             android:layout_height="@dimen/btn_main_height"
             android:layout_marginBottom="16dp"
+            android:paddingTop="3dp"
             android:text="@string/btn_caption_rewind"
-            android:textSize="44sp"
+            android:textSize="36sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toEndOf="@+id/btn_prev_block"
             />

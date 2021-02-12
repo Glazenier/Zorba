@@ -25,7 +25,7 @@ import java.util.*
 private val blue = Paint()
 
 /* constants to size and place flag and Zorba graphic */
-const val X0_ZORBA = 240f
+const val X0_ZORBA = 120f
 const val Y0_ZORBA = 1000f
 const val X0_FLAG = 240f
 const val Y0_FLAG = 50f

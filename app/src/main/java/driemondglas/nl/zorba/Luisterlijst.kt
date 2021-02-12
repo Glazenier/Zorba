@@ -18,7 +18,7 @@ import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
-import driemondglas.nl.zorba.Utils.enabled
+import driemondglas.nl.zorba.Utils.enable
 import driemondglas.nl.zorba.databinding.LuisterlijstBinding
 import java.util.*
 import kotlin.concurrent.thread
@@ -117,7 +117,7 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
             startStop()
         }
         binding.btnPlay.setOnClickListener { startStop() }
-        binding.btnPlay.enabled(useSpeech)
+        binding.btnPlay.enable(useSpeech)
 
         binding.btnRewind.setOnClickListener {
             positionInBlock = 0
@@ -163,7 +163,7 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
             R.id.menu_speech -> {
                 item.isChecked = !item.isChecked
                 useSpeech = item.isChecked
-                binding.btnPlay.enabled(useSpeech)
+                binding.btnPlay.enable(useSpeech)
                 stopTalking = true
                 spreker.stop()
             }

@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.speech.tts.TextToSpeech
+import android.util.Log
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
@@ -21,11 +22,11 @@ val inBracketsRegex = Regex( """\(.*?\)""")
 
 /* function is called from the menu item 'Clear All' to reset all selections made by user. */
 fun clearAll() {
-    resetThemeType()
+    resetThemeAndType()
     resetDetails()
 }
 
-fun resetThemeType(){
+fun resetThemeAndType(){
     thema = ""
     wordType = ""
     search = ""
@@ -109,7 +110,7 @@ fun cleanSpeech(rawText: String, wordType: String) {
                     * matchResult.groups[1]: noun
                     * matchResult.groups[2]: article */
 
-            /* multiple lines of similar nouns are possible, so assess all lines */
+            // multiple lines of similar nouns are possible, so assess all lines
             rawText.lines().forEach {
                 val matchResult = articleRegex.find(it)
                 if (matchResult != null) {
@@ -124,7 +125,7 @@ fun cleanSpeech(rawText: String, wordType: String) {
                          *  an extra ',' is inserted to ensure we hear two separate 'o's */
                         if (unStressOneChar(noun.first()) == 'ο' && article.last() == 'ο') article += ','
 
-                        /* Same thing for ee-sound (ie-klank) */
+                        // Same thing for ee-sound (ie-klank)
                         if (eeStartSound.find(noun) != null && (article == "η" || article == "οι")) article += ','
                         result += "$article $noun,"
                     }
@@ -135,7 +136,7 @@ fun cleanSpeech(rawText: String, wordType: String) {
         }
 
         "lidwoord" -> {
-            result = rawText.replace(" ", ",")
+            result = rawText.replace("""\s+""".toRegex(), ",") + "."
         }
 
         "werkwoord" -> {
@@ -147,7 +148,7 @@ fun cleanSpeech(rawText: String, wordType: String) {
             result += "."
         }
         
-        else -> {   /* Standard clean-up for other word types: */
+        else -> {   // Standard clean-up for other word types:
 
             /* 1: In speech output we don't want text in brackets */
             result = rawText.replace(inBracketsRegex, "")
@@ -159,11 +160,11 @@ fun cleanSpeech(rawText: String, wordType: String) {
             result = result.replace("=", ",")
         }
     }
-//    Log.d(TAG, "cleanSpeech: $result")
+    Log.d(TAG, "cleanSpeech: $result")
     zorbaSpeaks.speak(result, TextToSpeech.QUEUE_FLUSH, null, "")
 }
 
-/* This function returns all the greek characters from top line of the text until non greek is found */
+/* This function returns all the greek characters from first line of the text until non greek is found */
 val firstWordRegex = Regex("""^[\p{InGreek}]*""")
 fun getEnestotas(textGreek: String): String = firstWordRegex.find(textGreek)?.value ?: ""
 
@@ -199,22 +200,25 @@ fun buildHTMLtable(textGreek: String): String {
     if (par.size < 5) par = listOf("", "", "", "", "", "")
     if (aor.size < 5) aor = listOf("", "", "", "", "", "")
     if (pro.size < 2) pro = listOf("", "")
-    var htmlText = "<table>"
-
-    // top header row
-    htmlText += "<tr><th style='border: 1px solid black; background-color:gold;' >ENESTOTAS</th><th style='border: 1px solid black; background-color:gold;'>MELLONTAS</th></tr>"
+    var htmlText = """
+<table style='font-size: 0.75em;'>
+  <tr>
+    <th style='border: 1px solid black; background-color:gold;'>ENESTOTAS</th>
+    <th style='border: 1px solid black; background-color:gold;'>MELLONTAS</th>
+    <th style='border: 1px solid black; background-color:gold;'>AORISTOS</th>
+    <th style='border: 1px solid black; background-color:gold;'>PARATATIKOS</th>
+  </tr>
+"""
     // conjugations
-    for (i in 0..5) htmlText += "<tr><td>${ene[i]}</td><td>${mel[i]}</td></tr>"
-
-    // middle header row
-    htmlText += "<tr><th style='border: 1px solid black; background-color:gold;'>PARATATIKOS</th><th style='border: 1px solid black; background-color:gold;'>AORISTOS</th></tr>"
-    // conjugations
-    for (i in 0..5) htmlText += "<tr><td>${par[i]}</td><td>${aor[i]}</td></tr>"
+    for (i in 0..5) htmlText += "  <tr><td>${ene[i]}</td><td>${mel[i]}</td><td>${aor[i]}</td><td>${par[i]}</td></tr>" + "\n"
 
     // imperatief προστακτική
-    htmlText += "<tr><th colspan=2 style='border: 1px solid black; background-color:gold;' >PROSTAKTIKI</th></tr>"
-    htmlText += "<tr><td>${pro[0]}</td><td>${pro[1]}</td></tr>"
-    htmlText += "</table>"
+    htmlText += """  <tr>
+    <th colspan=2 style='border: 1px solid black; background-color:gold;'>PROSTAKTIKI</th>
+    <td style='border-top: 1px solid black;'>${pro[0]}</td>
+    <td style='border-top: 1px solid black;'>${pro[1]}</td>
+  </tr>
+</table>"""
     return htmlText
 }
 
@@ -280,7 +284,7 @@ fun conjugateEnestotas(textGreek: String): List<String> {
 
     return when (verbType) {
         "A1" -> listOf("ω",     "εις",   "ει",     "ουμε",      "ετε",  "ουν"     ).map { stem + it }
-        "A2" -> listOf("ω",     "ς",     "ει",     "με",        "τε",   "νε"      ).mapIndexed { idx, it -> (if (oneSyllable && idx == 1) stem.unStress() else stem) + it }
+        "A2" -> listOf("ω",     "ς",     "ει",     "με",        "τε",   "ν(ε)"    ).mapIndexed { idx, it -> (if (oneSyllable && idx == 1) stem.unStress() else stem) + it }
         "B1" -> listOf("άω(ώ)", "άς",    "άει(ά)", "άμε(ούμε)", "άτε",  "άνε(ούν)").map { stem + it }
         "B2" -> listOf("ώ",     "είς",   "εί",     "ούμε",      "είτε",  "ούν"    ).map { stem + it }
         "B3" -> listOf("ώ",     "άς",    "ά",      "ούμε",      "άτε",   "ούν"    ).map { stem + it }
@@ -483,28 +487,28 @@ fun createProstaktiki(textGreek: String): List<String> {
 }
 
 fun colorToast(context: Context, msg: String, bgColor: Int = Color.DKGRAY, fgColor: Int = Color.WHITE, duration: Int = 0) {
-    /* create the normal Toast message */
+    // create the normal Toast message
     val myToast = Toast.makeText(context, msg, if (duration == 0) Toast.LENGTH_SHORT else Toast.LENGTH_LONG)
 
-    /* create a reference to the view that holds this Toast */
+    // create a reference to the view that holds this Toast
     val myView = myToast.view
 
-    /* create a reference to the text-view part of the Toast */
+    // create a reference to the text-view part of the Toast
     val myText = myView.findViewById(android.R.id.message) as TextView
 
-    /* change the text color */
+    // change the text color
     myText.setTextColor(fgColor)
 
-    /* create background */
+    // create background
     val gd = GradientDrawable().apply {
         setColor(bgColor)
         cornerRadius = 30f
         setStroke(5, Color.BLACK)
     }
-    /* set background to view*/
+    // set background to view
     myView.background = gd
 
-    /* and  finally ... show this differently colored Toast */
+    // and  finally ... show this differently colored Toast
     myToast.show()
 }
 
@@ -545,8 +549,7 @@ object Utils {
 
     /* Extension function normalize
      * input: string containing any diacritic or accented vowel.
-     * output: same string without diacritic or ather marks.
-     */
+     * output: same string without diacritic or ather marks. */
     private val allDiacriticVowels  = "άέήίϊΐόύϋΰώ".toCharArray()
     private val allNormalizedVowels = "αεηιιιουυυω".toCharArray()
 
@@ -560,7 +563,7 @@ object Utils {
         }.joinToString("")
     }
 
-    fun View.enabled(isEnabled: Boolean) {
+    fun View.enable(isEnabled: Boolean) {
         alpha = if (isEnabled) 1f else 0.3f   // high transparency looks like greyed out
         isClickable = isEnabled
     }
@@ -568,10 +571,6 @@ object Utils {
     fun View.visible(isVisible: Boolean = true) {
         visibility = if (isVisible) View.VISIBLE else View.INVISIBLE
     }
-
-//    fun View.gone(setGone: Boolean = true) {
-//        visibility = if (setGone) View.GONE else View.VISIBLE
-//    }
 
     /* extension function for Views: toggles visibility on/off */
     fun View.toggleVisibility() {

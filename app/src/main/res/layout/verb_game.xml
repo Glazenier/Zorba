@@ -16,6 +16,7 @@
             android:checked="true"
             android:drawableEnd="?android:attr/listChoiceIndicatorMultiple"
             android:text="-ω"
+            android:textSize="12dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/chk_type2"
             />
@@ -28,6 +29,7 @@
             android:checked="true"
             android:drawableEnd="?android:attr/listChoiceIndicatorMultiple"
             android:text="Passief: -μαι"
+            android:textSize="12dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/lbl_level2"
             />
@@ -40,6 +42,7 @@
             android:checked="true"
             android:drawableEnd="?android:attr/listChoiceIndicatorMultiple"
             android:text="-άω, -ώ"
+            android:textSize="12dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/chk_type3"
             />
@@ -50,7 +53,7 @@
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
             android:layout_marginEnd="8dp"
-            android:background="@drawable/item_background"
+            android:background="@drawable/background_with_border"
             android:fontFamily="@font/tinos_italic"
             android:gravity="start|center_vertical"
             android:letterSpacing="0.02"
@@ -206,6 +209,7 @@
             android:checked="true"
             android:onClick="onTenseClick"
             android:text="Ενεστώτας"
+            android:textSize="12sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/lbl_tijdsvorm"
             />
@@ -217,6 +221,7 @@
             android:checked="true"
             android:onClick="onTenseClick"
             android:text="Μέλλοντας"
+            android:textSize="12sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/chk_enestotas"
             />
@@ -228,6 +233,7 @@
             android:checked="true"
             android:onClick="onTenseClick"
             android:text="Αόριστος"
+            android:textSize="12sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/chk_mellontas"
             />
@@ -239,6 +245,7 @@
             android:checked="true"
             android:onClick="onTenseClick"
             android:text="Παρατατικός"
+            android:textSize="12sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/chk_aoristos"
             />
@@ -249,6 +256,7 @@
             android:layout_marginStart="4dp"
             android:onClick="onTenseClick"
             android:text="Προστακτική"
+            android:textSize="12sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/chk_paratatikos"
             />
@@ -271,7 +279,7 @@
             android:onClick="onPersonClick"
             android:tag="0"
             android:text="εγώ"
-            android:textSize="14sp"
+            android:textSize="12sp"
             app:layout_constraintBottom_toTopOf="@+id/chk_2"
             app:layout_constraintStart_toEndOf="@+id/divider_vert_1"
             />
@@ -284,7 +292,7 @@
             android:onClick="onPersonClick"
             android:tag="1"
             android:text="εσύ"
-            android:textSize="14sp"
+            android:textSize="12sp"
             app:layout_constraintBottom_toTopOf="@+id/chk_3"
             app:layout_constraintStart_toEndOf="@+id/divider_vert_1"
             />
@@ -297,7 +305,7 @@
             android:onClick="onPersonClick"
             android:tag="2"
             android:text="αυτός, -ή, -ό"
-            android:textSize="14sp"
+            android:textSize="12sp"
             app:layout_constraintBottom_toTopOf="@+id/chk_4"
             app:layout_constraintStart_toEndOf="@+id/divider_vert_1"
             />
@@ -310,7 +318,7 @@
             android:onClick="onPersonClick"
             android:tag="3"
             android:text="εμείς"
-            android:textSize="14sp"
+            android:textSize="12sp"
             app:layout_constraintBottom_toTopOf="@+id/chk_5"
             app:layout_constraintStart_toEndOf="@+id/divider_vert_1"
             />
@@ -323,7 +331,7 @@
             android:onClick="onPersonClick"
             android:tag="4"
             android:text="εσείς"
-            android:textSize="14sp"
+            android:textSize="12sp"
             app:layout_constraintBottom_toTopOf="@+id/chk_6"
             app:layout_constraintStart_toEndOf="@+id/divider_vert_1"
             />
@@ -337,7 +345,7 @@
             android:onClick="onPersonClick"
             android:tag="5"
             android:text="αυτοί, -ές, -ά"
-            android:textSize="14sp"
+            android:textSize="12sp"
             app:layout_constraintBottom_toTopOf="@+id/divider2"
             app:layout_constraintStart_toEndOf="@+id/divider_vert_1"
             />
@@ -360,6 +368,7 @@
             android:layout_marginEnd="8dp"
             android:checked="true"
             android:text="@string/lbl_basis"
+            android:textSize="12dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/lbl_level"
             />
@@ -372,6 +381,7 @@
             android:checked="false"
             android:elevation="2dp"
             android:text="@string/lbl_advanced"
+            android:textSize="12dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/sw_level_basis"
             />
@@ -383,6 +393,7 @@
             android:layout_marginEnd="8dp"
             android:checked="false"
             android:text="@string/lbl_nice2know"
+            android:textSize="12dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/sw_level_gevorderd"
             />
@@ -391,7 +402,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="4dp"
-            android:format="%s"
             android:textSize="24sp"
             app:layout_constraintBottom_toTopOf="@+id/divider5"
             app:layout_constraintEnd_toStartOf="@+id/lbl_total"
@@ -407,30 +417,38 @@
             />
     <Button
             android:id="@+id/btn_show_ladder"
-            android:layout_width="80dp"
+            android:layout_width="66dp"
             android:layout_height="@dimen/btn_nav_height"
             android:layout_marginBottom="4dp"
+            android:paddingStart="1dp"
+            android:paddingEnd="1dp"
             android:text="@string/btn_caption_ladder"
             android:textAllCaps="false"
             android:textColor="@color/blue_text_color"
+            android:textSize="14sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toEndOf="@id/btn_verbal"
             />
     <Button
             android:id="@+id/btn_verbal"
-            android:layout_width="60dp"
+            android:layout_width="66dp"
             android:layout_height="@dimen/btn_nav_height"
             android:layout_marginBottom="4dp"
-            android:text="@string/btn_caption_speak"
-            android:textSize="24sp"
+            android:paddingStart="1dp"
+            android:paddingEnd="1dp"
+            android:text="@string/btn_caption_4tenses"
+            android:textAllCaps="false"
+            android:textSize="14sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             />
     <Button
             android:id="@+id/btn_previous"
-            android:layout_width="80dp"
+            android:layout_width="66dp"
             android:layout_height="@dimen/btn_nav_height"
             android:layout_marginBottom="4dp"
+            android:paddingStart="1dp"
+            android:paddingEnd="1dp"
             android:text="@string/btn_caption_previous"
             android:textAllCaps="false"
             android:textColor="@color/normal_text_color"
@@ -439,9 +457,11 @@
             />
     <Button
             android:id="@+id/btn_fout"
-            android:layout_width="90dp"
+            android:layout_width="80dp"
             android:layout_height="@dimen/btn_nav_height"
             android:layout_marginBottom="4dp"
+            android:paddingStart="1dp"
+            android:paddingEnd="1dp"
             android:text="@string/btn_caption_restart"
             android:textAllCaps="false"
             android:textColor="@color/colorAccent"
@@ -450,10 +470,12 @@
             />
     <Button
             android:id="@+id/btn_go"
-            android:layout_width="90dp"
+            android:layout_width="80dp"
             android:layout_height="@dimen/btn_nav_height"
-            android:layout_marginEnd="8dp"
+            android:layout_marginEnd="4dp"
             android:layout_marginBottom="4dp"
+            android:paddingStart="1dp"
+            android:paddingEnd="1dp"
             android:text="@string/btn_caption_checknext"
             android:textAllCaps="false"
             android:textColor="@color/colorPrimary"

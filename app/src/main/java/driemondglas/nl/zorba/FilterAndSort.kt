@@ -173,7 +173,7 @@ class FilterAndSort : AppCompatActivity() {
                 overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
             }
             R.id.menu_clear_selects -> {
-                resetThemeType()
+                resetThemeAndType()
                 restoreDefaults()
             }
 

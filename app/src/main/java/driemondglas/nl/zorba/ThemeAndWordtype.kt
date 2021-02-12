@@ -111,23 +111,21 @@ class ThemeAndWordType : AppCompatActivity() {
         var originalPosition = 0
         var runningPosition = 0
         allThemes.clear()
+        allThemes.add("★")  // prepopulate arrayList with '★' (all)
 
-        // prepopulate arrayList with '★' (all)
-        allThemes.add("★")
-
-        // this query returns all distinct themes (column "Thema") and
-        // the number of records per theme (column "thematotaal")
         val db = zorbaDBHelper.readableDatabase
+        // the query queryAllThemes returns all distinct themes (column "Thema") and
+        // the number of records per theme (column "thematotaal")
         db.rawQuery(QueryManager.queryAllThemes, null).apply {
-            val col0 = getColumnIndex("Thema")
-            val col1 = getColumnIndex("thematotaal")
+            val colTheme = getColumnIndex("Thema")
+            val colCount = getColumnIndex("thematotaal")
             // step through the records (themes)
             while (moveToNext()) {
-                val thema = getString(col0)
-                val themaTotaal = getInt(col1)
-                allThemes.add("$thema ($themaTotaal)")
+                val wordTheme = getString(colTheme)
+                val themeCount = getInt(colCount)
+                allThemes.add("$wordTheme ($themeCount)")
                 runningPosition++
-                if (thema == originalTheme) originalPosition = runningPosition
+                if (wordTheme == originalTheme) originalPosition = runningPosition
             }
             close()
         }
@@ -141,24 +139,24 @@ class ThemeAndWordType : AppCompatActivity() {
     private fun populateWordTypes() {
         var originalPosition = 0
         var runningPosition = 0
+
         allTypes.clear()
+        allTypes.add("★") // prepopulate arrayList with '★' (all)
 
-        // prepopulate arrayList with '★' (all)
-        allTypes.add("★")
-
-        // this query returns all distinct wordtypes (column "woordsoort") and
-        // the number of records per wordtype (column "soorttotaal")
         val db = zorbaDBHelper.readableDatabase
+
+        // the query queryAllWordTypes returns all distinct wordtypes (column "woordsoort") and
+        // the number of records per wordtype (column "soorttotaal")
         db.rawQuery(QueryManager.queryAllWordTypes, null).apply {
-            val col0 = getColumnIndex("Woordsoort")
-            val col1 = getColumnIndex("soorttotaal")
+            val colType = getColumnIndex("Woordsoort")
+            val colCount = getColumnIndex("soorttotaal")
             // step through the records (wordtypes)
             while (moveToNext()) {
-                val woordsoort = getString(col0)
-                val soorttotaal = getInt(col1)
-                allTypes.add("$woordsoort ($soorttotaal)")
+                val wordType = getString(colType)
+                val typeCount = getInt(colCount)
+                allTypes.add("$wordType ($typeCount)")
                 runningPosition++
-                if (woordsoort == originalType) originalPosition = runningPosition
+                if (wordType == originalType) originalPosition = runningPosition
             }
             close()
         }

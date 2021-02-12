@@ -6,7 +6,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import java.util.*
-import driemondglas.nl.zorba.Utils.visible
 
 class LemmaRecyclerAdapter(private val lemmaArrayList: ArrayList<LemmaItem>) : RecyclerView.Adapter<LemmaRecyclerAdapter.MyViewHolder>() {
     private var viewHolderClickListener: View.OnClickListener? = null
@@ -22,13 +21,12 @@ class LemmaRecyclerAdapter(private val lemmaArrayList: ArrayList<LemmaItem>) : R
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
         with(holder) {
-            meaningNl.text = lemmaArrayList[position].meaningNL
-
-            meaningNl.visibility = if (showDutch) View.VISIBLE else View.GONE
             val thisidx = lemmaArrayList[position].idx
             lemmaGr.text = lemmaArrayList[position].pureLemma
             lemmaGr.visibility = if (showGreek) View.VISIBLE else View.GONE
-            thisFlash.visible(zorbaDBHelper.isFlashed(thisidx.toInt()))
+            meaningNl.text = lemmaArrayList[position].meaningNL
+            meaningNl.visibility = if (showDutch) View.VISIBLE else View.GONE
+            thisFlash.visibility = if (zorbaDBHelper.isFlashed(thisidx.toInt())) View.VISIBLE else View.GONE
         }
     }
 

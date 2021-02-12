@@ -51,6 +51,9 @@
     </Properties>
     <XML>
       <option name="XML_ATTRIBUTE_WRAP" value="0" />
+      <option name="XML_TEXT_WRAP" value="0" />
+      <option name="XML_KEEP_LINE_BREAKS" value="true" />
+      <option name="XML_SPACE_INSIDE_EMPTY_TAG" value="false" />
     </XML>
     <codeStyleSettings language="Properties">
       <option name="ALIGN_GROUP_FIELD_DECLARATIONS" value="true" />

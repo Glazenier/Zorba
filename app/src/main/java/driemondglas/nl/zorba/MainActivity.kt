@@ -50,7 +50,7 @@ var orderbyTag = ""       // initial lemma order is by index in table
 var orderDescending = true// highest index on top (newest first)
 var search = ""           // search text can be lemma (Greek) or meaning (Dutch)
 var flashed = false       // flag to signal to show only flashed lemma's
-var speechRate = 1.25f
+var speechRate = 1f       // speech speed
 
 /* Jumpers:
  * Jumpers are lemmas with count of correct answers above the set threshold. "They jumped the threshold"
@@ -88,16 +88,12 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
          *  This viewHolder will contain the values needed for the item. */
         val viewHolder = view.tag as RecyclerView.ViewHolder
 
-        /* retrieve position (index) of the clicked item */
+        // retrieve position (index) of the clicked item
         val position = viewHolder.adapterPosition
 
-        /* lookup the item in the ArrayList */
-        val thisLemmaItem: LemmaItem = lemmaArrayList[position]
-
-        val thisIdx = thisLemmaItem.idx
-
+        // display the item in a single flashcard
         val myIntent = Intent(this, FlashCard::class.java)
-        myIntent.putExtra("idx", thisIdx)
+        myIntent.putExtra("idx", lemmaArrayList[position].idx)
         myIntent.putExtra("singlecard", true)
         startActivity(myIntent)
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
@@ -106,12 +102,12 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        /* FIRST launch the Splash Activity , note: done before  inflation of the main activity layout*/
+        // FIRST launch the Splash Activity , note: done before  inflation of the main activity layout
         val splashIntent = Intent(this, Splash::class.java)
         startActivity(splashIntent)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
-        /*  inflate the layout file for this activity */
+        //  inflate the layout file for this activity
         setContentView(binding.root)
 
         zorbaDBHelper = ZorbaDBHelper(applicationContext)
@@ -120,7 +116,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         clipboardManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
 
-        /* retrieve config from shared preferences  */
+        // retrieve config from shared preferences
         with(zorbaPreferences) {
             useBlocks = getBoolean("useblocks", true)
             blockSize = getInt("blocksize", 5)
@@ -138,6 +134,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             hideJumpers = getBoolean("hidejumpers", false)
             flashed = getBoolean("flashed", false)
             speechRate = getFloat("speechrate", 1.0f)
+            search = getString("search", "") ?: ""
         }
 
         val mainTitle = SpannableString(getString(R.string.title_main)).apply {
@@ -146,44 +143,47 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             setSpan(RelativeSizeSpan(0.75f), 5, 15, 0)
         }
 
-        /* create action bar on top */
+        // create action bar on top
         supportActionBar?.apply {
             setDisplayShowHomeEnabled(true)
             title = mainTitle
             setIcon(R.drawable.greneth)
         }
 
-        /* Init reference to tts */
+        // Init reference to tts
         zorbaSpeaks = TextToSpeech(applicationContext, this)
 
-        /* set listener for changes in search field   */
+        // set listener for changes in search field
         binding.textSearch.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(searchWhat: Editable) = onSearch(searchWhat)
             override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
         })
 
-        /* create jumpers table if it does not exist yet */
+        binding.textSearch.setText(search)
+
+        // create jumpers table if it does not exist yet
         zorbaDBHelper.assessJumperTable()
 
-        /* create local flashed table if it does not exist yet */
+        // create local flashed table if it does not exist yet
         zorbaDBHelper.assessFlashTable()
 
-        /* initialise the recyclerView for the lemma's on the front page */
+        // initialise the recyclerView for the lemma's on the front page
         val recyclerView = findViewById<RecyclerView>(R.id.recycler_view)
 
-        /* fill up with lemma's */
+        // fill her up with lemma's
         refreshData()
 
-        /* declare the adapter that attaches the data to the view
-         * this also initialises the click listener */
+        // declare the adapter that attaches the data to the view
+        // this also initialises the click listener
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = recyclerViewAdapter
 
-        /* create and set OnItemClickListener to the adapter, that in turn sets it to the viewholder */
+        // create and set OnItemClickListener to the adapter, that in turn sets it to the viewholder
         recyclerViewAdapter.setOnItemClickListener(onItemClickListener)
 
-        /* attach listeners to the front page buttons */
+        // attach listeners to the front page buttons:
+
         /*** open FLASHCARDS ***/
         binding.btnOpenDeck.setOnClickListener {
             /* launch the FlashCard Activity */
@@ -191,7 +191,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             if (selectedCount() > 0 ) {
                 val myIntent = Intent(this, FlashCard::class.java)
                 myIntent.putExtra("singlecard", false)
-                startActivity(myIntent)
+                startActivityForResult(myIntent, FLASHCARDS)
                 overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
             } else {
                 colorToast(applicationContext, getString(R.string.warning_empty_cursor))
@@ -230,19 +230,19 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
         }
 
-        /*  pressing the Greek flag toggles the Greek text on/off */
-        binding.imgFlagGreek.setOnClickListener {
+        //  pressing the Greek flag toggles the Greek text on/off
+        binding.btnFlagGreek.setOnClickListener {
             if (recyclerViewAdapter.showDutch) recyclerViewAdapter.showGreek = !recyclerViewAdapter.showGreek
             recyclerViewAdapter.notifyDataSetChanged()
         }
 
-        /*  pressing the Dutch flag toggles the Dutch text on/off */
-        binding.ibtnFlagNl.setOnClickListener {
+        //  pressing the Dutch flag toggles the Dutch text on/off
+        binding.flagNlBtn.setOnClickListener {
             if (recyclerViewAdapter.showGreek) recyclerViewAdapter.showDutch = !recyclerViewAdapter.showDutch
             recyclerViewAdapter.notifyDataSetChanged()
         }
 
-        binding.btnClear.setOnClickListener {
+        binding.btnClearSearch.setOnClickListener {
             binding.textSearch.setText("")
             val inputManager: InputMethodManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             @Suppress("RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
@@ -252,7 +252,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     /* overriding onInit() is needed for the TextToSpeech.OnInitListener */
     override fun onInit(status: Int) {
-        /* set Greek as language for text to speech object */
+        // set Greek as language for text to speech object
         if (status == TextToSpeech.SUCCESS) {
             zorbaSpeaks.language = Locale("el_GR")
             zorbaSpeaks.setSpeechRate(speechRate)
@@ -264,8 +264,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     override fun onResume() {
         super.onResume()
-        // remove used search text
-        binding.textSearch.setText (search)  // ATTENTION this also reloads the recycle list with current data!
+        // runs when focus returns from config changes or other activity
         zorbaSpeaks.language = Locale("el_GR")
     }
 
@@ -273,28 +272,26 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         // Shutdown TTS
         zorbaSpeaks.stop()
         zorbaSpeaks.shutdown()
-        zorbaPreferences.edit().putInt("last_viewed_block", 0).apply()
         super.onDestroy()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         /*  Inflate the menu from the layout file
-         *  this adds menu items to the action bar if it is present.
-         */
+         *  this adds menu items to the action bar if it is present. */
         menuInflater.inflate(R.menu.menu_main, menu)
         menu.findItem(R.id.menu_speech).isChecked = useSpeech
         return true
     }
 
+    /* Handle action bar (menu) item clicks here. */
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        /* Handle action bar (menu) item clicks here. */
 
         when (item.itemId) {
             /* menu set theme/wordtype */
             R.id.menu_set_theme_wordtype -> {
                 /* launch the Thema/Woordsoort Selection Activity */
                 val myIntent = Intent(this, ThemeAndWordType::class.java)
-                startActivity(myIntent)
+                startActivityForResult(myIntent, THEME_WORDTYPE)
                 overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
             }
 
@@ -302,7 +299,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             R.id.menu_set_details_sort -> {
                 /* launch the Selecties Activity */
                 val myIntent = Intent(this, FilterAndSort::class.java)
-                startActivity(myIntent)
+                startActivityForResult(myIntent, DETAILS)
                 overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
             }
 
@@ -333,10 +330,23 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         return true
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, myIntent: Intent?) {
+        super.onActivityResult(requestCode, resultCode, myIntent)
+        /* when configuration changing activities are finished, they return here.
+         * if result is a possible selection change, requery the data */
+        if (resultCode== RESULT_OK) {
+            if (requestCode in setOf(THEME_WORDTYPE, DETAILS, FLASHCARDS)) {
+                if (myIntent?.getStringExtra("result") == "changed") {
+                    refreshData()
+                    recyclerViewAdapter.notifyDataSetChanged()
+                }
+            }
+        }
+    }
+
     /* method clears the existing array list and refills it with fresh data from the local database */
     private fun refreshData() {
-
-        /* remove existing content */
+        // remove existing content
         lemmaArrayList.clear()
 
         val db = zorbaDBHelper.readableDatabase
@@ -348,7 +358,12 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             val col3 = getColumnIndex("Woordsoort")
             val col4 = getColumnIndex("idx")
             while (moveToNext()) {
-                val lemmaItem = LemmaItem(getString(col0), getString(col1), getString(col2), getString(col3), getLong(col4))
+                val lemmaItem = LemmaItem(
+                    getString(col0),
+                    getString(col1),
+                    getString(col2),
+                    getString(col3),
+                    getLong(col4))
                 lemmaArrayList.add(lemmaItem)
             }
             close()
@@ -431,7 +446,13 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun onSearch(searchText: CharSequence) {
+        // set global variable
         search = searchText.toString()
+
+        // save in preferences so we can restart from where we left off
+        zorbaPreferences.edit().putString("search", search).apply()
+
+        // show in recycler list
         refreshData()
         recyclerViewAdapter.notifyDataSetChanged()
     }
