@@ -16,7 +16,7 @@
             android:checked="true"
             android:drawableEnd="?android:attr/listChoiceIndicatorMultiple"
             android:text="-ω"
-            android:textSize="12dp"
+            android:textSize="12sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/chk_type2"
             />
@@ -29,7 +29,7 @@
             android:checked="true"
             android:drawableEnd="?android:attr/listChoiceIndicatorMultiple"
             android:text="Passief: -μαι"
-            android:textSize="12dp"
+            android:textSize="12sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/lbl_level2"
             />
@@ -42,7 +42,7 @@
             android:checked="true"
             android:drawableEnd="?android:attr/listChoiceIndicatorMultiple"
             android:text="-άω, -ώ"
-            android:textSize="12dp"
+            android:textSize="12sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/chk_type3"
             />
@@ -368,7 +368,7 @@
             android:layout_marginEnd="8dp"
             android:checked="true"
             android:text="@string/lbl_basis"
-            android:textSize="12dp"
+            android:textSize="12sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/lbl_level"
             />
@@ -381,7 +381,7 @@
             android:checked="false"
             android:elevation="2dp"
             android:text="@string/lbl_advanced"
-            android:textSize="12dp"
+            android:textSize="12sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/sw_level_basis"
             />
@@ -393,7 +393,7 @@
             android:layout_marginEnd="8dp"
             android:checked="false"
             android:text="@string/lbl_nice2know"
-            android:textSize="12dp"
+            android:textSize="12sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/sw_level_gevorderd"
             />

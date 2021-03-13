@@ -155,7 +155,7 @@ class Luisterlijst : AppCompatActivity(), TextToSpeech.OnInitListener {
 
             /* menu wis alle selecties */
             R.id.menu_clear_selects -> {
-                clearAll()
+                clearAllSelections()
                 thisCursor = db.rawQuery(QueryManager.mainQuery(), null)
             }
 

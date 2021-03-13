@@ -29,6 +29,7 @@
     <item
             android:id="@+id/menu_copy"
             android:title="@string/menu_caption_copy"
+            android:checkable="true"
             />
     <item
             android:id="@+id/menu_raw_view"

@@ -12,14 +12,15 @@
         tools:ignore="Autofill,HardcodedText"
         >
 
+    <!--NAVIGATION BUTTONS-->
     <ScrollView
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="4dp"
             app:layout_constraintBottom_toTopOf="@+id/btn_select"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.0"
+            app:layout_constraintVertical_bias="1.0"
             >
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -27,7 +28,7 @@
                 android:layout_height="0dp"
                 tools:context=".MainActivity"
                 >
-<!--LEVEL SWITCHES-->
+            <!--LEVEL SWITCHES-->
             <TextView
                     android:id="@+id/lbl_level"
                     android:layout_width="wrap_content"
@@ -82,7 +83,7 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/sw_level1"
                     />
-<!--LEMMA LENGTH-->
+            <!--LEMMA LENGTH-->
             <TextView
                     android:id="@+id/lbl_lemmalength_pre"
                     android:layout_width="wrap_content"
@@ -144,7 +145,7 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/sw_use_length"
                     />
-<!--INITIAL LETTER-->
+            <!--INITIAL LETTER-->
             <TextView
                     android:id="@+id/lbl_initaal"
                     android:layout_width="wrap_content"
@@ -170,7 +171,7 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/lbl_initaal"
                     >
-                <include layout="@layout/greek_alphabet" />
+                <include layout="@layout/greek_alphabet"/>
             </HorizontalScrollView>
 
             <TextView
@@ -203,7 +204,7 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/sw_initial"
                     />
-<!--BLOCKSIZE-->
+            <!--BLOCKSIZE-->
             <TextView
                     android:id="@+id/lbl_blocksize_pre"
                     android:layout_width="wrap_content"
@@ -267,7 +268,7 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/sw_use_blocks"
                     />
-<!--SORT - ORDER-->
+            <!--SORT - ORDER-->
             <TextView
                     android:id="@+id/lbl_volgorde"
                     android:layout_width="wrap_content"
@@ -338,7 +339,7 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/sw_desc"
                     />
-<!--JUMPERS THRESHOLD-->
+            <!--JUMPERS THRESHOLD-->
             <TextView
                     android:id="@+id/lbl_threshold_pre"
                     android:layout_width="wrap_content"
@@ -383,8 +384,8 @@
                     />
             <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/sw_hide_jumpers"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="134dp"
+                    android:layout_height="42dp"
                     android:layout_marginTop="16dp"
                     android:layout_marginEnd="8dp"
                     android:tag="hide"
@@ -401,7 +402,7 @@
                     app:layout_constraintTop_toBottomOf="@+id/sw_hide_jumpers"
                     tools:layout_editor_absoluteX="8dp"
                     />
-<!--FLASHED-->
+            <!--FLASHED-->
             <TextView
                     android:id="@+id/lbl_flash"
                     android:layout_width="wrap_content"
@@ -436,7 +437,7 @@
                     android:background="?android:attr/listDivider"
                     app:layout_constraintTop_toBottomOf="@+id/sw_flashed"
                     />
-<!--SPEECH-->
+            <!--SPEECH-->
             <TextView
                     android:id="@+id/lbl_speech"
                     android:layout_width="wrap_content"
@@ -500,7 +501,6 @@
                     />
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
-<!--NAVIGATION BUTTONS-->
     <Button
             android:id="@+id/btn_select"
             android:layout_width="wrap_content"

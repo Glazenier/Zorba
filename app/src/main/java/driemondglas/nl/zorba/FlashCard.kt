@@ -14,12 +14,11 @@ import android.os.Bundle
 import android.os.SystemClock
 import android.text.Spannable
 import android.text.SpannableString
-import android.text.method.ScrollingMovementMethod
 import android.text.style.*
-import android.util.Log
 import android.view.*
+import android.webkit.WebSettings
 import android.webkit.WebView
-import android.widget.TextView
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import driemondglas.nl.zorba.Utils.enable
@@ -27,10 +26,11 @@ import driemondglas.nl.zorba.Utils.toggleVisibility
 import driemondglas.nl.zorba.Utils.visible
 import driemondglas.nl.zorba.databinding.FlashcardBinding
 
+
 class FlashCard : AppCompatActivity() {
-    
+
     private lateinit var binding: FlashcardBinding  // replaces synthetic view binding
-    
+
     /* initialize reference to the Zorba database */
     private lateinit var db: SQLiteDatabase
 
@@ -55,15 +55,15 @@ class FlashCard : AppCompatActivity() {
     private var idxRequested = 0L
     private var singleLemma = false
 
-    private var startTime=0L
+    private var startTime = 0L
     private var configChanged = false
 
-    @SuppressLint("ClickableViewAccessibility")
+//    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         binding = FlashcardBinding.inflate(layoutInflater)
-            setContentView(binding.root)
+        setContentView(binding.root)
 
         // initialise the ZORBA Action Bar
         supportActionBar?.apply {
@@ -79,29 +79,7 @@ class FlashCard : AppCompatActivity() {
         // init database
         db = zorbaDBHelper.readableDatabase
 
-        with (binding) {
-            if (!singleLemma) {
-                // setup the touch area's response to various motions
-                shadowGrieks.setOnTouchListener { v: View, m: MotionEvent ->
-                    IamTouched(v, m, true)
-                    true
-                }
-                textGrieks.setOnTouchListener { v: View, m: MotionEvent ->
-                    IamTouched(v, m, true)
-                    true
-                }
-                shadowNote.setOnTouchListener { v: View, m: MotionEvent ->
-                    IamTouched(v, m, false)
-                    true
-                }
-                textNote.setOnTouchListener { v: View, m: MotionEvent ->
-                    IamTouched(v, m, false)
-                    true
-                }
-            }
-            /* enable scrolling for long texts (does not work together with onTouchListener) */
-            textNederlands.movementMethod = ScrollingMovementMethod()
-
+        with(binding) {
             /* initialize the buttons' listeners
              * NOTE that the text fields also double as (large) buttons:
              * Greek text field: go to previous card
@@ -111,19 +89,22 @@ class FlashCard : AppCompatActivity() {
              * Touch UP  moves to next record
              * Move outside the view's boundaries while touch DOWN, prevents goto next and restores the score
              */
+
+            enableTouch(!singleLemma)
+
             btnReveal.setOnClickListener {
                 textGrieks.toggleVisibility()
                 textNote.toggleVisibility()
             }
             btnNextBlock.setOnClickListener { nextBlock() }
             btnPrevBlock.setOnClickListener { prevBlock() }
-            btnPrevBlock.setOnLongClickListener { goToFirstBlock(); true}
-            textNederlands.setOnClickListener { if (!singleLemma) previous() }
-            btnOTT.setOnClickListener { showVerb(conjugateEnestotas(thisGreekText), getString(R.string.title_verb_present,thisPureLemma)) }
-            btnOTTT.setOnClickListener { showVerb(conjugateMellontas(thisGreekText), getString(R.string.title_verb_future,thisPureLemma)) }
-            btnVVT.setOnClickListener { showVerb(conjugateAoristos(thisGreekText), getString(R.string.title_verb_past,thisPureLemma)) }
-            btnOVT.setOnClickListener { showVerb(conjugateParatatikos(thisGreekText), getString(R.string.title_verb_paratatikos,thisPureLemma)) }
-            btnGW.setOnClickListener { showVerb(createProstaktiki(thisGreekText), getString(R.string.title_verb_imperative,thisPureLemma)) }
+            btnPrevBlock.setOnLongClickListener { goToFirstBlock(); true }
+
+            btnOTT.setOnClickListener { showVerb(conjugateEnestotas(thisGreekText), getString(R.string.title_verb_present, thisPureLemma)) }
+            btnOTTT.setOnClickListener { showVerb(conjugateMellontas(thisGreekText), getString(R.string.title_verb_future, thisPureLemma)) }
+            btnVVT.setOnClickListener { showVerb(conjugateAoristos(thisGreekText), getString(R.string.title_verb_past, thisPureLemma)) }
+            btnOVT.setOnClickListener { showVerb(conjugateParatatikos(thisGreekText), getString(R.string.title_verb_paratatikos, thisPureLemma)) }
+            btnGW.setOnClickListener { showVerb(createProstaktiki(thisGreekText), getString(R.string.title_verb_imperative, thisPureLemma)) }
             btnSpeak.setOnClickListener { cleanSpeech(thisGreekText, thisWordType) }
             lblJumper.setOnClickListener { unJump() }
             btnShowAll.setOnClickListener { alleRijtjes() }
@@ -139,6 +120,7 @@ class FlashCard : AppCompatActivity() {
             lblPrev.visible(!singleLemma)
             txtProgress.visible(!singleLemma)
             textScore.visible(!singleLemma)
+            blockProgressBar.visible(!singleLemma)
 
             if (singleLemma) {
                 mainCursor = db.rawQuery("SELECT * FROM woorden WHERE idx=$idxRequested", null)
@@ -202,11 +184,14 @@ class FlashCard : AppCompatActivity() {
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         /* Inflate the menu; this adds menu items to the zorba action bar. */
         menuInflater.inflate(R.menu.menu_flashcard, menu)
-        menu.findItem(R.id.menu_card_speech).isChecked = useSpeech
-        menu.findItem(R.id.menu_set_theme_wordtype).isVisible = !singleLemma
-        menu.findItem(R.id.menu_set_details_sort).isVisible = !singleLemma
-        menu.findItem(R.id.menu_clear_selects).isVisible = !singleLemma
-        menu.findItem(R.id.menu_reset_score).isVisible = !singleLemma
+        with (menu) {
+            findItem(R.id.menu_card_speech).isChecked = useSpeech
+            findItem(R.id.menu_set_theme_wordtype).isVisible = !singleLemma
+            findItem(R.id.menu_set_details_sort).isVisible = !singleLemma
+            findItem(R.id.menu_clear_selects).isVisible = !singleLemma
+            findItem(R.id.menu_reset_score).isVisible = !singleLemma
+            findItem(R.id.menu_copy).isVisible = !singleLemma
+        }
         return true
     }
 
@@ -229,7 +214,7 @@ class FlashCard : AppCompatActivity() {
 
             /* menu wis alle selecties */
             R.id.menu_clear_selects -> {
-                clearAll()
+                clearAllSelections()
                 configChanged = true
             }
 
@@ -248,8 +233,13 @@ class FlashCard : AppCompatActivity() {
             R.id.menu_mail_lemma -> mailLemma()
 
             R.id.menu_copy -> {
-                val clipData = ClipData.newPlainText("text", thisPureLemma)
-                clipboardManager.setPrimaryClip(clipData)
+                // Checking this menu item disables the onTouchlistener on the greek text fields
+                // This re-enables the standard cut/paste/share actions on the textfield.
+                item.isChecked = !item.isChecked
+                binding.lblCorrect.visible(!item.isChecked)
+                binding.lblWrong.visible(!item.isChecked)
+                binding.lblPrev.visible(!item.isChecked)
+                enableTouch(!item.isChecked)
             }
 
             R.id.menu_raw_view -> buidHTMLbox()
@@ -274,12 +264,12 @@ class FlashCard : AppCompatActivity() {
     /* when configuration changing activities are finished, they return here.
      * if result is a possible selection change, requery the data */
     override fun onActivityResult(requestCode: Int, resultCode: Int, myIntent: Intent?) {
-        if (resultCode== RESULT_OK) {
-            if (requestCode in setOf( THEME_WORDTYPE, DETAILS, FLASHCARDS)) {
+        if (resultCode == RESULT_OK) {
+            if (requestCode in setOf(THEME_WORDTYPE, DETAILS, FLASHCARDS)) {
                 if (myIntent?.getStringExtra("result") == "changed") {
                     configChanged = true
                     reQuery()
-                    if (mainCursor.count>0) populateFields()
+                    if (mainCursor.count > 0) populateFields()
                 }
             }
         }
@@ -289,7 +279,7 @@ class FlashCard : AppCompatActivity() {
     /* re-execute the main query and get new set of data from database table */
     private fun reQuery() {
 
-        mainCursor =  db.rawQuery(QueryManager.mainQuery(), null)
+        mainCursor = db.rawQuery(QueryManager.mainQuery(), null)
 
         if (mainCursor.moveToFirst()) {
             // determine how many block are possible
@@ -324,7 +314,7 @@ class FlashCard : AppCompatActivity() {
         myIntent.putExtra("result", if (configChanged) "changed" else "unchanged")
         setResult(RESULT_OK, myIntent)
         super.finish()
-        overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
     }
 
     private fun unJump() {
@@ -404,7 +394,6 @@ class FlashCard : AppCompatActivity() {
 
     /* copy field content from cursor and enable/disable appropriate buttons */
     private fun populateFields() {
-        Log.d(TAG, "populateFields: ${mainCursor.count}")
         with(mainCursor) {
             thisIdx = getInt(getColumnIndex("idx"))
             thisGreekText = getString(getColumnIndex("GR"))
@@ -483,6 +472,8 @@ class FlashCard : AppCompatActivity() {
             .putInt("last_viewed_position", 0)
             .apply()
         mainCursor.moveToFirst()
+        populateFields()
+
         binding.textGrieks.visibility = View.INVISIBLE
         binding.textNote.visibility = View.INVISIBLE
         binding.blockProgressBar.progress = 0
@@ -536,7 +527,7 @@ class FlashCard : AppCompatActivity() {
 
     /* show verb conjugations */
     private fun showVerb(conjugations: List<String>, title: String) {
-        if (conjugations.size !=2 && conjugations.size !=6) return
+        if (conjugations.size != 2 && conjugations.size != 6) return
         var ladder = conjugations.joinToString("\n")
         var verbPos = title.lastIndexOf(' ')
         val titleSpan = SpannableString(title)
@@ -630,6 +621,7 @@ class FlashCard : AppCompatActivity() {
                 </body>
             </html>"""
         webView.loadData(record, "text/html", "UTF-8")
+
         val bob = AlertDialog.Builder(this)
             .setTitle(getString(R.string.alert_baserecord_title))
             .setView(webView)
@@ -643,12 +635,16 @@ class FlashCard : AppCompatActivity() {
     fun alleRijtjes() {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         val webView = WebView(applicationContext)
+
         val table = buildHTMLtable(thisGreekText)
         webView.loadData(table, "text/html", "UTF-8")
+        val settings: WebSettings = webView.getSettings()
+        settings.textZoom = 85 // where 50 is 50%; default value is ... 100
+
         val bob = AlertDialog.Builder(this)
             .setTitle(thisPureLemma)
             .setView(webView)
-            .setPositiveButton(R.string.btn_caption_ok) {_,_ -> requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT}
+            .setPositiveButton(R.string.btn_caption_ok) { _, _ -> requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT }
         val alertDialog = bob.create()
         alertDialog.show()
         alertDialog.getButton(DialogInterface.BUTTON_POSITIVE).textSize = 24f
@@ -658,7 +654,7 @@ class FlashCard : AppCompatActivity() {
         // if current activity was created using active/passive switchover, just finish it
         if (intent.getStringExtra("origin") == "apSwitch") {
             finish()
-        // otherwise create new activity using cross referenced active/passive counterpart
+            // otherwise create new activity using cross referenced active/passive counterpart
         } else {
             val myIntent = Intent(this, FlashCard::class.java)
                 .putExtra("idx", thisActivePassiveXref.toLong())
@@ -666,6 +662,27 @@ class FlashCard : AppCompatActivity() {
                 .putExtra("origin", "apSwitch")
             startActivity(myIntent)
             overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
+        }
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private fun enableTouch(enable: Boolean) {
+        // Text field click/touch behaviour
+        // Disabled click/touch restore standard copy/share/... functionality
+        with(binding) {
+            if (enable) {
+                textNederlands.setOnClickListener { previous() }
+                shadowGrieks.setOnTouchListener { v: View, m: MotionEvent -> IamTouched(v, m, true);true }
+                textGrieks.setOnTouchListener { v: View, m: MotionEvent -> IamTouched(v, m, true); true }
+                shadowNote.setOnTouchListener { v: View, m: MotionEvent -> IamTouched(v, m, false); true }
+                textNote.setOnTouchListener { v: View, m: MotionEvent -> IamTouched(v, m, false); true; }
+            } else {
+                textNederlands.setOnClickListener(null)
+                shadowGrieks.setOnTouchListener(null)
+                textGrieks.setOnTouchListener(null)
+                shadowNote.setOnTouchListener(null)
+                textNote.setOnTouchListener(null)
+            }
         }
     }
 }

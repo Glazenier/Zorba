@@ -2,7 +2,6 @@ package driemondglas.nl.zorba
 
 import android.app.AlertDialog
 import android.content.*
-import android.content.ClipboardManager
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
@@ -17,6 +16,7 @@ import android.webkit.WebView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
@@ -53,39 +53,39 @@ var flashed = false       // flag to signal to show only flashed lemma's
 var speechRate = 1f       // speech speed
 
 /* Jumpers:
- * Jumpers are lemmas with count of correct answers above the set threshold. "They jumped the threshold"
+ * Jumpers are lemmas having a count of correct answers above the set threshold. "They jumped the threshold"
  * The idea is to hide those lemmas in further selections to focus on remaining lemmas */
 var jumpThreshold = 2
 var hideJumpers = false  // do not move jumpers completely out of sight
 
-/*  Initialise the database helper class. */
+/*  Initialise the DATABASE HELPER class. */
 lateinit var zorbaDBHelper: ZorbaDBHelper
 
-/* text to speech object used throughout the application*/
+/* text to SPEECH OBJECT used throughout the application*/
 lateinit var zorbaSpeaks: TextToSpeech
 
-/* speech on or off */
+/* SPEECH on or off */
 var useSpeech = true
 
-/* shared preferences to keep configuration as well as certain progress ans score values */
+/* SHARED PREFERENCES to keep configuration as well as certain progress ans score values */
 lateinit var zorbaPreferences: SharedPreferences
 
-lateinit var clipboardManager: ClipboardManager
 
-/* main activity class implements TextToSpeech.OnInitListener */
+/* MAIN ACTIVITY CLASS implements TextToSpeech.OnInitListener */
 class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
-    private lateinit var binding: ActivityMainBinding  // replaces synthetic view binding
+    // view binding replaces synthetic binding
+    private lateinit var binding: ActivityMainBinding
     
-    /* list containing all the Lemma data items that attaches to the recycler through the adapter */
+    // initialise the list containing all the Lemma data items that attaches to the recycler through the adapter
     private val lemmaArrayList: ArrayList<LemmaItem> = ArrayList()
 
-    /* attach to view */
+    // attach to view
     private val recyclerViewAdapter = LemmaRecyclerAdapter(lemmaArrayList)
 
     private val onItemClickListener = View.OnClickListener { view ->
-        /*  The viewholder is attached as tag to the view
-         *  This viewHolder will contain the values needed for the item. */
+        //  The viewholder is attached as tag to the view
+        //  This viewHolder will contain the values needed to create the item.
         val viewHolder = view.tag as RecyclerView.ViewHolder
 
         // retrieve position (index) of the clicked item
@@ -114,8 +114,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         zorbaPreferences = applicationContext.getSharedPreferences("zorbaPrefKey", Context.MODE_PRIVATE)
 
-        clipboardManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-
         // retrieve config from shared preferences
         with(zorbaPreferences) {
             useBlocks = getBoolean("useblocks", true)
@@ -137,16 +135,14 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             search = getString("search", "") ?: ""
         }
 
-        val mainTitle = SpannableString(getString(R.string.title_main)).apply {
-            setSpan(StyleSpan(Typeface.BOLD_ITALIC), 0, 4, 0)
-            setSpan(StyleSpan(Typeface.NORMAL), 5, 15, 0)
-            setSpan(RelativeSizeSpan(0.75f), 5, 15, 0)
-        }
-
         // create action bar on top
         supportActionBar?.apply {
             setDisplayShowHomeEnabled(true)
-            title = mainTitle
+            title = SpannableString(getString(R.string.title_main)).apply {
+                setSpan(StyleSpan(Typeface.BOLD_ITALIC), 0, 4, 0)
+                setSpan(StyleSpan(Typeface.NORMAL), 5, 15, 0)
+                setSpan(RelativeSizeSpan(0.75f), 5, 15, 0)
+            }
             setIcon(R.drawable.greneth)
         }
 
@@ -168,7 +164,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         // create local flashed table if it does not exist yet
         zorbaDBHelper.assessFlashTable()
 
-        // initialise the recyclerView for the lemma's on the front page
+        // initialise the recyclerView showing the lemma's on the front page (the main activity)
         val recyclerView = findViewById<RecyclerView>(R.id.recycler_view)
 
         // fill her up with lemma's
@@ -184,9 +180,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         // attach listeners to the front page buttons:
 
-        /*** open FLASHCARDS ***/
+        /*** to launch FLASHCARDS activity ***/
         binding.btnOpenDeck.setOnClickListener {
-            /* launch the FlashCard Activity */
 
             if (selectedCount() > 0 ) {
                 val myIntent = Intent(this, FlashCard::class.java)
@@ -198,9 +193,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
         }
 
-        /*** open LISTENING excercise ***/
+        /*** to launch LISTENING excercise ***/
         binding.btnLuister.setOnClickListener {
-            /* launch the luisterlijst Activity only if selection contains lemma's */
+            // launch the luisterlijst activity only if selection contains lemma's
             if (selectedCount() > 0 ) {
                 val myIntent = Intent(this, Luisterlijst::class.java)
                 startActivity(myIntent)
@@ -210,7 +205,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
         }
 
-        /*** open VERB game ***/
+        /*** to launch the VERB game activity ***/
         binding.btnVerbGame.setOnClickListener {
             /* launch the verb game activity if selection contains any verbs */
             if (verbGameCount() > 0 ) {
@@ -222,9 +217,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
         }
 
-        /*** open HANGMAN game ***/
+        /*** launch the HANGMAN game ***/
         binding.btnHangman.setOnClickListener {
-            /* launch the Hangman Activity */
             val myIntent = Intent(this, Hangman::class.java)
             startActivity(myIntent)
             overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
@@ -305,7 +299,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
             /* menu wis alle selecties */
             R.id.menu_clear_selects -> {
-                clearAll()
+                clearAllSelections()
                 binding.textSearch.setText("")
                 refreshData()
                 recyclerViewAdapter.notifyDataSetChanged()
@@ -386,8 +380,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             <table>
                 <tr><td>&nbsp;</td><td>${getString(R.string.app_description)}</td></tr>
                 <tr><td>Author:</td><td>${getString(R.string.app_author)}</td></tr>
-                <tr><td>Version:</td><td>${BuildConfig.VERSION_NAME}</td></tr>
-                <tr><td>Build:</td><td>${BuildConfig.VERSION_CODE}</td></tr>
+
                 <tr><td>Change:</td><td>${getString(R.string.app_versioninfo)}</td></tr>
                 <tr><td>Lemmas:</td><td>${zorbaDBHelper.lemmaCount()}</td></tr>
                 <tr><td>Selected:</td><td>${selectedCount()}</td></tr>

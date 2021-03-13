@@ -40,7 +40,7 @@
     <string name="lbl_descending">ondersteboven</string>
     <string name="lbl_threshold_pre">Geslaagd bij </string>
     <string name="lbl_threshold_post"> x goed.</string>
-    <string name="lbl_hidejumpers">dan niet meer tonen</string>
+    <string name="lbl_hidejumpers">dan niet\nmeer tonen</string>
     <string name="lbl_flash">Flash ⚡</string>
     <string name="lbl_flashed">alleen flashed</string>
     <string name="lbl_lightning">⚡</string>
@@ -97,7 +97,8 @@
     <string name="menu_caption_neurolingo">🌐 Zoek op - NeuroLingo</string>
     <string name="menu_caption_wordreference">🌐 Zoek op - WordReference</string>
     <string name="menu_caption_base_record">💽 Toon basis record</string>
-    <string name="menu_caption_copy">📋 copy pure lemma</string>
+<!--    <string name="menu_caption_copy">📋 copy pure lemma</string>-->
+    <string name="menu_caption_copy">📋 enable copy</string>
     <string name="menu_caption_set_default">Bewaar als standaard</string>
 
 <!-- MESSAGES AND ALERTS-->

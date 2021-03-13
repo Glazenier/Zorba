@@ -80,9 +80,19 @@ class ZorbaDBHelper(zorbaContext: Context) : SQLiteOpenHelper(zorbaContext, DATA
                 val pureLemma = pureLemma(thisGR).trim()
                 val pureLength = pureLemma.length
 
-                val query = "INSERT INTO woorden VALUES " +
-                      "($thisId, $thisIdx, '$thisGR', '$thisNL', '$thisOpm', '$thisThema', $thisFlash," +
-                      " $thisLevel, '$thisWoordsoort', '$pureLemma', $pureLength, $apRef);"
+                val query = "INSERT INTO woorden VALUES (" +
+                      "$thisId, " +
+                      "$thisIdx, " +
+                      "'$thisGR', " +
+                      "'$thisNL', " +
+                      "'$thisOpm', " +
+                      "'$thisThema', " +
+                      "$thisFlash," +
+                      " $thisLevel, " +
+                      "'$thisWoordsoort', " +
+                      "'$pureLemma', " +
+                      "$pureLength, " +
+                      "$apRef);"
                 db.execSQL(query)
             }
         }

@@ -2,10 +2,10 @@
 <CheckedTextView xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@android:id/text1"
         android:layout_width="match_parent"
-        android:layout_height="46dp"
+        android:layout_height="wrap_content"
         android:checkMark="?android:attr/textCheckMark"
         android:gravity="center_vertical"
         android:paddingStart="4dp"
         android:paddingEnd="4dp"
-        android:textSize="16sp"
+        android:textSize="15sp"
         />
