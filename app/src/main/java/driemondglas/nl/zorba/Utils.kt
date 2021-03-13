@@ -12,16 +12,16 @@ import driemondglas.nl.zorba.Utils.replace
 import driemondglas.nl.zorba.Utils.stressLastVowel
 import driemondglas.nl.zorba.Utils.stressOneChar
 import driemondglas.nl.zorba.Utils.unStress
-import driemondglas.nl.zorba.Utils.unStressOneChar
 
-const val allConsonants = "βγδζθκλμνξπρσςτφχψ"
-val allStressedVowels = "άέήίΐόύΰώ".toCharArray()
-val allUnstressedVowels = "αεηιϊουϋω".toCharArray()
+const val consonants = "βγδζθκλμνξπρσςτφχψ"
+val stressedVowels = "άέήίΐόύΰώ".toCharArray()
+val unstressedVowels = "αεηιϊουϋω".toCharArray()
 
 val inBracketsRegex = Regex( """\(.*?\)""")
 
+
 /* function is called from the menu item 'Clear All' to reset all selections made by user. */
-fun clearAll() {
+fun clearAllSelections() {
     resetThemeAndType()
     resetDetails()
 }
@@ -72,16 +72,20 @@ fun resetDetails() {
           .apply()
 }
 
-val articleRegex = Regex("""(.*?),\s(τ?[ηοα]ι?)""")  //match greek articles after a komma: , ο, η, το, οι, τα
+//val articleRegex = Regex("""(.*?),\s(τ?[ηοα]ι?)""")  //match greek articles after a komma+space: , ο, η, το, οι, τα
+val articleRegex = Regex("""(.*?),\s([οητ][οι]?)""")  //match greek articles after a komma+space: , ο, η, το, οι, τα
 val adjectiveRegex = Regex("""(.*?)(ε?[οηόύήί][ςιί]),\s?-(ε?[αάεέηήιί][αάς]?),\s?-([άαεέίοόύή]ς?)""")   //changed for -είς, -είς, -ή
-val eeStartSound = Regex("""\b[οε]?[ιηυίήύ]""")
+val eeStartSound = Regex("""\b(([οε]?[ιί])|([ηήυύ]))""")
+val oStartSound = Regex("""\b[οόωώ][^ιί]""")
 
 fun cleanSpeech(rawText: String, wordType: String) {
     var result = ""
+    val takeAbrake= if (zorbaSpeaks.defaultEngine.contains ("acapelagroup")) """\pau=75\""" else ","
+
     when (wordType) {
         "bijvoeglijk nw", "voornaamwoord", "telwoord" -> {
             /* uses adjectiveRegex to match endings of greek adjectives and similar
-             * contains capturing groups:
+             * returns capturing groups:
              *   matchResult.groups[0]: whole match
              *   matchResult.groups[1]: stem
              *   matchResult.groups[2]: male ending
@@ -123,10 +127,10 @@ fun cleanSpeech(rawText: String, wordType: String) {
                         /* if article ends with 'o' and noun begins with 'o', the speech engine combines them into one 'o'
                          *  This is not what we want, so
                          *  an extra ',' is inserted to ensure we hear two separate 'o's */
-                        if (unStressOneChar(noun.first()) == 'ο' && article.last() == 'ο') article += ','
+                        if (article.last() == 'ο' && oStartSound.find(noun)!=null) article += takeAbrake
 
                         // Same thing for ee-sound (ie-klank)
-                        if (eeStartSound.find(noun) != null && (article == "η" || article == "οι")) article += ','
+                        if ( (article == "η" || article == "οι") && eeStartSound.find(noun) != null ) article += takeAbrake
                         result += "$article $noun,"
                     }
                 } else {
@@ -153,11 +157,11 @@ fun cleanSpeech(rawText: String, wordType: String) {
             /* 1: In speech output we don't want text in brackets */
             result = rawText.replace(inBracketsRegex, "")
 
-            /* 2: Change space dash space to comma for speech to force pause (gebiedende wijs) */
-            result = result.replace(" - ", ", ")
+            /* 2: Change space dash space to insert pause (gebiedende wijs) */
+            result = result.replace(" - ", takeAbrake)
 
-            /* 3: Change equeals sign (=) to comma for speech to force pause */
-            result = result.replace("=", ",")
+            /* 3: Change equeals sign (=) to insert pause for speech */
+            result = result.replace("=", takeAbrake)
         }
     }
     Log.d(TAG, "cleanSpeech: $result")
@@ -201,7 +205,7 @@ fun buildHTMLtable(textGreek: String): String {
     if (aor.size < 5) aor = listOf("", "", "", "", "", "")
     if (pro.size < 2) pro = listOf("", "")
     var htmlText = """
-<table style='font-size: 0.75em;'>
+<table style="font-size: 11pt;">
   <tr>
     <th style='border: 1px solid black; background-color:gold;'>ENESTOTAS</th>
     <th style='border: 1px solid black; background-color:gold;'>MELLONTAS</th>
@@ -254,7 +258,7 @@ fun conjugateEnestotas(textGreek: String): List<String> {
         enestotas.endsWith("ω") -> {
             stem = enestotas.dropLast(1)
             verbType = when {
-                stem.last() in allConsonants -> "A1"
+                stem.last() in consonants -> "A1"
                 stem.endsWith("εύ") -> "A1"
                 stem.endsWith("έ") -> "A1"
                 else -> "A2"
@@ -452,14 +456,14 @@ fun createProstaktiki(textGreek: String): List<String> {
          // σημειώσ
          // χαιρ
     /* If no accent in the stem then add accent to last vowel */
-    var stressPos = stem.indexOfAny(allStressedVowels)
+    var stressPos = stem.indexOfAny(stressedVowels)
         // σημειώσ
         //      ^---- stressPos = 5
         // χαιρ
         // ----     <- stressPos = -1
     if (stressPos == -1) {
         /* find last vowel */
-        stressPos = stem.lastIndexOfAny(allUnstressedVowels)
+        stressPos = stem.lastIndexOfAny(unstressedVowels)
             // χαιρ
             //   ^---- vowelPos = 2
         stem = stem.replace(atPosition = stressPos, replacement = stressOneChar(unStressed = stem[stressPos]))
@@ -479,7 +483,7 @@ fun createProstaktiki(textGreek: String): List<String> {
     if (stressPos > 0) {
         val dbl = stem.substring(stressPos - 1..stressPos)
         if (dbl in setOf("αύ", "εύ", "αί", "εί", "οί", "ού")) stressPos--
-        val vowelPos = single.take(stressPos).lastIndexOfAny(allUnstressedVowels)
+        val vowelPos = single.take(stressPos).lastIndexOfAny(unstressedVowels)
         if (vowelPos > -1) single = single.unStress().replace(atPosition = vowelPos, replacement = stressOneChar(unStressed = single[vowelPos]))
     }
     /* return Imperative as: 2nd person single - 2nd person plural */
@@ -520,8 +524,8 @@ object Utils {
      * if input not part o
      * f unstressed vowels it returns original input character. */
     fun stressOneChar(unStressed: Char): Char {
-        val position = allUnstressedVowels.indexOf(unStressed)
-        return if (position == -1) unStressed else allStressedVowels[position]
+        val position = unstressedVowels.indexOf(unStressed)
+        return if (position == -1) unStressed else stressedVowels[position]
     }
 
     /* Extension function unStressOneChar
@@ -529,8 +533,8 @@ object Utils {
      * output: same character without stress (tonos / accent).
      * if input not part of stressed vowels it returns original input character. */
     fun unStressOneChar(target: Char): Char {
-        val matchIndex = allStressedVowels.indexOf(target)
-        return if (matchIndex >= 0) allUnstressedVowels[matchIndex] else target
+        val matchIndex = stressedVowels.indexOf(target)
+        return if (matchIndex >= 0) unstressedVowels[matchIndex] else target
     }
 
     /* Extension function unStress
@@ -538,11 +542,11 @@ object Utils {
      * output: same string without stress (tonos / accent).
      * if input does not contain a stressed vowel it returns original input string. */
     fun String.unStress(): String {
-        val stressPos = this.indexOfAny(allStressedVowels)
+        val stressPos = this.indexOfAny(stressedVowels)
         return if (stressPos == -1) this else this.replace(atPosition = stressPos, replacement = unStressOneChar(target = this[stressPos]))
     }
 
-    /* Extension function replace character at index */
+    /* Extension function replace character at index position */
     fun String.replace(atPosition: Int, replacement: Char): String {
         return if (atPosition < this.length && atPosition >= 0) this.take(atPosition) + replacement + this.drop(atPosition + 1) else this
     }
@@ -550,12 +554,12 @@ object Utils {
     /* Extension function normalize
      * input: string containing any diacritic or accented vowel.
      * output: same string without diacritic or ather marks. */
-    private val allDiacriticVowels  = "άέήίϊΐόύϋΰώ".toCharArray()
-    private val allNormalizedVowels = "αεηιιιουυυω".toCharArray()
+    private val diacriticVowels  = "άέήίϊΐόύϋΰώ".toCharArray()
+    private val normalizedVowels = "αεηιιιουυυω".toCharArray()
 
     fun String.normalize(): String {
-        val diacritics = allDiacriticVowels + 'ς'     // ς normalized to
-        val normalized = allNormalizedVowels + 'σ'    // σ just for hangman purpose !!!
+        val diacritics = diacriticVowels + 'ς'     // ς normalized to
+        val normalized = normalizedVowels + 'σ'    // σ just for hangman purpose !!!
 
         return this.map {
             val position = diacritics.indexOf(it)
@@ -587,7 +591,7 @@ object Utils {
     fun String.stressLastVowel(): String {
         // remove all stress
         val unstressed = this.unStress()
-        val vowelPos = unstressed.lastIndexOfAny(allUnstressedVowels)
+        val vowelPos = unstressed.lastIndexOfAny(unstressedVowels)
         return if (vowelPos == -1) this else unstressed.replace(atPosition = vowelPos, replacement = stressOneChar(unstressed[vowelPos]))
     }
 }
